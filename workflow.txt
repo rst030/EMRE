@@ -1,0 +1,76 @@
+cw plotter for lyra:
+1. delete second tree view
+2. press plot and plot the selected spectrum from the tree view
+	add new axes to plot
+		add dax variable to Plotter class for datasets
+3. instead of plot lets make 2 buttons: X and Y channels.
+(for now keep both)
+
+19/10/20
+make three processes:
+one runs gui.
+the other runs communication to the spectrometer
+third runs plotting
+
+done!
+
+make window for setting parameters: inspire yourself by xEpr.
+load from file button - load parameters from a given spectrum: load_btn
+set up all parameters in fields:
+	B_start_etry
+	B_stop_etry
+	B_step_etry
+	..
+	...
+	....
+setup scan window is created. when all scan parameters are set, click set scan button
+..
+...
+....
+how to implement electrochemistry here?
+scan is set. 
+Now lets set electrochemistry
+0 mV - scan
+100 mV - scan
+...
+...
+...800 mV - scan
+what so we do here?
+
+we go to 100 mV, do 10 scans, go back to 0mV and rest there, do another 10 scans.
+
+ok hold on.
+we made the set scan scan window.
+now lets implement it as a seperate python module.
+Lets call it setup_scan.py and let us import it in the GUI later. (make a button for that too)
+
+
+02/11/20
+real testing.
+Fake devices dont work now. Make sure they dont work accidently.
+connect to lia and fc and run scan. No bridge, no resonator.
+
+write lines to devices was a bad idea
+implementing nruns.
+nruns cycle implemented.
+Implementing averaging feature:
+	each scan gives bvals[] and signal[]
+	after B0 cycle calculate list signal_averaged[] by averaging all scans that we had before. 
+	Dont just add them up, weight! 
+	signal_averaged = (signal_averaged + signal)/scans_that_have_been_done.
+
+add live axes to the plotter. Plot live data in these axes. 
+self.liveaxis = self.subplot.twinx()
+
+plot live data on live axes.
+going over averaged signal and how to assign its elements dynamically.
+1st run append,
+from second run average each point (last point each time)
+
+
+wrote save function for spectra in cw_spectrum class.
+making cw spectrum populating as the scan progresses
+
+
+
+

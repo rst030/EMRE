@@ -1,0 +1,47 @@
+
+spincouting v3.0-devel
+05-Mar-2020 19:39:47
+
+Spectrum file:	/home/ikulikov/Desktop/cwEPR_batteries/Feb_2020/sample_4_PC_acetonitrile/a01_swEPR_50CV_cleaned_in_PC_AN_15CV_solid_state_modified_tube_RT_22dB.akku2
+Tune file:	/home/ikulikov/Desktop/cwEPR_batteries/Feb_2020/sample_4_PC_acetonitrile/solid_state_after wash_Q/F0064CH1.CSV
+[Warning: Existing output files will be overwritten.
+] 
+[> In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('spincounting', '/net/grouphome/ag-bittl/OPV/Ilia/Scripts/matlab/spincounting-master/spincounting.m', 457)" style="font-weight:bold">spincounting</a> (<a href="matlab: opentoline('/net/grouphome/ag-bittl/OPV/Ilia/Scripts/matlab/spincounting-master/spincounting.m',457,0)">line 457</a>)
+  In <a href="matlab:matlab.internal.language.introspective.errorDocCallback('spin_count_for_a_battery', '/home/ikulikov/Documents/EPR/Scripts/matlab/my scripts/public/spin_count_for_a_battery.m', 10)" style="font-weight:bold">spin_count_for_a_battery</a> (<a href="matlab: opentoline('/home/ikulikov/Documents/EPR/Scripts/matlab/my scripts/public/spin_count_for_a_battery.m',10,0)">line 10</a>)] 
+Log file:	/home/ikulikov/Desktop/cwEPR_batteries/Feb_2020/sample_4_PC_acetonitrile/spincount_data/a01_swEPR_50CV_cleaned_in_PC_AN_15CV_solid_state_modified_tube_RT_22dB.log
+Operation mode: calc_spins
+
+
+<a href = "matlab: helpview([docroot '/toolbox/optim/msg_csh/optim_msg_csh.map'],'local_min_lsq','CSHelpWindow');">Local minimum found</a>.
+
+Optimization completed because the <a href = "matlab: helpview([docroot '/toolbox/optim/msg_csh/optim_msg_csh.map'],'lsq_grad_size','CSHelpWindow');">size of the gradient</a> is less than
+the default value of the <a href = "matlab: helpview([docroot '/toolbox/optim/msg_csh/optim_msg_csh.map'],'optimality_tolerance_lsq','CSHelpWindow');">optimality tolerance</a>.
+
+<<a href = "matlab: createExitMsg('snls',1.000000e+00,true,true,'lsqcurvefit',6.318100e-07,'default',1.000000e-06,0.000000e+00,'',0.000000e+00,0.000000e+00,'',0.000000e+00);">stopping criteria details</a>>
+
+
+
+
+Tune picture background: [-2.86  -1.00  4.57  14.96] MHz
+Use 'tunebglimits' to change.
+FWHM: 1.4736 MHz
+q-factor: 6376.51
+
+Spectrum background: [3250.0 3312.6 3437.4 3500.0] G
+Use 'intbglimits' to change.
+Double integral: 1.00638 a.u.
+
+Calculation performed based on the following parameters:
+ - actual power: 1.261915e+00 mW
+ - temperature: 300 K
+ - boltzmann population factor: 1.0015
+ - sample spin: S = 0.5
+ - modulation amplitude: 3.00
+ - receiver gain: 1.00
+ - time constant: 1.000000e+00 s
+ - number of scans: 1
+
+Using transfer factor tfactor = 4.900000e-19.
+Calculated number of spins in sample: 4.023768e+15
+
+Figure saved.
