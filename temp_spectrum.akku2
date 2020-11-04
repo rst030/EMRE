@@ -1,22 +1,22 @@
 %%? 1d 2ch akku
-%? 2020-11-03 19:17:43.037383
+%? 2020-11-04 13:17:49.801333
 %. 
 
-%! nruns 3
-%! npoints 8
+%! nruns 1
+%! npoints 10
 %! bstart 3200.00000 G
 %! bstop 3400.00000 G
-%! bstep 25.00000 G
-%! modamp 1e+00 G
-%! modfreq 1e+04 Hz
+%! bstep 20.00000 G
+%! modamp 1e+00 V
+%! modfreq 1e+05 Hz
 %! li_tc 1e-03 s
-%! li_level 2e-01 V
-%! li_phase 291.00 deg
+%! li_level 1e+00 V
+%! li_phase 338.00 deg
 %! li_sens 1e-03 V
 %! conv_time 3 TC
 %! mw_freq -1e+00 Hz
 %! attn 22 dB
 %! temp 295.00 K
-%! li_level 0.15 V
-3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 
-3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 
+%! li_level 1.00 V
+3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 
+3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 3e+00 

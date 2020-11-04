@@ -283,7 +283,9 @@ class main_gui:
     def run_experiment(self): # run experiment here
         # just run the experiment with the parameters obtained from self.scan_setting.
         if self.scan_setting.scan_set:
-            self.run_cw_experiment()
+            # self.run_cw_experiment() that would work, for now we just test
+            self.run_echem_experiment()
+
         else:
             print('first set up a scan')
             self.scan_setting = setup_scan.Scan_setup()  # create an instance of the class. Scan set if scanset var True
@@ -292,10 +294,17 @@ class main_gui:
 
 
     def run_cw_experiment(self):
-        print('creating one process for the experiment')
+        print('just running the cw_scan method')
         #experiment_thread = threading.Thread(target=cw_scan, args= (self.spectrometer_communicator,self.scan_setting,self.plotter))# here starts the cw scan in a separate process! Dont forget to finish it.
         #experiment_thread.start()
         cw_scan(self.spectrometer_communicator,self.scan_setting,self.plotter)
+
+
+    def run_echem_experiment(self):
+        print('just running the echem_scan method')
+        #experiment_thread = threading.Thread(target=cw_scan, args= (self.spectrometer_communicator,self.scan_setting,self.plotter))# here starts the cw scan in a separate process! Dont forget to finish it.
+        #experiment_thread.start()
+        echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter)
         print('creating another process for plotting')
 
 
@@ -308,7 +317,8 @@ class main_gui:
         '''connect to spectrometer, that is create a communicator and try creating all devices in it'''
         print('connecting to spectrometer...')
 
-        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py backend. This is a global field of the main_gui class.
+        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
+        # backend. This is a global field of the main_gui class.
         # now I dont want to always write self.spectrometer_communicator, I will just write sp_comm
         sp_comm = self.spectrometer_communicator
 
@@ -395,10 +405,10 @@ class main_gui:
         from time import sleep  # this guy is slow
 
         sp_com.field_controller.go_remote()  # doing it as it was written in its manual
-        sleep(1)
+        sleep(0.5)
         sp_com.field_controller.set_operating_mod(mode_ = 0) # moving BH15 to operating mode 0
         sp_com.field_controller.set_center_field(self.scan_setting.bstart) # setting b_start to field controller
-        sleep(5)  # it likes to sleep. Check it with LE though, that is more sensible
+        sleep(0.5)  # it likes to sleep. Check it with LE though, that is more sensible
 
         return 1  # default return value is 1. anything goes wrong and changes it to -1, that will be seen.
 
@@ -550,7 +560,84 @@ def cw_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, pl
 
 
 def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter):
-    print('echem scan')
+    import numpy as np
+
+    echem_potentials = np.linspace(start = scan_setting.echem_low, stop = scan_setting.echem_high, num=scan_setting.echem_nsteps)
+
+    print('we will go through following potentials:')
+    for pot in echem_potentials:
+        print(f'{pot} mV')
+
+    stay_low_ncycles = scan_setting.echem_go_low
+    go_high_ncycles = scan_setting.echem_stay_high
+
+    high_scans = []  # list of electrochemical scans with nonzero potential
+    low_scans = []   # list of echem scans with zero potential
+
+
+    #  plotting: averaged plot at the averaged axes.
+    plotter.add_average_plot(bstart=scan_setting.bstart, bstop = scan_setting.bstop)
+
+    print('echem experiment:')
+    for pot in echem_potentials:
+        print(f' ______________________________________________________________ this will set new potential {pot} mV P')
+        for _ in range(go_high_ncycles):
+            print(f'   CW running cw scan')
+
+            high_scan = SingleCwScan(sp_com,scan_setting,plotter,pot) # record one cw scan
+            high_scans.append(high_scan)
+
+            plotter.plot_averaged_data(high_scan.bvalues,high_scan.signal,'r-')
+            #todo: do averaging, plot averaged on the averaged plot...
+
+
+        print(f' ______________________________________________________________ this will set zero potential {0} mV 0')
+        for _ in range(stay_low_ncycles):
+            print(f'   CW running cw scan')
+
+            low_scan = SingleCwScan(sp_com, scan_setting, plotter, potential=0)  # record one cw scan
+            low_scans.append(low_scan)
+
+
+class SingleCwScan:
+    '''populate bvalues and signal by measuring the spectrum'''
+
+    bvalues = [] # values of B0, measured. Populated in the constructor.
+    signal = []  # values of signal. Measured. populated in the constructor
+    potential = 0 # electrochemical potential for this scan
+
+    def __init__(self,sp_com: communication.new_communicator, scan_setting: setup_scan.Scan_setup, plotter: Plotter.Plotter, potential):
+        # this creates an instance of the single_cw_scan. Constructor is the main method, it actually runs an experiment
+        import numpy as np
+        bstart = scan_setting.bstart # read scan parameters from the scan setting obj that has been constructed before
+        bstop = scan_setting.bstop
+        bstep = scan_setting.bstep
+        bvalues_to_send = np.arange(bstart, bstop, bstep) # these will be sent to the field controller.
+        delay = scan_setting.delay
+
+        self.potential = potential
+        print('doing one scan at %.2f mV'%self.potential)
+
+
+        plotter.add_live_plot(bstart,bstop) # rescaling B axis for live plotting and adding live axes if needed
+
+        self.signal = []
+        self.bvalues = []
+
+        # go through B0s in bvalues_to_send:
+        for B0 in bvalues_to_send:
+            B0_measured_by_FC = sp_com.field_controller.set_field(B0) # set and measure magnetic field
+            self.bvalues.append(B0)#B0_measured_by_FC) #todo: uncomment this for real measured fields
+            sleep(delay) # is sleep in seconds?
+            print('MEASURING SIGNAL')
+            # fake epr line:
+            fc = 3275
+            intens = 50
+            lw = 20
+            self.signal.append(-intens*np.exp(-(B0-fc)*(B0-fc)/(2*lw*lw))*(B0-fc)+np.random.randint(0,50))  # temp!
+            plotter.plot_live_data(self.bvalues, self.signal, 'k-')
+
+
 
 
 

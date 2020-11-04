@@ -56,6 +56,9 @@ class Scan_setup:
     li_sens = 1e-3         # LIA sensitivity [V]
 
     conv_time = 3          # conversion time, TCs
+
+    delay = li_tc*(conv_time+1) # that much wait for measuring each point
+
     mwfreq = 9.6           # MW frequency, GHz
     attn = 22              # Attenuation, dB
     temp = 295             # Temperature, K
@@ -839,6 +842,10 @@ class Scan_setup:
         print('LIA sensitivity set to %.1e'%self.li_sens)
         self.li_tc = float(self.TC_combobox.get())
         self.conv_time = int(self.LIA_conv_time_combobox.get())
+
+        self.delay = self.li_tc * (self.conv_time + 1) # this much to wait for each point measurement
+        print('measurement delay for each point, s: %.3f' %self.delay)
+
         self.li_phase = float(self.LIA_phase_etry.get())
 
         print('autophae function has been implemented')

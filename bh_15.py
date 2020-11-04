@@ -16,6 +16,17 @@ class bh_15 (object):
         self.rm = rm
         self.connect(model)
 
+    def set_field(self, magnetic_field_in_gauss: float):
+        'sets magnetic field, returns field measured by the field controller'
+
+        self.curse_BH15('MO0')                          # move to basic field control mode that is mode 0'''
+        self.set_center_field(magnetic_field_in_gauss)  # set the field
+        self.curse_BH15('MO5')                          # move to field measure mode that is mode 5
+        ledstatus = self.talk_to_BH15('LE')             # '''get the led status''' use it later
+        B0_measured_str = self.talk_to_BH15('FC')       # measure field
+        B0_measured = float(B0_measured_str[3:11])      # convert response to float
+        '''God save the magnet.'''
+
 
     def write(self, command):
         '''write data to BH-15, many lines can be accepted as an argument. Useful for pre-setting'''

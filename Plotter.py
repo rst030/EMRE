@@ -76,6 +76,7 @@ class Plotter:
     def add_live_plot(self,bstart,bstop): # adding axes for the live plot. plot live data on this axes
         if self.liveaxis == 0:
             self.liveaxis = self.subplot.twinx()
+        self.clear_live_plot() # when add new live plot old plot goes away
         self.liveaxis.set_xlim(bstart, bstop)
         self.update()
 
@@ -142,17 +143,23 @@ class Plotter:
 
     def plot_points(self, xs, ys, arg:str):
         self.subplot.plot(xs,ys,arg)
-
-
-
-
-    def set_live_xlim(self,xstart,xstop):
-        self.subplot.set_xlim(xstart, xstop)
         self.update()
-        #self.subplot.autoscale(False)
+
+
+
+
+    #def set_live_xlim(self,xstart,xstop):
+    #    self.subplot.set_xlim(xstart, xstop)
+    #    self.update()
+    #    #self.subplot.autoscale(False)
 
     def plot_data(self,xs, ys, arg):
         self.subplot.plot(xs, ys, arg)
+
+    def clear_live_plot(self):
+        self.liveaxis.clear()
+        self.liveline = []
+
 
     def clear_plot(self):
         self.subplot.cla()

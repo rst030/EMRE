@@ -71,6 +71,95 @@ from second run average each point (last point each time)
 wrote save function for spectra in cw_spectrum class.
 making cw spectrum populating as the scan progresses
 
+03/11/20
+saving file
+populate nruns ok
+wtf is with the li_level why is that not saving? ok
+modamp add dimension v
+lets populate npoints v
+
+ultimate goal:
+	do electrochemical scan
+next step:
+	write def echem_scan and mostly copy it from cw_scan
+	
+04/11/20
+echem scan. сделаем затычку сначала done
+now when press run button you run echem experiment instead of simple cw.
+
+I collect data.
+It does not matter how I plot it,
+main idea is to collect data.
+
+the echem_scan method works with text.
+write cw scan method.
+What should it do?
+It should give a scan back.
+new_cw_scan = cw_scan(scan_setting,- b0 и так далее)
+cw_scan it is an object.
+it is created in its constructor.
+you need to pass it parameters 
+and you need to pass it a device communicator.
+There we go.
+
+cw_scan gives a scan that is bvalues[] and signal[]
+let us call it single_cw_scan()
+
+def single_cw_scan(parameters: scan_setting, communicator: communicator)
+	bvalues = []
+	signal = []
+	
+	bvalues_to_feed = scan_setting.b0s
+	
+	def __init__(self):
+		for Bvalue_to_feed in bvalues_to_feed:
+			communicator.set_magnetic_field(Bvalue_to_feed)
+			magnetic_field_value = communicator.get_magnetic_field()
+			signal_value = communicator.get_signal()
+			
+			bvalues.append(magnetic_field_value)
+			signal.append(signal_value)
+			sleep if you need to. You probably need to!
+			
+		# at the end of this for, you populate bvalues and signal
+			
+			
+written set_field method in the bh-15 file. Dont confuse it with set_center_field
+
+now we need to wait after setting the magnetic field.
+lets make it a field in the setup_scan.
+delay = time constant of lia * (conv_time + 1) - addigned in setup_scan.set_scan()
+ 
+lets take delay from the setup_scan object and wait for this exact time
+			
+ok.
+now lets record data from the lock-in amplifier.
+
+for time being append B0s to signal
+		
+playing with plotting, it should not be so hard
+i can plot points in the plot, ok
+but there are too many points
+each line should be a line instead.
+
+maybe wiser would be to add elements to lines in the plots...
+it plots weongly
+
+whats wrong
+
+it does not delete scan after it has been plotted...
+
+now it can.
+it plots right.
+it does electrochemical scan and plots the line right.
+
+now we want to accumulate each scan somewhere
+lets make a list of scans.
+
+lets add potential as a field to single_cw_scan
+
+
+plotting averaged. continue at line 590 in main gui
 
 
 
