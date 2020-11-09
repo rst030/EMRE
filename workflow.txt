@@ -162,4 +162,20 @@ lets add potential as a field to single_cw_scan
 plotting averaged. continue at line 590 in main gui
 
 
+09/11/2020 
+I am damn sure I have modified this file after 4th of November. 
+Now we can talk to the potentiostat.
+It can set voltage and hopefully beep.
+Lets test it.
+
+In the main_gui class lets go to the echem_scan
+and each time we set the new potential we would beep.
+echem_scan() is the guy we need.
+it beeps :3333333333333333333333333333333333333333333333333333
+I play wierd tunes on it
+Ok it seems to work.
+
+Now save the spectra in the appropriate formats.
+
+
 

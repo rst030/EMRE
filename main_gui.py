@@ -317,7 +317,9 @@ class main_gui:
         '''connect to spectrometer, that is create a communicator and try creating all devices in it'''
         print('connecting to spectrometer...')
 
-        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
+        self.spectrometer_communicator = communication.new_communicator('')  # create a communicator with pyvisa-py
+        #TODO: UNCOMMENT THIS ON LYRA:
+#        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
         # backend. This is a global field of the main_gui class.
         # now I dont want to always write self.spectrometer_communicator, I will just write sp_comm
         sp_comm = self.spectrometer_communicator
@@ -412,7 +414,7 @@ class main_gui:
 
         return 1  # default return value is 1. anything goes wrong and changes it to -1, that will be seen.
 
-    def unload_parameters_from_hardware(self):
+    def unload_parameters_from_hardware(self): # make it solve most of the problems.
         print("unload parameters from hardware. You can't run experiment now.")
         print("just stop modulation coils by now")
         sp_com = self.spectrometer_communicator
@@ -580,7 +582,11 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
     print('echem experiment:')
     for pot in echem_potentials:
-        print(f' ______________________________________________________________ this will set new potential {pot} mV P')
+        sp_com.pstat.play_tune() # 460 Hz for 1s. LETSDOEIT!
+        sp_com.pstat.set_voltage(voltage_in_volts=pot/1000)
+        sp_com.pstat.output_on() # включили выход потенциостата, он - ебашит.
+        print(f' ______________________________________________________________ this will set new potential {pot} mV. I also beep.  P')
+
         for _ in range(go_high_ncycles):
             print(f'   CW running cw scan')
 
@@ -592,6 +598,8 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
 
         print(f' ______________________________________________________________ this will set zero potential {0} mV 0')
+        sp_com.pstat.set_voltage(voltage_in_volts = 0)  # Двойная зашита от пыли и грязи.
+        sp_com.pstat.output_off()  # выключили выход потенциостата, он - не ебашит.
         for _ in range(stay_low_ncycles):
             print(f'   CW running cw scan')
 

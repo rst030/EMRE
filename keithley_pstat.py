@@ -2,30 +2,35 @@
 written by Ilia Kulikov on 27/10/20
 ilia.kulikov@fu-berlin.de'''
 
-import visa
+import pyvisa as visa
 
-class bh_15 (object):
+class pstat (object):
     model = '2450'                   # default model is 2450 that is the pstat at Lyra
     address = 'GPIB0::18::INSTR'       # and this is its GPIB address
+    usb_address = 'USB0::0x05E6::0x2450::04431893::INSTR' # this is its usb_address
     device = 0                        # pyvisa device that is populated with the constructor
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
 
     def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
-        '''create an instance of the BH-15 field controller object'''
+        '''create an instance of the pstat object''' # создать объект потенциостата.
         self.rm = rm
         self.connect(model)
+        self.write('*RST') # ресетнем ка мы его на всякий случай
+        self.write('*IDN?') # и спросим, как его зовут
+        self.play_tune()
+        print('Potentiostat: '+self.read())
 
-    def write(self, lines):
+
+    def write(self, command):
         '''write data to BH-15, many lines can be accepted as an argument. Useful for pre-setting'''
         if not self.fake:
             try:
-                for line in lines:
-                    self.device.write(line)
+                self.device.write(command)
             except:
                 print('write operation to Pstat failed')
         else:
-            print('Pstat: No device. Writing %s to fake Pstat'%lines)
+            print('Pstat: No device. Writing %s to fake Pstat'%command)
 
     def read(self):
         if not self.fake:
@@ -39,11 +44,15 @@ class bh_15 (object):
             self.address = 'GPIB0::18::INSTR'  # pad 8
             try:
                 self.device = self.rm.open_resource(self.address)
-                print('got instrument for Potentiostat: %s'%self.device)
+                print('got GPIB instrument for Potentiostat: %s'%self.device)
             except:
-                print('failed to get Pstat device. Using fake device')
-                self.fake = True
-                self.device = 0
+                try:
+                    self.device = self.rm.open_resource(self.usb_address)
+                    print('got USB instrument for Potentiostat: %s' % self.device)
+                except:
+                    print('failed to get Pstat device. Using fake device')
+                    self.fake = True
+                    self.device = 0
         else:
             print('no support for %s'% model)
 
@@ -51,88 +60,36 @@ class bh_15 (object):
     def beep_tone(self,frequency_in_hz, duration_in_seconds): # fun stuff
         self.write(':SYSTem:BEEPer %.5f, %.5f'%(frequency_in_hz,duration_in_seconds))
 
+    def play_tune(self):
+        for offtune in range(10):
+            for _ in range(1):
+                # happy C goes wild:
+                self.beep_tone(523.251+ 25*offtune, 0.01)
+                self.beep_tone(783.991- 15*offtune, 0.01)
+                self.beep_tone(659.255+ 25*offtune, 0.01)
 
 
+    def set_voltage(self,voltage_in_volts):
+        # ставим напряждение в вольтах на выход пстата и маряем ток. На морде показываем ток. Сам показывается он.
+        self.write(':SENS:FUNC \'CURR\'')
+        self.write(':SENS:CURR:RANG:AUTO ON')
+        self.write('SENS:CURR:UNIT OHM') #change to amps?
+        self.write('SENS:CURR:OCOM ON')
+        self.write('SOUR:FUNC VOLT')
+        self.write('SOUR:VOLT %.5f' %voltage_in_volts) # here we set the voltage
+        self.write('SOUR:VOLT:ILIM 0.1') # limit the current. Idk how much. 100 mA looks safe to me.
+        self.write('COUNT 5') # looks like this is the number of points to measure
+#        self.write('OUTP ON') # here we turn output on
+        #self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
+        #self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
+        #self.write('OUTP OFF') # this we dont need now
 
 
+    def output_on(self): # self explanatory
+        self.write('OUTP ON')  # here we turn output on
 
 
-    def device_clear(self):
-        mnemonic = "SDC"
-        command = mnemonic
-        self.write(command)
-
-    def go_remote(self):
-        mnemonic = "CO"
-        command = mnemonic
-        print('BH-15 going remote')
-        self.write(command)
-
-    def reset(self):
-        mnemonic = "DCL"
-        command = mnemonic
-        self.write(command)
-
-    def curse_BH15(self,command_):
-        '''send command and dont listen to the box'''
-        print('BH-15 curse with %s'%command_)
-        self.write(command_)
-
-    def talk_to_BH15(self, command_): #this returns a value (string or whatever)
-        print('BH-15 talking to with %s' % command_)
-        self.write(command_)
-        response = self.read()
-        print('BH-15 replies with %s' % response)
-        return response
+    def output_off(self): # self explanatory
+        self.write('OUTP OFF')  # here we turn output off
 
 
-
-
-        #--------------------------------------------------------------------------------------------
-        '''---------------------------------------- KEITHLEY COMMANDS -----------------------------------------------'''
-
-        def connect_to_sourcemeter(self):
-            try:
-                self.sourcemeter = self.rm.get_instrument(
-                    'TCPIP0::192.168.1.20::inst0::INSTR')  # Address might change, then change it here also
-                self.sourcemeter.write("*IDN?")
-                response = self.sourcemeter.read()
-                self.sourcemeter.write("smua.reset()")  # when connected, all reset
-                self.sourcemeterstatus = 'con'
-                return 'OK:\n' + response + ',sourcemeter reset.'  # if ok return smu's idn and reset it
-            except:
-                self.sourcemeterstatus = 'dis'
-                return 'failed to connect to Keithley!\n'
-
-        def reset_sourcemeter(self):  # a customized reset method, suitable for organics
-            try:
-                self.sourcemeter.write("smua.reset()")  # reset the source-meter
-                self.sourcemeter.write("smua.source.limiti = 1000e-3")  # limit the current
-                self.sourcemeter.write("smua.source.func = smua.OUTPUT_DCVOLTS")  # output volts
-                self.sourcemeter.write("smua.source.rangev = 20")  # output range 20 V
-                self.sourcemeter.write("smua.source.levelv = 0")  # output value 0 volts
-            except:
-                return ('could not reset sourcemeter. check connection')
-
-        def set_voltage_sourcemeter(self, amplitude_in_volts):
-            self.sourcemeter.write("smua.source.levelv = " + str(
-                amplitude_in_volts))  # output value for voltage is set, keithley understands volts
-            self.sourcemeter.write("smua.source.output =smua.OUTPUT_ON")  # output is on!
-            return 'set voltage ' + str(amplitude_in_volts) + 'V'
-
-        def wait_ms(self, time_in_ms):
-            sleep(float(time_in_ms / 1000))  # sleep method eats seconds
-            return 'waited' + str(time_in_ms) + ' ms'
-
-        def get_current_sourcemeter(self, number_of_averages, delay_in_ms):
-            tempCurrents = []
-            for counter in range(number_of_averages):
-                self.wait_ms(delay_in_ms)
-                self.sourcemeter.write("currenta, voltagea = smua.measure.iv()")  # writing command to read current
-                tempCurrents.append(float(self.sourcemeter.ask("print(currenta)")))  # creating an array of currents
-            current_value = float(sum(tempCurrents)) / len(tempCurrents)  # average value of temporary currents
-            return current_value
-
-        def shutdown_output_sourcemeter(self):
-            self.sourcemeter.write("smua.source.output=smua.OUTPUT_OFF")
-            return 0
