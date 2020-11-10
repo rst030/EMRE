@@ -5,10 +5,10 @@ ilia.kulikov@fu-berlin.de'''
 import pyvisa as visa
 
 class pstat (object):
-    model = '2450'                   # default model is 2450 that is the pstat at Lyra
-    address = 'GPIB0::18::INSTR'       # and this is its GPIB address
+    model = '2450'                    # default model is 2450 that is the pstat at Lyra
+    address = 'GPIB0::18::INSTR'      # and this is its GPIB address
     usb_address = 'USB0::0x05E6::0x2450::04431893::INSTR' # this is its usb_address
-    device = 0                        # pyvisa device that is populated with the constructor
+    device = visa.Resource            # pyvisa device that is populated with the constructor
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
 
@@ -16,9 +16,12 @@ class pstat (object):
         '''create an instance of the pstat object''' # создать объект потенциостата.
         self.rm = rm
         self.connect(model)
-        self.write('*RST') # ресетнем ка мы его на всякий случай
+        self.write('*RST')  # ресетнем ка мы его на всякий случай
         self.write('*IDN?') # и спросим, как его зовут
         self.play_tune()
+        self.write(':DISPlay:SCReen SOURce')
+        self.write(':DISP:CURR:DIG 5') # 5 digits to show on current display
+        self.write(':DISPlay:LIGHt:STATe ON100') # full brightness
         print('Potentiostat: '+self.read())
 
 
@@ -60,6 +63,7 @@ class pstat (object):
     def beep_tone(self,frequency_in_hz, duration_in_seconds): # fun stuff
         self.write(':SYSTem:BEEPer %.5f, %.5f'%(frequency_in_hz,duration_in_seconds))
 
+
     def play_tune(self):
         for offtune in range(10):
             for _ in range(1):
@@ -79,14 +83,14 @@ class pstat (object):
         self.write('SOUR:VOLT %.5f' %voltage_in_volts) # here we set the voltage
         self.write('SOUR:VOLT:ILIM 0.1') # limit the current. Idk how much. 100 mA looks safe to me.
         self.write('COUNT 5') # looks like this is the number of points to measure
-#        self.write('OUTP ON') # here we turn output on
-        #self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
-        #self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
+        #self.write('OUTP ON') # here we turn output on
         #self.write('OUTP OFF') # this we dont need now
 
 
     def output_on(self): # self explanatory
         self.write('OUTP ON')  # here we turn output on
+        self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
+        self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
 
 
     def output_off(self): # self explanatory

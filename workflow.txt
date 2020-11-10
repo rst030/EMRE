@@ -177,5 +177,76 @@ Ok it seems to work.
 
 Now save the spectra in the appropriate formats.
 
+10/11/2020
+I am on lyra.
+I am starting the code.
+I want to run it for two potentials.
+0 and 1000 mV
+
+I can talk to pot.
+formatted output does not work for python 3.5
+nado na morde pokazat u potentiostata eto. pust tok merajet hule emu budet
+
+pochemuto lockin ne stavit sensitivity.
+stavit, suka, 100 uV, i vsio tut!
+gde bug?
+
+bug v kode.
+
+what controls that?
+scan setting.
+setup scan tochnee
+hUi tam, netu tam. prichem suka otpravliaiet CODE=17, govorit po krainei mere. STOPE-
+on pishet SCAL 17
+chto znachit scal 17
+eto ne SCAL a SENS lool
+chtio takoe scal interesno#
+scal bylo na novom SRS 860, u kotorogo display is fancy.
+pohui. ubirai nahui!
+
+snimaem spektry
+n@c60 lezhit mezhdu 3365 i 3390
+
+lets display current field and the current potential
+
+done
+
+plotting averaged data now.
+we have a list of scans.
+We want to plot the averaged value for them.
+
+Lets take one scan.
+Take its bvalues and first plot the first scan only.
+
+I need a class.
+cw_spectrum fits for this!
+
+koro4e
+cw spectrum bolshe ne klass.
+eto budet method.
+kotory budet sozdavat class cw_spectrum()! okak
+
+cw_spectrum has a 'potential' field now.
+
+ok now it is a spectrum that is returned by the method.
+now echem_scan() operates with cw_spectra
+plot_averaged_data now.
+it takes a list[] of cw_spectra. [a b c d e f g ...]
+plot (a.bvalues, a.signal)
+
+
+it plots something but idk if that is averaging or not
+
+saving in cw_spectrum sucks. it doesnt save the actual data!
+
+signal is way too weak!
+nc60 should be higher at 22 db. Why. Am I wrong. How to check. FscII.
+Enough for today.
+
+------- next steps -------
+    check with fscII that you have the right signal.
+    save individual scans.
+    save averaged scans.
+    do both channels, not only R.
 
 

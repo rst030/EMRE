@@ -136,7 +136,7 @@ class lockin (object):
 
     def set_sensitivity(self, code: int):
         '''I could have done it human-friendly, but sensitivity setting is not often in use. Plus not all values are alowed'''
-        self.write('SCAL %d' % code)
+        self.write('SENS %d' % code) # sens, not scal!
 
     def autophase(self):  # set autophase, wait 3TC until the signal is relaxed.
         '''set autophase, wait 3TC until signal is relaxed'''

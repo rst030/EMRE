@@ -7,7 +7,7 @@ import visa
 class bh_15 (object):
     model = 'BH-15'                   # default model is BH-15 that is the field controller at Lyra
     address = 'GPIB0::8::INSTR'       # and this is its GPIB address
-    device = 0                        # pyvisa device that is populated with the constructor
+    device = visa.Resource                        # pyvisa device that is populated with the constructor
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
 
@@ -25,6 +25,7 @@ class bh_15 (object):
         ledstatus = self.talk_to_BH15('LE')             # '''get the led status''' use it later
         B0_measured_str = self.talk_to_BH15('FC')       # measure field
         B0_measured = float(B0_measured_str[3:11])      # convert response to float
+        return B0_measured
         '''God save the magnet.'''
 
 

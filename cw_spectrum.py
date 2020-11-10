@@ -48,6 +48,8 @@ class cw_spectrum:
     # === these are for saving spectrum to a file ===
     savefile = 0 # file to save data
 
+    # === these are for electrochemistry ===
+    potential = 0  # to be populated in the electrochemistry scan.
 
     def __init__(self,filepath):
         ''''create instance of cwepr spectrum with parameters and data.
@@ -60,8 +62,8 @@ class cw_spectrum:
         # replace it by self.fsc2load to get cwe_spectrum from akku2 file (look at file format)
         # or use self.eprload to get cw_spectrum from xEpr files.
 
-        if filepath == '':  # if no file path given, just create a container
-            return None
+        if filepath == '':  # if no file path given, just create a container. Used for creating spectra,
+            return
 
 
         self.file_path = filepath # we will work with the file from here

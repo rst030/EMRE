@@ -14,6 +14,7 @@ import cw_spectrum
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from tkinter import Frame, BOTH, NW, TOP
+import numpy as np
 
 # you can have lines as a result of plot(). lines can ghave visibility 1 or 0. We use it for disabling spectra
 class Plotter:
@@ -36,6 +37,7 @@ class Plotter:
 
     def __init__(self, rootframe: Frame):
 
+        plt.style.use('dark_background')
         self.figure = plt.Figure(figsize=(1,1), dpi=120)
         fig = self.figure
         self.subplot = fig.add_subplot(111)
@@ -82,7 +84,7 @@ class Plotter:
 
     def plot_live_data(self,xs,ys,arg): # plot live data on the live axes.
         self.liveaxis.clear()
-        self.liveline = self.liveaxis.plot(xs,ys,arg, linewidth=0.25)
+        self.liveline = self.liveaxis.plot(xs,ys,arg, linewidth=1)
         self.update()
 
     def add_average_plot(self, bstart, bstop):
@@ -92,10 +94,24 @@ class Plotter:
         self.averaged_axis.set_xlim(bstart, bstop)
         self.update()
 
-    def plot_averaged_data(self,xs,ys,arg):
-        self.averaged_axis.clear()
-        self.averaged_line = self.averaged_axis.plot(xs, ys, arg, linewidth=0.45)
-        self.update()
+    def plot_averaged_data(self, list_of_cw_spectra: [cw_spectrum.cw_spectrum], arg:str):
+        '''it plots in the special averages_axis axis'''
+        if len(list_of_cw_spectra) > 0:
+
+            # If something is in the list:
+            container = list_of_cw_spectra[0]
+            bvalues = np.array(container.bvalues)
+            averaged_signal = np.array(container.signal)*0
+            # lets average now
+
+            for sctrm in list_of_cw_spectra:
+                averaged_signal = averaged_signal + np.array(sctrm.signal)
+
+            averaged_signal = averaged_signal/len(list_of_cw_spectra) # normalization
+
+            self.averaged_axis.clear()
+            self.averaged_line = self.averaged_axis.plot(bvalues, averaged_signal, arg, linewidth=1)
+            self.update()
 
 
     def set_visibility_of_selected_spectrum_compon(self, spectrum: cw_spectrum.cw_spectrum, component: str, show: bool):

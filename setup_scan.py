@@ -40,8 +40,8 @@ class Scan_setup:
     gaussmeter = False  # gaussmeter used?
     date = 0          # date of experiment
     time = 0          # time of experiment
-    bstart = 3200        # start value of magnetic field
-    bstop = 3400         # upper limit of magnetic field
+    bstart = 3365       # start value of magnetic field, N@C60 is in this range
+    bstop = 3396         # upper limit of magnetic field
     bstep = 0.1         # step of magnetic field
 
     modamp = 1        # modulation amplitude. This Must be in gauss!
@@ -49,7 +49,7 @@ class Scan_setup:
 
     modampingauss = True   # for the time being
     modfreq = 100000       # modulation frequency in Hz
-    li_tc = 1e-3           # LIA TC [s]
+    li_tc = 1e-2           # LIA TC [s]
     li_level = 0           # LIA level [V] that is calculated from the reauired modamp that is given in G
     li_phase = 338.0       # LIA phase [deg] 338 deg for 100 kHz and 291 [deg] for 10 kHz default state in gui: auto
 
@@ -76,7 +76,7 @@ class Scan_setup:
     echem_low = 0         # lowest echem potetial
     echem_high = 1000     # highest echem potential
     echem_nsteps = 2      # how many potentials
-    echem_stay_high = 1   # 1 cycle for staying high
+    echem_stay_high = 5   # 1 cycle for staying high
     echem_go_low = 0      # 0 cycles for going low for recovery between potentials
     # ---------------------------------------------
 

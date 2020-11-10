@@ -304,7 +304,7 @@ class main_gui:
         print('just running the echem_scan method')
         #experiment_thread = threading.Thread(target=cw_scan, args= (self.spectrometer_communicator,self.scan_setting,self.plotter))# here starts the cw scan in a separate process! Dont forget to finish it.
         #experiment_thread.start()
-        echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter)
+        echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter, self)
         print('creating another process for plotting')
 
 
@@ -438,6 +438,17 @@ class main_gui:
                 self.params_to_hw_btn.configure(relief=tk.RAISED)  # keep it unpressed
                 self.run_btn.configure(state=tk.DISABLED)
 
+    # decorative fancy useless things that absolutely noone needs
+
+    def show_potential_in_gui(self, pot: float):  # this modifies the label in the gui that shows the applied potential.
+        self.echem_pot_label.configure(text='%.3f' % pot)
+        self.echem_pot_label.update()
+
+    def show_field_in_gui(self, field: float):  # this modifies the label in the gui that shows the applied potential.
+        self.B_set_label.configure(text='%.3f' % field)
+        self.B_set_label.update()
+
+
 
 END = tk.END  # convenient variable for configuring entries
 
@@ -560,15 +571,16 @@ def cw_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, pl
 
     spectrum.save('temp_spectrum.akku2') # сохранили временный спектр. Потом можно спросить там как его называть
 
+import cw_spectrum
 
-def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter):
+def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, gui:main_gui):
     import numpy as np
 
     echem_potentials = np.linspace(start = scan_setting.echem_low, stop = scan_setting.echem_high, num=scan_setting.echem_nsteps)
 
     print('we will go through following potentials:')
     for pot in echem_potentials:
-        print(f'{pot} mV')
+        print(str(pot)+'mV')
 
     stay_low_ncycles = scan_setting.echem_go_low
     go_high_ncycles = scan_setting.echem_stay_high
@@ -582,71 +594,91 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
     print('echem experiment:')
     for pot in echem_potentials:
-        sp_com.pstat.play_tune() # 460 Hz for 1s. LETSDOEIT!
+        #sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
         sp_com.pstat.set_voltage(voltage_in_volts=pot/1000)
         sp_com.pstat.output_on() # включили выход потенциостата, он - ебашит.
-        print(f' ______________________________________________________________ this will set new potential {pot} mV. I also beep.  P')
+        print(' ________________________________________this will set new potential' + str(pot) + 'mV. I also beep.  P')
+        gui.show_potential_in_gui(pot)
 
-        for _ in range(go_high_ncycles):
-            print(f'   CW running cw scan')
+        for scan_cntr in range(go_high_ncycles):
+            print('   CW running cw scan')
 
-            high_scan = SingleCwScan(sp_com,scan_setting,plotter,pot) # record one cw scan
+            high_scan = SingleCwScan(sp_com,scan_setting,plotter,pot,gui) # record one cw scan
             high_scans.append(high_scan)
+            plotter.plot_averaged_data(high_scans,'r-')
+                #this averaged plot is plotted once per scan
 
-            plotter.plot_averaged_data(high_scan.bvalues,high_scan.signal,'r-')
-            #todo: do averaging, plot averaged on the averaged plot...
 
-
-        print(f' ______________________________________________________________ this will set zero potential {0} mV 0')
+        print(' ______________________________________________________________ this will set zero potential {0} mV 0')
         sp_com.pstat.set_voltage(voltage_in_volts = 0)  # Двойная зашита от пыли и грязи.
         sp_com.pstat.output_off()  # выключили выход потенциостата, он - не ебашит.
         for _ in range(stay_low_ncycles):
-            print(f'   CW running cw scan')
+            print('   CW running cw scan')
 
-            low_scan = SingleCwScan(sp_com, scan_setting, plotter, potential=0)  # record one cw scan
+            low_scan = SingleCwScan(sp_com, scan_setting, plotter, 0, gui)  # record one cw scan for zero potential
             low_scans.append(low_scan)
 
 
-class SingleCwScan:
+import numpy as np
+import datetime as dt
+
+def SingleCwScan(sp_com: communication.new_communicator, scan_setting: setup_scan.Scan_setup, plotter: Plotter.Plotter, potential, gui:main_gui):
     '''populate bvalues and signal by measuring the spectrum'''
 
-    bvalues = [] # values of B0, measured. Populated in the constructor.
-    signal = []  # values of signal. Measured. populated in the constructor
-    potential = 0 # electrochemical potential for this scan
+    spectrum = cw_spectrum.cw_spectrum('')  # container. empty filepath === just an empty cw_spectrum
+    spectrum.bvalues = [] # values of B0, measured. Populated in the constructor.
+    spectrum.signal = []  # values of signal. Measured. populated in the constructor
+    spectrum.potential = 0 # electrochemical potential for this scan
 
-    def __init__(self,sp_com: communication.new_communicator, scan_setting: setup_scan.Scan_setup, plotter: Plotter.Plotter, potential):
-        # this creates an instance of the single_cw_scan. Constructor is the main method, it actually runs an experiment
-        import numpy as np
+    def runscan():
+        # this runs a scan. it runs the cw EPR experiment. And returns an instance of cw_spectrum
+
         bstart = scan_setting.bstart # read scan parameters from the scan setting obj that has been constructed before
         bstop = scan_setting.bstop
         bstep = scan_setting.bstep
         bvalues_to_send = np.arange(bstart, bstop, bstep) # these will be sent to the field controller.
         delay = scan_setting.delay
 
-        self.potential = potential
-        print('doing one scan at %.2f mV'%self.potential)
+        spectrum.signal = []  # these are the most important fields of this class.
+        spectrum.bvalues = []
 
+        spectrum.potential = potential
+        print('doing one scan at %.2f mV'%spectrum.potential)
 
         plotter.add_live_plot(bstart,bstop) # rescaling B axis for live plotting and adding live axes if needed
 
-        self.signal = []
-        self.bvalues = []
 
         # go through B0s in bvalues_to_send:
         for B0 in bvalues_to_send:
+            print('SETTING B0')
+            gui.show_field_in_gui(B0) # absolutely excessive useless function yeah. Of course.
             B0_measured_by_FC = sp_com.field_controller.set_field(B0) # set and measure magnetic field
-            self.bvalues.append(B0)#B0_measured_by_FC) #todo: uncomment this for real measured fields
+            #self.bvalues.append(B0)#B0_measured_by_FC) #todo: uncomment this for real measured fields
+            spectrum.bvalues.append(B0_measured_by_FC) # thios is the real data from lyra.
+            print('___________________________________________ %.2f G ______________________________'%B0_measured_by_FC)
             sleep(delay) # is sleep in seconds?
             print('MEASURING SIGNAL')
+
+            # uncomment the fake line for debugging.
             # fake epr line:
-            fc = 3275
-            intens = 50
-            lw = 20
-            self.signal.append(-intens*np.exp(-(B0-fc)*(B0-fc)/(2*lw*lw))*(B0-fc)+np.random.randint(0,50))  # temp!
-            plotter.plot_live_data(self.bvalues, self.signal, 'k-')
+                #fc = 3275
+                #intens = 50
+                #lw = 20
+                #self.signal.append(-intens*np.exp(-(B0-fc)*(B0-fc)/(2*lw*lw))*(B0-fc)+np.random.randint(0,50))  # temp!
+            lia_voltage_in_R_channel = sp_com.lockin.getR()
+            print('___________________________________________ %.2f V _____________________' % lia_voltage_in_R_channel)
+
+            spectrum.signal.append(lia_voltage_in_R_channel)
+            plotter.plot_live_data(spectrum.bvalues, spectrum.signal, 'w-')
+
+        # TODO: also make a file. CW_scan outputs a file(!) call it temp. Rename it later whan the user demands. Or rather call it temp_date
+        # lol easy. Just run spectrum.save!
 
 
 
+    dtm = dt.datetime.now() # time stamp after scan ended.
+    runscan()
+    return spectrum
 
 
 def startgui():
