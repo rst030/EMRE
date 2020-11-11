@@ -299,7 +299,7 @@ class cw_spectrum:
         else:
             f2w.write('%%? 1d 2ch akku\n')
 
-        # make a date time that is today
+        # time was created when experiment started
 
         f2w.write('%%? %s\n' % (str(self.time)))
         f2w.write('%%. %s\n' % self.comment)
@@ -308,26 +308,26 @@ class cw_spectrum:
         f2w.write('%%! bstart %.5f G\n' % self.bstart)
         f2w.write('%%! bstop %.5f G\n' % self.bstop)
         f2w.write('%%! bstep %.5f G\n' % self.bstep)
-        f2w.write('%%! modamp %.e %s\n' % (self.modamp, self.modamp_dim))
-        f2w.write('%%! modfreq %.e Hz\n' % self.modfreq)
-        f2w.write('%%! li_tc %.e s\n' % self.li_tc)
-        f2w.write('%%! li_level %.e V\n' % self.li_level)
+        f2w.write('%%! modamp %.8e %s\n' % (self.modamp, self.modamp_dim))
+        f2w.write('%%! modfreq %.8e Hz\n' % self.modfreq)
+        f2w.write('%%! li_tc %.8e s\n' % self.li_tc)
+        f2w.write('%%! li_level %.8e V\n' % self.li_level)
         f2w.write('%%! li_phase %.2f deg\n' % self.li_phase)
-        f2w.write('%%! li_sens %.e V\n' % self.li_sens)
+        f2w.write('%%! li_sens %.8e V\n' % self.li_sens)
         f2w.write('%%! conv_time %d TC\n' % self.conv_time)
-        f2w.write('%%! mw_freq %.e Hz\n' % self.mwfreq)
+        f2w.write('%%! mw_freq %.8e Hz\n' % self.mwfreq)
         f2w.write('%%! attn %d dB\n' % self.attn)
         f2w.write('%%! temp %.2f K\n' % self.temp)
         f2w.write('%%! li_level %.2f V\n' % self.li_level)
 
         # now populating the values
         for value in self.x_channel:
-            f2w.write("%.e "%value)
+            f2w.write("%.8e "%value)
 
         f2w.write('\n')
 
         for value in self.y_channel:
-            f2w.write("%.e "%value)
+            f2w.write("%.8e "%value)
 
         # writing mw frequency
         # f2w.write(str(self.mwfreq)) # not now
@@ -341,6 +341,7 @@ class cw_spectrum:
 
 
 
+
     #TODO: make this happen and you dont need Matlab anymore ;-)
     def fsc2load(self,fsc2_spectrum_file_path):
         print("loading fsc2 spectrum from file. To be continued")
@@ -351,6 +352,53 @@ class cw_spectrum:
         print("loading bruker xEpr spectrum from file. To be continued")
         print("read bruker xEpr file, lookup Stoll's code!")
         print("initialize the cw_spectrum instance with the fields from this file")
+
+import setup_scan
+def make_spectrum_from_scans(scans: [cw_spectrum], scan_setting: setup_scan.Scan_setup):
+    # majes an averaged spectrum from the list of spectra in the input.
+    container = cw_spectrum('')  # this is to be returned
+
+    if len(scans) > 0:
+
+        # If something is in the list:
+        container = scans[0]
+        averaged_signal_x = np.array(container.x_channel) * 0
+        averaged_signal_y = np.array(container.y_channel) * 0
+        # lets average now
+
+        for sctrm in scans:  # going through the list of cw_spectra
+            averaged_signal_x = averaged_signal_x + np.array(sctrm.x_channel)
+            averaged_signal_y = averaged_signal_y + np.array(sctrm.y_channel)
+
+        averaged_signal_x = averaged_signal_x / len(scans)  # normalization
+        averaged_signal_y = averaged_signal_y / len(scans)  # normalization
+
+        container.x_channel = averaged_signal_x
+        container.y_channel = averaged_signal_y
+
+    # now populating the fields of the spectrum from the scan setting.
+    container.nruns = len(scans)
+    container.npoints = len(container.bvalues)
+    container.bstart = scan_setting.bstart
+    container.bstop = scan_setting.bstop
+    container.bstep = scan_setting.bstep
+    container.modamp = scan_setting.modamp
+    container.modamp_dim = scan_setting.modamp_dim
+    container.modfreq = scan_setting.modfreq
+    container.li_tc = scan_setting.li_tc
+    container.li_level = scan_setting.li_level
+    container.li_phase = scan_setting.li_phase
+    container.li_sens = scan_setting.li_sens
+    container.conv_time = scan_setting.conv_time
+    container.mwfreq = scan_setting.mwfreq  # todo: get the mw frequency.
+    container.attn = scan_setting.attn
+    container.temp = scan_setting.temp
+    container.li_level = scan_setting.li_level
+    container.comment = scan_setting.comment
+
+    return container
+    # return scan 0 with its parameters, and with the averaged channels.
+
 
 
 

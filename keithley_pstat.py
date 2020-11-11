@@ -22,6 +22,8 @@ class pstat (object):
         self.write(':DISPlay:SCReen SOURce')
         self.write(':DISP:CURR:DIG 5') # 5 digits to show on current display
         self.write(':DISPlay:LIGHt:STATe ON100') # full brightness
+        self.write(':SENSe:CURRent:RSENse ON') #for 4 wire measurements.
+
         print('Potentiostat: '+self.read())
 
 
@@ -63,6 +65,8 @@ class pstat (object):
     def beep_tone(self,frequency_in_hz, duration_in_seconds): # fun stuff
         self.write(':SYSTem:BEEPer %.5f, %.5f'%(frequency_in_hz,duration_in_seconds))
 
+    def play_short_beep(self):
+        self.beep_tone(713,0.1)
 
     def play_tune(self):
         for offtune in range(10):

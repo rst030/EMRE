@@ -25,6 +25,7 @@ class bh_15 (object):
         ledstatus = self.talk_to_BH15('LE')             # '''get the led status''' use it later
         B0_measured_str = self.talk_to_BH15('FC')       # measure field
         B0_measured = float(B0_measured_str[3:11])      # convert response to float
+        #todo: if ledstatus shows overload, wait here until it is ok.
         return B0_measured
         '''God save the magnet.'''
 
@@ -91,7 +92,7 @@ class bh_15 (object):
         field = '%.4f'%field_
         mnemonic = "CF"
         command = mnemonic + field
-        print('BH-15 setting field: %s'%command)
+        #print('BH-15 setting field: %s'%command)
         self.write(command)
 
     def reset(self):
@@ -110,21 +111,21 @@ class bh_15 (object):
         mode = str(mode_)
         mnemonic = "MO"
         command = mnemonic + mode
-        print('BH-15 change mode %s' % command)
+        #print('BH-15 change mode %s' % command)
         self.write(command)
 
     def curse_BH15(self,command_):
         '''send command and dont listen to the box'''
-        print('BH-15 curse with %s'%command_)
+        #print('BH-15 curse with %s'%command_)
         self.write(command_)
 
     def talk_to_BH15(self, command_): #this returns a value (string or whatever)
         if (self.fake and command_ == 'FC'):
             return('xxx1000.00')
-        print('BH-15 talking to with %s' % command_)
+        #print('BH-15 talking to with %s' % command_)
         self.write(command_)
         response = self.read()
-        print('BH-15 replies with %s' % response)
+        #print('BH-15 replies with %s' % response)
         return response
 
     def get_measured_field(self):
@@ -136,7 +137,7 @@ class bh_15 (object):
     def get_interlock_lines(self):
         query = "IL"
         self.write(query)
-        print(self.read())
+        #print(self.read())
 
     def unlisten(self):
         query = "UNL"
@@ -147,6 +148,6 @@ class bh_15 (object):
         self.write(cmnd)
 
     def go_local(self):
-        print('BH-15 goes local')
+        #print('BH-15 goes local')
         query = "GTL"
         self.write(query)

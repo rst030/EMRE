@@ -244,9 +244,72 @@ nc60 should be higher at 22 db. Why. Am I wrong. How to check. FscII.
 Enough for today.
 
 ------- next steps -------
+    in potentiostat, :SENSe:CURRent:RSENse ON fpr 4 wire measurements.
     check with fscII that you have the right signal.
     save individual scans.
     save averaged scans.
-    do both channels, not only R.
+    in lockin, do both channels, not only R.
+
+11/11/2020
+
+so, we start with the potentiostat. we want it to be in 4 wire mode.
+fscII give a different spectrum!
+record X and Y, dont record R.
+
+    lets go to lock-in.py and create two methods. getX and getY.
+    there was a mistake. I was reading the Y channel ALL THE TIME!
+    done getX and getY.
+
+    in main_gui get the x and y, not r
+
+    what is wrong with the magnetic field?
+
+    do scaling of the plot
+
+    too many print operations. bh15 speaks too much.
+    disabeled visa log to screen
+
+    the scan is happening too slow
+
+    that seems to work but very slow. Will it make it overnight?
+    Idk. We should try.
+    How about saving files?
+
+    lets save averaged spectra at each high potential and also averaged spectra at 0 potential.
+
+    def make_spectrum_from_scans(high_scans: [cw_spectrum]): in cw_spectrum.py.
+    make a spectrum with averaged scans. then save it.
+
+    parameters are not saved in file. data is saved
+    parameters save from scan setting.
+
+    get mw frequency.
+    measurement delay for each point?
+    i fucked up the mod amp!
+    whyyyy but WHYYY!!!!
+
+    hmm. now when it is in volts, not in millivolts, all seem good. wtf
+
+    plotting is shit. saving is shit!
+    save in %.8e otherwise data is SHIT!
+
+    def set_limits_of_x_averaged_axis(self, low,high): a method in Plotter.
+    Used for scaling the axes so that you can see all that you plotted in this scan.
+
+    in main_gui.py, scale the axes and keep that scale.
+    when you plot the averaged data, just keep the scale the same.
+    I also added offsets for x and y channels ibo hule net. ne vidno je nihrena!
+
+    saving is ok.
+    modamp is ok.
+
+    mw freq needs to be recorded.
+    written agilent_53181a.py.
+    lets get frequency.
+
+    added freq counter to communication.
+    mw frequency is saved in files.
+
+
 
 

@@ -59,14 +59,28 @@ class lockin (object):
 
     def set_voltage(self, voltage_in_volts: float):
         '''sets amplitude in V for sin out'''
-        amplitudeForLockin = voltage_in_volts * 1000  # volts to millivolts conversion
-        self.write('SLVL ' + str(amplitudeForLockin) + ' MV')
+#        amplitudeForLockin = voltage_in_volts * 1000  # volts to millivolts conversion
+        self.write('SLVL ' + str(voltage_in_volts) + 'V')
 
     def getR(self):
+        # OUTP? i Query the value of X (1), Y (2), R (3) or θ (4). Returns ASCII floating point value.
+        self.write('OUTP? 3')  # request for R channel
+        voltage = float(self.read())  # read the lockin response in volts
+        return voltage
+
+    def getX(self):
+        # OUTP? i Query the value of X (1), Y (2), R (3) or θ (4). Returns ASCII floating point value.
+        self.write('OUTP? 1')  # request for R channel
+        voltage = float(self.read())  # read the lockin response in volts
+        return voltage
+
+    def getY(self):
         # self.lockin.write('GAUT DAT3')  # autoscale the R channel
         self.write('OUTP? 2')  # request for R channel
         voltage = float(self.read())  # read the lockin response in volts
         return voltage
+
+
 
     def get_voltage(self, channel: str):
         '''get voltage in channel channel'''

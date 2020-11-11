@@ -13,26 +13,30 @@ from time import sleep #time-dependent business for IV curves and time-constants
 interval = 0.01 # an interval in seconds that is waited whenever a command is sent to the Osilla's X200 SMU.
 # Can be made a little shorter, but Osilla is unpredictable often.
 
-import lock_in # lock in amplifier class.
+import lock_in  # lock in amplifier class.
 import bh_15   # field controller class
-import keithley_pstat # potentiostat keithley model 2450 source meter
+import keithley_pstat  # potentiostat keithley model 2450 source meter
+import agilent_53181a  # frequency counter class.
 
 class new_communicator(object):
     rm = 0 # no resource manager for beginning
     lockin = lock_in.lockin
     field_controller = bh_15.bh_15
+    keithley_pstat = keithley_pstat.pstat
+    frequency_counter = agilent_53181a.agilent_frequency_counter
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
     def __init__(self, backend):
         '''The constructor of the communicator class.'''
-        visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
+        #visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
         self.rm = visa.ResourceManager('%s'%backend) # forget about Windows for a while.
         # populating devices:
         self.lockin = lock_in.lockin(rm = self.rm, model = 810) # creating lia, that easy.
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
         self.pstat = keithley_pstat.pstat(rm = self.rm, model = '2450') # creating pstat. That easy
+        self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
 
 
 class old_communicator (object):

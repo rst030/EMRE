@@ -4,7 +4,7 @@
 
  @author: Ilia Kulikov
 '''
-#===============================================================================#
+# =============================================================================== #
 # TODO: Write this plotter properly! it should be able to plot points, plot lines and plot datasets
 
 import matplotlib
@@ -29,11 +29,19 @@ class Plotter:
     x_lines = [] # list of x_components
     y_lines = [] # list of y_components
 
-    liveaxis = 0 # to be assigned in add_live_plot
-    averaged_axis = 0 # same here
+    liveaxis_x = 0 # to be assigned in add_live_plot x component
+    liveaxis_y = 0 # to be assigned in add_live_plot y component
+
+    averaged_axis_x = 0 # same here
+    averaged_axis_y = 0  # same here
 
     liveline = 0 # live plotting
     averaged_line = 0 # live plotting of averaged data
+
+    OFFSET_FOR_LIVE_DATA_X = 1e-4 # for nice plotting
+    OFFSET_FOR_LIVE_DATA_Y = 2e-4  # for nice plotting
+    OFFSET_FOR_AVERAGED_DATA_X = 3e-4  # offset for x
+    OFFSET_FOR_AVERAGED_DATA_Y = 4e-4  # offset for x
 
     def __init__(self, rootframe: Frame):
 
@@ -74,43 +82,98 @@ class Plotter:
 
         self.update()
 
-
     def add_live_plot(self,bstart,bstop): # adding axes for the live plot. plot live data on this axes
-        if self.liveaxis == 0:
-            self.liveaxis = self.subplot.twinx()
-        self.clear_live_plot() # when add new live plot old plot goes away
-        self.liveaxis.set_xlim(bstart, bstop)
+        if self.liveaxis_x == 0:
+            self.liveaxis_x = self.subplot.twinx()
+        self.clear_live_plot_x() # when add new live plot old plot goes away
+        self.liveaxis_x.set_xlim(bstart, bstop)
+        self.liveaxis_x.autoscale(False)
+        self.liveaxis_x.set_ylim(-1e-2, 1e-2)
+
+
+        if self.liveaxis_y == 0:
+            self.liveaxis_y = self.subplot.twinx()
+        self.clear_live_plot_y()  # when add new live plot old plot goes away
+        self.liveaxis_y.set_xlim(bstart, bstop)
+        self.liveaxis_x.autoscale(False)
+        self.liveaxis_y.set_ylim(-1e-2, 1e-2)
+
         self.update()
 
-    def plot_live_data(self,xs,ys,arg): # plot live data on the live axes.
-        self.liveaxis.clear()
-        self.liveline = self.liveaxis.plot(xs,ys,arg, linewidth=1)
-        self.update()
+    def plot_live_data_x(self,xs,ys,low,high): # plot live data on the live axes.
+        self.liveaxis_x.clear()
+        self.liveline = self.liveaxis_x.plot(xs,ys,'r-', linewidth=0.45)
+        self.liveaxis_x.autoscale(False)
+
+        #self.set_y_limits_of_x_live_axis(low + self.OFFSET_FOR_LIVE_DATA_X, high + self.OFFSET_FOR_LIVE_DATA_X)
+
+        #self.update()
+
+    def plot_live_data_y(self,xs,ys,low,high): # plot live data on the live axes.
+        self.liveaxis_y.clear()
+        self.liveline = self.liveaxis_y.plot(xs,ys,'g-', linewidth=0.45)
+        self.liveaxis_y.autoscale(False)
+        #if high > low:
+        #    self.set_y_limits_of_y_live_axis(low  + self.OFFSET_FOR_LIVE_DATA_Y, high + self.OFFSET_FOR_LIVE_DATA_Y)
+
+        #self.update()
+
 
     def add_average_plot(self, bstart, bstop):
 
-        if self.averaged_axis == 0:
-            self.averaged_axis=self.subplot.twinx()
-        self.averaged_axis.set_xlim(bstart, bstop)
+        if self.averaged_axis_x == 0:
+            self.averaged_axis_x=self.subplot.twinx()
+        self.averaged_axis_x.set_xlim(bstart, bstop)
+
+        if self.averaged_axis_y == 0:
+            self.averaged_axis_y = self.subplot.twinx()
+        self.averaged_axis_y.set_xlim(bstart, bstop)
+
         self.update()
 
-    def plot_averaged_data(self, list_of_cw_spectra: [cw_spectrum.cw_spectrum], arg:str):
-        '''it plots in the special averages_axis axis'''
+
+    def set_y_limits_of_x_averaged_axis(self, low,high):
+        self.averaged_axis_x.set_ylim([low,high])
+
+    def set_y_limits_of_y_averaged_axis(self, low,high):
+        self.averaged_axis_y.set_ylim([low,high])
+
+    def set_y_limits_of_x_live_axis(self, low,high):
+        self.averaged_axis_x.set_ylim([low,high])
+
+    def set_y_limits_of_y_live_axis(self, low,high):
+        self.averaged_axis_y.set_ylim([low,high])
+
+
+
+    def plot_averaged_data(self, list_of_cw_spectra: [cw_spectrum.cw_spectrum]):
+        '''it plots in the special averaged_axis_x and axis_y '''
+
         if len(list_of_cw_spectra) > 0:
 
             # If something is in the list:
             container = list_of_cw_spectra[0]
             bvalues = np.array(container.bvalues)
-            averaged_signal = np.array(container.signal)*0
+            averaged_signal_x = np.array(container.x_channel) * 0
+            averaged_signal_y = np.array(container.y_channel) * 0
             # lets average now
 
-            for sctrm in list_of_cw_spectra:
-                averaged_signal = averaged_signal + np.array(sctrm.signal)
+            for sctrm in list_of_cw_spectra: # going through the list of cw_spectra
+                averaged_signal_x = averaged_signal_x + np.array(sctrm.x_channel)
+                averaged_signal_y = averaged_signal_y + np.array(sctrm.y_channel)
 
-            averaged_signal = averaged_signal/len(list_of_cw_spectra) # normalization
+            averaged_signal_x = averaged_signal_x/len(list_of_cw_spectra) # normalization
+            averaged_signal_y = averaged_signal_y/len(list_of_cw_spectra) # normalization
 
-            self.averaged_axis.clear()
-            self.averaged_line = self.averaged_axis.plot(bvalues, averaged_signal, arg, linewidth=1)
+            self.averaged_axis_x.clear()
+            self.averaged_axis_y.clear()
+
+            self.averaged_line_x = self.averaged_axis_x.plot(bvalues, averaged_signal_x, 'y-', linewidth=0.5)
+            self.averaged_line_y = self.averaged_axis_y.plot(bvalues, averaged_signal_y, 'c-', linewidth=0.5)
+
+            self.set_y_limits_of_x_averaged_axis(min(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X,max(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X)
+            self.set_y_limits_of_y_averaged_axis(min(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y, max(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y)
+
             self.update()
 
 
@@ -172,9 +235,14 @@ class Plotter:
     def plot_data(self,xs, ys, arg):
         self.subplot.plot(xs, ys, arg)
 
-    def clear_live_plot(self):
-        self.liveaxis.clear()
-        self.liveline = []
+    def clear_live_plot_x(self):
+        self.liveaxis_x.clear()
+        self.liveline_x = []
+
+    def clear_live_plot_y(self):
+        self.liveaxis_y.clear()
+
+        self.liveline_y = []
 
 
     def clear_plot(self):
