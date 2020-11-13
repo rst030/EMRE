@@ -72,8 +72,8 @@ class Plotter:
         self.dax.append(ax1)
 
         # plot its x component and add that line to the x_lines list
-        linex = ax1.plot(spectrum.bvalues, spectrum.x_channel, linewidth=1.0, color='navy')
-        liney = ax1.plot(spectrum.bvalues, spectrum.y_channel, linewidth=1.0, color='red')
+        linex = ax1.plot(spectrum.bvalues, spectrum.x_channel, linewidth=1.0, color='cyan')
+        liney = ax1.plot(spectrum.bvalues, spectrum.y_channel, linewidth=1.0, color='yellow')
         linex[0].set_visible(True)
         liney[0].set_visible(True)
 
@@ -199,7 +199,7 @@ class Plotter:
         ax1 = self.dax[spectrum.index]
         ax1.clear()
 
-        linex = ax1.plot(spectrum.bvalues, spectrum.x_channel, linewidth=1.0, color='navy')
+        linex = ax1.plot(spectrum.bvalues, spectrum.x_channel, linewidth=1.0, color='white')
         liney = ax1.plot(spectrum.bvalues, spectrum.y_channel, linewidth=1.0, color='red')
 
         # also refreshing the lines in the plot.

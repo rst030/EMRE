@@ -18,13 +18,28 @@ class pstat (object):
         self.connect(model)
         self.write('*RST')  # ресетнем ка мы его на всякий случай
         self.write('*IDN?') # и спросим, как его зовут
+        response = self.read()
         self.play_tune()
         self.write(':DISPlay:SCReen SOURce')
-        self.write(':DISP:CURR:DIG 5') # 5 digits to show on current display
-        self.write(':DISPlay:LIGHt:STATe ON100') # full brightness
-        self.write(':SENSe:CURRent:RSENse ON') #for 4 wire measurements.
+        self.write(':SENSe:CURRent:RSENse ON')
+        self.write('SENS:FUNC \'CURR\'')
+        self.write('SENS:CURR:RANG:AUTO ON')
+        self.write('SENS:CURR:UNIT AMP') # double check it
+        self.write('SENS:CURR:OCOM ON')
+        self.write('SOUR:FUNC VOLT')
+        self.write('SOUR:VOLT 0')
+        self.write('SOUR:VOLT:ILIM 0.01')
+        self.write('COUNT 100')
 
-        print('Potentiostat: '+self.read())
+
+
+        #self.write(':DISP:CURR:DIG 5') # 5 digits to show on current display
+        #self.write(':DISPlay:LIGHt:STATe ON100') # full brightness
+        #self.write(':SENSe:CURRent:RSENse ON') #for 4 wire measurements.
+        #self.write(':DISPlay:SCReen HOME_LARGe_reading') # show large readings on the display
+        #self.write('CURR:NPLC 0.5') # how quickly meas current 0.5/60 s
+
+        print('Potentiostat: '+response)
 
 
     def write(self, command):
@@ -79,25 +94,62 @@ class pstat (object):
 
     def set_voltage(self,voltage_in_volts):
         # ставим напряждение в вольтах на выход пстата и маряем ток. На морде показываем ток. Сам показывается он.
-        self.write(':SENS:FUNC \'CURR\'')
-        self.write(':SENS:CURR:RANG:AUTO ON')
-        self.write('SENS:CURR:UNIT OHM') #change to amps?
-        self.write('SENS:CURR:OCOM ON')
-        self.write('SOUR:FUNC VOLT')
-        self.write('SOUR:VOLT %.5f' %voltage_in_volts) # here we set the voltage
-        self.write('SOUR:VOLT:ILIM 0.1') # limit the current. Idk how much. 100 mA looks safe to me.
-        self.write('COUNT 5') # looks like this is the number of points to measure
-        #self.write('OUTP ON') # here we turn output on
-        #self.write('OUTP OFF') # this we dont need now
+                    #self.write(':SENS:FUNC \'CURR\'')
+                    #self.write(':SENS:CURR:RANG:AUTO ON')
+                    #self.write('SENS:CURR:UNIT OHM') #change to amps?
+                    #self.write('SENS:CURR:OCOM ON')
+                    #self.write('SOUR:FUNC VOLT')
+                    #self.write('SOUR:VOLT %.5f' %voltage_in_volts) # here we set the voltage
+                    #self.write('SOUR:VOLT:ILIM 0.1') # limit the current. Idk how much. 100 mA looks safe to me.
+                    #self.write('COUNT 5') # looks like this is the number of points to measure
+
+
+
+
+
+        # another way:
+        self.write('SOUR:VOLT %.3f'%voltage_in_volts)
+#        self.write('TRAC:DATA? 1, 5, \"defbuffer1\", SOUR, READ')
+
+
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+        #self.write('')
+
+
+
+
+        #OUTP ON
+        #TRAC:TRIG “defbuffer1”
+        #TRAC:DATA? 1, 5, “defbuffer1”, SOUR, READ
+        #OUTP OFF
+
+
+    def measure_current_show_on_face(self):
+        self.write('TRAC:TRIG \"defbuffer1\"')
 
 
     def output_on(self): # self explanatory
+        self.play_short_beep()  # short beep when pot on
         self.write('OUTP ON')  # here we turn output on
-        self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
-        self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
+        self.write('TRAC:TRIG \"defbuffer1\"')
+        # #self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
+        #self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
+
 
 
     def output_off(self): # self explanatory
+        from time import sleep
         self.write('OUTP OFF')  # here we turn output off
+        self.play_short_beep()  # short beep when pot on
+        sleep(0.25)
+        self.play_short_beep()  # twice
 
 

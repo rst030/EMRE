@@ -84,11 +84,12 @@ class cw_spectrum:
 
         #------ reading date and time of experiment: ------#
 
-        date_time_list = sf.readline().split(" ")
-        date_list = date_time_list[1].split("-")
-        time_list = date_time_list[2].split(":")
-        self.date = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2]))  # set date
-        self.time = datetime.time(int(time_list[0]), int(time_list[1]), int(time_list[2]))  # set time
+        date_time_list = sf.readline()#.split(" ")
+        self.time = date_time_list # just a string
+        #date_list = date_time_list[1].split("-")
+        #time_list = date_time_list[2].split(":")
+        #self.date = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2]))  # set date
+        #self.time = datetime.time(int(time_list[0]), int(time_list[1]), int(time_list[2]))  # set time
 
         # ------ reading magnetic field: ------#
 

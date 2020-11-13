@@ -310,6 +310,36 @@ record X and Y, dont record R.
     added freq counter to communication.
     mw frequency is saved in files.
 
+    13/11/2020
+    we are ready to run the experiment
+    lets take a cw spectrum of a tube.
+    wowowowo lets first make a print of how much is left
+
+
+    damn pstat sets wrong voltage.
+    it is just a 4 wire measurement of current.
+    lets do it. properly.
+
+    potentiostat shit
+    it doesnt let me do electrochemistry#
+    i want 4 wire measurement of current, thats it.
+
+CURR:NPLC 0.5 ??? time for meas current??
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    plotting: add https://pypi.org/project/mpldatacursor/
+    datacursor

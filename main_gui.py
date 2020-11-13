@@ -150,7 +150,8 @@ class main_gui:
         self.TLabel1_4.configure(foreground="#000000")
         self.TLabel1_4.configure(font="-family {Segoe UI} -size 12")
         self.TLabel1_4.configure(relief="flat")
-        self.TLabel1_4.configure(text='''Electrochemical potential''')
+#!!! changed here text in this label
+        self.TLabel1_4.configure(text='''E-chem pot''')
 
         self.echem_pot_label = ttk.Label(self.Frame1)
         self.echem_pot_label.place(relx=0.915, rely=0.105, height=25, width=87)
@@ -307,7 +308,7 @@ class main_gui:
         self.sink_run_button()
         echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter, self)
         self.raise_run_button()
-        print('creating another process for plotting')
+        print('make a separate process for plotting, man')
 
     def sink_run_button(self):
         self.run_btn.configure(relief=tk.SUNKEN)
@@ -447,8 +448,8 @@ class main_gui:
 
     # decorative fancy useless things that absolutely noone needs
 
-    def show_potential_in_gui(self, pot: float):  # this modifies the label in the gui that shows the applied potential.
-        self.echem_pot_label.configure(text='%.3f' % pot)
+    def show_potential_in_gui(self, pot: float, maxpot: float):  # this modifies the label in the gui that shows the applied potential.
+        self.echem_pot_label.configure(text='%.3f/%.3f' % (pot,maxpot))
         self.echem_pot_label.update()
 
     def show_field_in_gui(self, field: float):  # this modifies the label in the gui that shows the applied potential.
@@ -587,6 +588,12 @@ import cw_spectrum
 def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, gui:main_gui):
     import numpy as np
     from datetime import datetime as dt
+
+    ################## lets ask how to save the file #######################
+    from tkinter import filedialog
+    file_path = filedialog.asksaveasfilename()
+    print("saving spectra as %s....." % file_path)
+
     echem_potentials = np.linspace(start = scan_setting.echem_low, stop = scan_setting.echem_high, num=scan_setting.echem_nsteps)
 
     print('we will go through following potentials:')
@@ -603,19 +610,22 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
     #  plotting: averaged plot at the averaged axes.
     plotter.add_average_plot(bstart=scan_setting.bstart, bstop = scan_setting.bstop)
 
-    print('echem experiment:')
+    print('echem experiment running:')
     for pot in echem_potentials:
         #sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
-        sp_com.pstat.play_short_beep()
-        sp_com.pstat.set_voltage(voltage_in_volts=pot/1000)
+        sp_com.pstat.set_voltage(voltage_in_volts=pot/1000) # voltage in volts, not in mV.
         sp_com.pstat.output_on() # включили выход потенциостата, он - ебашит.
-        print(' ________________________________________this will set new potential' + str(pot) + 'mV. I also beep.  P')
-        gui.show_potential_in_gui(pot)
+        print(' _______ potentiostat sets ' + str(pot) + 'mV. And beeps. ++++ P')
+        gui.show_potential_in_gui(pot, max(echem_potentials))
 
         for scan_cntr in range(go_high_ncycles):
-            print('   CW running cw scan')
-            gui.show_nscan_in_gui(scan_cntr)  # absolutely excessive useless function, yeah. Of course.
+            print('====== CW running high scan [ %d of %d ] ==== CW' %(scan_cntr+1, go_high_ncycles))
+            gui.show_nscan_in_gui(scan_cntr+1)  # absolutely excessive useless function, yeah. Of course.
 
+            # also show current on pots face.
+            sp_com.pstat.measure_current_show_on_face()  # easy right? It will take 100 measurements
+
+            # run a cw scan
             high_scan = SingleCwScan(sp_com,scan_setting,plotter,pot,gui) # record one cw scan
             high_scans.append(high_scan)
             plotter.plot_averaged_data(high_scans)
@@ -635,14 +645,15 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
         # getting the MW frequency from agilent counter:
         mwfrq = sp_com.frequency_counter.get_MW_frequency()
         averaged_spectrum_high.mwfreq = mwfrq
-        averaged_spectrum_high.save('HIGH_n%d_%.2fmV'%(go_high_ncycles,pot))
+        averaged_spectrum_high.save(file_path+'_HIGH_n%d_%.2fmV'%(go_high_ncycles,pot))
 
-
-        print(' ______________________________________________________________ this will set zero potential {0} mV 0')
+        pot = 0
+        print(' _______ potentioostat sets ' + str(pot) + 'mV. And beeps. ---- P')
         sp_com.pstat.set_voltage(voltage_in_volts = 0)  # Двойная зашита от пыли и грязи.
+        gui.show_potential_in_gui(pot,max(echem_potentials))
         sp_com.pstat.output_off()  # выключили выход потенциостата, он - не ебашит.
         for _ in range(stay_low_ncycles):
-            print('   CW running cw scan')
+            print('====== CW running high scan [ %d of %d ] ==== CW' %(scan_cntr+1,go_high_ncycles))
 
             low_scan = SingleCwScan(sp_com, scan_setting, plotter, 0, gui)  # record one cw scan for zero potential
             low_scans.append(low_scan)
@@ -652,7 +663,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
     # getting the MW frequency from agilent counter:
     mwfrq = sp_com.frequency_counter.get_MW_frequency()
     averaged_spectrum_low.mwfreq = mwfrq
-    averaged_spectrum_low.save('LOW_n%d' % (stay_low_ncycles*scan_setting.echem_nsteps))
+    averaged_spectrum_low.save(file_path+'_LOW_n%d' % (stay_low_ncycles*scan_setting.echem_nsteps))
 
 
 import numpy as np
