@@ -29,7 +29,7 @@ class pstat (object):
         self.write('SOUR:FUNC VOLT')
         self.write('SOUR:VOLT 0')
         self.write('SOUR:VOLT:ILIM 0.01')
-        self.write('COUNT 100')
+        self.write('COUNT 125') # 250 points of current to measuer
 
 
 
@@ -92,58 +92,51 @@ class pstat (object):
                 self.beep_tone(659.255+ 25*offtune, 0.01)
 
 
-    def set_voltage(self,voltage_in_volts):
+    def set_voltage(self,voltage_in_volts):  # sets voltage and presets the trigger (1 second transient for now)
         # ставим напряждение в вольтах на выход пстата и маряем ток. На морде показываем ток. Сам показывается он.
-                    #self.write(':SENS:FUNC \'CURR\'')
-                    #self.write(':SENS:CURR:RANG:AUTO ON')
-                    #self.write('SENS:CURR:UNIT OHM') #change to amps?
-                    #self.write('SENS:CURR:OCOM ON')
-                    #self.write('SOUR:FUNC VOLT')
-                    #self.write('SOUR:VOLT %.5f' %voltage_in_volts) # here we set the voltage
-                    #self.write('SOUR:VOLT:ILIM 0.1') # limit the current. Idk how much. 100 mA looks safe to me.
-                    #self.write('COUNT 5') # looks like this is the number of points to measure
+        # nope, we just set the measurement and trigger it maually.
 
+        self.configure_transient_trigger(duration_in_seconds=1)  # 1-second transient for beginning.  # todo: make it as long as scan is.
 
+        # Set the transient meas. duration loop for duration_in_seconds s, no delay (167 ns), saving to buf100
+        # :TRIGger:LOAD "DurationLoop"
+        # This command loads a predefined trigger model configuration that makes continuous measurements for a
+        # specified amount of time.
+        # :TRIGger:LOAD "DurationLoop", <duration>, <delay>, "<readingBuffer>"
+        # 167 ns minimal delay between measurement points
 
-
-
-        # another way:
         self.write('SOUR:VOLT %.3f'%voltage_in_volts)
-#        self.write('TRAC:DATA? 1, 5, \"defbuffer1\", SOUR, READ')
 
+        # after this we just need to turn on the output and to fire the trigger right after that
 
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
-        #self.write('')
+    def configure_transient_trigger(self,duration_in_seconds):  # duration_in_seconds s measurements into buf100
+        self.write('TRAC:MAKE \"buf100\", 100')  # create buffer
+        self.write('TRIGger:LOAD \"DurationLoop\", %.2f, 0, \"buf100\"' % duration_in_seconds)  # load trigger model
 
+    def query_current_transient(self):# returns the current readings in a string!
 
+        self.write('TRAC:DATA? 1, 100, \"buf100\", SOUR, READ, REL') # Read the 5 data points, reading, programmed source, and relative time for each point.
+        transients = self.read()
 
-
-        #OUTP ON
-        #TRAC:TRIG “defbuffer1”
-        #TRAC:DATA? 1, 5, “defbuffer1”, SOUR, READ
-        #OUTP OFF
-
-
-    def measure_current_show_on_face(self):
-        self.write('TRAC:TRIG \"defbuffer1\"')
-
+        return transients
 
     def output_on(self): # self explanatory
         self.play_short_beep()  # short beep when pot on
         self.write('OUTP ON')  # here we turn output on
-        self.write('TRAC:TRIG \"defbuffer1\"')
+        self.trigger_current_transient()  # and immediately after, start measuring it. For 1 second as for now
+
         # #self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
         #self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
 
+    def trigger_current_transient(self): # starts current transient measurement.
+        print('... triggrting the measurement of a current transient ...')
+        self.write('INIT') # initiate the readings of current WOUD THIS WORK ???
+        #self.write('*WAI')  # wait until the current measurements are done
 
+        # This sets the
+        # and store the readings in the buf100 reading buffer.
+
+        #self.write('TRAC:TRIG \"defbuffer1\"') # this puts readings on its face.
 
     def output_off(self): # self explanatory
         from time import sleep
@@ -151,5 +144,4 @@ class pstat (object):
         self.play_short_beep()  # short beep when pot on
         sleep(0.25)
         self.play_short_beep()  # twice
-
 

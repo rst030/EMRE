@@ -10,6 +10,11 @@
 import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+
+#import mplcyberpunk # cyberpunk style
+#plt.style.use("cyberpunk")
+#mplcyberpunk.add_glow_effects()
+
 import cw_spectrum
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -111,7 +116,7 @@ class Plotter:
 
     def plot_live_data_y(self,xs,ys,low,high): # plot live data on the live axes.
         self.liveaxis_y.clear()
-        self.liveline = self.liveaxis_y.plot(xs,ys,'g-', linewidth=0.45)
+        self.liveline = self.liveaxis_y.plot(xs,ys,color = 'lime', linewidth=0.45)
         self.liveaxis_y.autoscale(False)
         #if high > low:
         #    self.set_y_limits_of_y_live_axis(low  + self.OFFSET_FOR_LIVE_DATA_Y, high + self.OFFSET_FOR_LIVE_DATA_Y)
@@ -181,7 +186,7 @@ class Plotter:
         # clear the corresponding axes and plot only x component of the spectrum. Stupid but what can I do?!
         #get_current_axis of the spectrum. It is its index.
         linex = self.x_lines[spectrum.index]
-        liney = self.y_lines[spectrum.index] #crooked numbering of lines
+        liney = self.y_lines[spectrum.index]  # crooked numbering of lines
 
         if component == 'x':
             linex[0].set_visible(show)
@@ -237,6 +242,7 @@ class Plotter:
 
     def clear_live_plot_x(self):
         self.liveaxis_x.clear()
+
         self.liveline_x = []
 
     def clear_live_plot_y(self):

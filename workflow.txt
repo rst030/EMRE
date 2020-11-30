@@ -326,15 +326,41 @@ record X and Y, dont record R.
 
 CURR:NPLC 0.5 ??? time for meas current??
 
+    pot works.
+    wtf is wrong with the mpl, why is that SO slow?!
+    plotting everything in one axis now
 
 
 
+16/11/2020
+echem scan going upwards and downwards.
 
 
 
+23/11/2020
+recording currents at each potential point.
+Charging currents.
+We may use them for making a kind of transient CV curve.
+
+
+lets create a file with charging curves and save the data in it.
+
+% structure of file %
+date_time
+potential current time
+1          1e-2    0
+1          2e-2    1
+...
+...
+...
 
 
 
+24/11/20
+    something is wrong with the potentiostat reading. it triggers too often and too much.
+
+30/11/20
+    whats wrong with the time trigger?
 
 
 
