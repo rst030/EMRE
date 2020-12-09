@@ -362,6 +362,10 @@ potential current time
 30/11/20
     whats wrong with the time trigger?
 
+08/12/20
+    recording current transients at each potential. .chg file.
+    potentiostat does not like to trigger...
+
 
 
 

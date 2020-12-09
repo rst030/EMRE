@@ -96,7 +96,9 @@ class pstat (object):
         # ставим напряждение в вольтах на выход пстата и маряем ток. На морде показываем ток. Сам показывается он.
         # nope, we just set the measurement and trigger it maually.
 
-        self.configure_transient_trigger(duration_in_seconds=1)  # 1-second transient for beginning.  # todo: make it as long as scan is.
+        self.write('SOUR:VOLT %.3f'%voltage_in_volts)
+
+
 
         # Set the transient meas. duration loop for duration_in_seconds s, no delay (167 ns), saving to buf100
         # :TRIGger:LOAD "DurationLoop"
@@ -105,17 +107,28 @@ class pstat (object):
         # :TRIGger:LOAD "DurationLoop", <duration>, <delay>, "<readingBuffer>"
         # 167 ns minimal delay between measurement points
 
-        self.write('SOUR:VOLT %.3f'%voltage_in_volts)
+
 
         # after this we just need to turn on the output and to fire the trigger right after that
 
-    def configure_transient_trigger(self,duration_in_seconds):  # duration_in_seconds s measurements into buf100
-        self.write('TRAC:MAKE \"buf100\", 100')  # create buffer
-        self.write('TRIGger:LOAD \"DurationLoop\", %.2f, 0, \"buf100\"' % duration_in_seconds)  # load trigger model
+    def configure_transient_trigger(self,duration_in_seconds, delay_in_seconds):  # duration_in_seconds s measurements into buffer
+
+        self.write(':SENSe:CURRent:NPLCycles 0.5') # to measure faster
+
+        print('setting up trigger model to DurationLoop: %.2f s'%duration_in_seconds)
+        self.write('TRAC:MAKE \"CYKA_BLYAT\", 256')  # create buffer with 2048 points
+        self.write('TRIG:LOAD \"DurationLoop\", %.2f, %.6f, \"CYKA_BLYAT\"' % (duration_in_seconds,delay_in_seconds))  # load trigger model 0.5 us TEMPORARY!
+
+
+    def delete_trace(self):
+        self.write(':TRACe:DELete \"CYKA_BLYAT\"')
+
 
     def query_current_transient(self):# returns the current readings in a string!
+        print('attempting to read 1 values from CYKA_BLYAT butter ++++ P')
+        self.write('TRAC:DATA? 1, 128, \"CYKA_BLYAT\", SOUR, READ, REL') # Read the 5 data points, reading, programmed source, and relative time for each point.
 
-        self.write('TRAC:DATA? 1, 100, \"buf100\", SOUR, READ, REL') # Read the 5 data points, reading, programmed source, and relative time for each point.
+
         transients = self.read()
 
         return transients
@@ -123,17 +136,20 @@ class pstat (object):
     def output_on(self): # self explanatory
         self.play_short_beep()  # short beep when pot on
         self.write('OUTP ON')  # here we turn output on
-        self.trigger_current_transient()  # and immediately after, start measuring it. For 1 second as for now
+    #    self.trigger_current_transient()  # and immediately after, start measuring it. For 1 second as for now
+
+
 
         # #self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
         #self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
 
     def trigger_current_transient(self): # starts current transient measurement.
-        print('... triggrting the measurement of a current transient ...')
+        print('__________ ptriggering the measurement of a current transient NOW! ++++ P')
         self.write('INIT') # initiate the readings of current WOUD THIS WORK ???
-        #self.write('*WAI')  # wait until the current measurements are done
+        self.write('*WAI') # postpone execution of successive commands while this is executed.
+        self.write('OUTP ON')  # keep output on
 
-        # This sets the
+        # This sets the trigger on time loop
         # and store the readings in the buf100 reading buffer.
 
         #self.write('TRAC:TRIG \"defbuffer1\"') # this puts readings on its face.

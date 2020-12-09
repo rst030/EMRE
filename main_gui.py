@@ -591,13 +591,17 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
     ################## lets ask how to save the file #######################
     from tkinter import filedialog
-    file_path = filedialog.asksaveasfilename(initialdir = "/home/ikulikov/Desktop/EMRE_DATA/",title = "Select file to save spectrum",filetypes = (("akku2 files","*.akku2"),("all files","*.*")))
+    file_path = filedialog.asksaveasfilename(initialdir = "/home/ikulikov/Desktop/EMRE_DATA/",title = "Select file to save spectrum")#,filetypes = (("akku2 files","*.akku2"),("all files","*.*")))
     print("saving spectra as %s.akku2" % file_path) #todo save also ch1 and ch2 files! it is important for analysis.
     print("saving potentials and charging currents as %s_charging.chg" % file_path)
     #  file for saving current transients:
     current_transient_file = open('%s_charging.chg' % file_path,'w')  # open the file
-    current_transient_file.write('Potential, V Current, A Time, s\n')
+    current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
     low_scans = []  # list of echem scans with zero potential
+
+    duration_of_current_transient = 10 # s
+    delay_between_pts_in_cur_tr = 1e-6 # s
+    sp_com.pstat.configure_transient_trigger(duration_in_seconds=duration_of_current_transient, delay_in_seconds=delay_between_pts_in_cur_tr)  # 1-second transient for beginning.  # todo: make it as long as scan is.
 
     ################### upwards potential scan ##############################
     echem_potentials = np.linspace(start = scan_setting.echem_low, stop = scan_setting.echem_high, num=scan_setting.echem_nsteps)
@@ -620,7 +624,9 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
     for pot in echem_potentials:
         #sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
         sp_com.pstat.set_voltage(voltage_in_volts=pot/1000) # voltage in volts, not in mV. Set next potential here.
-        sp_com.pstat.output_on() # включили выход потенциостата, он - ебашит. Curr transient begins now.
+        sp_com.pstat.output_on() # включили выход потенциостата, он - ебашит.
+        sp_com.pstat.trigger_current_transient()  # Curr transient begins now.
+
         print(' _______ potentiostat sets ' + str(pot) + 'mV. And beeps. ++++ P')
         gui.show_potential_in_gui(pot, max(echem_potentials))
 
@@ -635,13 +641,15 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
             plotter.plot_averaged_data(high_scans)
             # ------------------ this has taken some time! --------------
 
-            # now we can query the transient from the buffer.
+            # now we can query the transient from the buffer. After the scan is done.
             curr_transient = sp_com.pstat.query_current_transient()
-            print(curr_transient)  # temporarily, just to see if the machine measures really...
+            #print(curr_transient)  # temporarily, just to see if the machine measures really...
 
-            for element in curr_transient:
-                current_transient_file.write(element + ',')
-            current_transient_file.write('\n')
+            # saving curr transient
+            vls = curr_transient.split(',')
+            for i in range(0, round(len(vls)),3):
+                current_transient_file.write(
+                    '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'UP HIGH'))
 
             #plotter.set_y_limits_of_x_averaged_axis(min(),scan_setting.li_sens) # wit and easy
             #plotter.set_y_limits_of_y_averaged_axis(-scan_setting.li_sens, scan_setting.li_sens)  # wit and easy
@@ -663,23 +671,29 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
         pot = 0
         print(' _______ potentioostat sets ' + str(pot) + 'mV. And beeps. ---- P')
-        sp_com.pstat.set_voltage(voltage_in_volts = 0)  # Двойная зашита от пыли и грязи.
-        gui.show_potential_in_gui(pot,max(echem_potentials))
-        sp_com.pstat.output_on()  # Its a trick. Otherwise we cant measure transients at 0 mV
-        for _ in range(stay_low_ncycles):
-            print('====== CW running high scan [ %d of %d ] ==== CW' %(scan_cntr+1,go_high_ncycles))
+        # sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
+        sp_com.pstat.set_voltage(voltage_in_volts=0)  # voltage in volts, not in mV. Set 0V here.
 
+        for _ in range(stay_low_ncycles):
+            print('====== CW running high scan [ %d of %d ] ==== CW' %(_+1,go_high_ncycles))
+
+            sp_com.pstat.output_off()  # включили выход потенциостата, он - ебашит. Pust i nuljom, no ebashit. Curr transient begins now.
+            sp_com.pstat.trigger_current_transient()
+
+            # ------------------   run a cw scan at 0V------------------------
             low_scan = SingleCwScan(sp_com, scan_setting, plotter, 0, gui)  # record one cw scan for zero potential
             low_scans.append(low_scan)
+            # ------------------ this has taken some time! --------------
+
+            # now we can query the transient from the buffer. After the scan is done.
+            curr_transient = sp_com.pstat.query_current_transient()
+            #print(curr_transient)  # temporarily, just to see if the machine measures really...
 
             #### saving the current transient ####
-
-            curr_transient = sp_com.pstat.get_current_transient()
-            measured_charge_currents.append(
-                curr_transient)  # here you already have the meas done! Just read it from the pot.
-            print(measured_charge_currents)  # temporarily, just to see if the machine measures really...
-            for element in curr_transient:
-                current_transient_file.write(element + '\n')
+            vls = curr_transient.split(',')
+            for i in range(0, round(len(vls)),3):
+                current_transient_file.write(
+                    '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'UP LOW'))
 
     ############## downward potential scan ################
     echem_potentials = np.linspace(start = scan_setting.echem_high, stop = scan_setting.echem_low, num=scan_setting.echem_nsteps)
@@ -692,16 +706,14 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
     go_high_ncycles = scan_setting.echem_stay_high
 
 
-
-
     #  plotting: averaged plot at the averaged axes.
     plotter.add_average_plot(bstart=scan_setting.bstart, bstop = scan_setting.bstop)
 
     print('echem experiment running:')
     for pot in echem_potentials:
-        #sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
-        sp_com.pstat.set_voltage(voltage_in_volts=pot/1000) # voltage in volts, not in mV.
-        sp_com.pstat.output_on() # включили выход потенциостата, он - ебашит.
+        # sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
+        sp_com.pstat.set_voltage(voltage_in_volts=pot/1000)  # voltage in volts, not in mV. Set voltage here.
+
         print(' _______ potentiostat sets ' + str(pot) + 'mV. And beeps. ++++ P')
         gui.show_potential_in_gui(pot, max(echem_potentials))
 
@@ -710,20 +722,24 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
             print('====== CW running high scan [ %d of %d ] ==== CW' %(scan_cntr+1, go_high_ncycles))
             gui.show_nscan_in_gui(scan_cntr+1)  # absolutely excessive useless function, yeah. Of course.
 
-            # also show current on pots face.
-            sp_com.pstat.trigger_current_transient()  # easy right? It will take 100 measurements
+            sp_com.pstat.output_on()  # включили выход потенциостата, он - ебашит. Curr transient begins now.
+            sp_com.pstat.trigger_current_transient()
 
-            # run a cw scan
+            # ------------------   run a cw scan ------------------------
             high_scan = SingleCwScan(sp_com,scan_setting,plotter,pot,gui) # record one cw scan
             high_scans.append(high_scan)
             plotter.plot_averaged_data(high_scans)
+            # -----------------  this has taken time  ------------------
 
+            # now we can query the transient from the buffer. After the scan is done we do it.
+            curr_transient = sp_com.pstat.query_current_transient()
+            ##print(curr_transient)  # temporarily, just to see if the machine measures really...
 
-            curr_transient = sp_com.pstat.get_current_transient()
-            measured_charge_currents.append(curr_transient) # here you already have the meas done! Just read it from the pot.
-            print(measured_charge_currents)  # temporarily, just to see if the machine measures really...
-            for element in curr_transient:
-                current_transient_file.write(element + '\n')
+            #### saving the current transient ####
+            vls = curr_transient.split(',')
+            for i in range(0, round(len(vls)),3):
+                current_transient_file.write(
+                    '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'DOWN HIGH'))
 
             #plotter.set_y_limits_of_x_averaged_axis(min(),scan_setting.li_sens) # wit and easy
             #plotter.set_y_limits_of_y_averaged_axis(-scan_setting.li_sens, scan_setting.li_sens)  # wit and easy
@@ -737,43 +753,60 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
         # first make a cw_spectrum from these scans.
 
         averaged_spectrum_high = cw_spectrum.make_spectrum_from_scans(high_scans,scan_setting)
-        averaged_spectrum_high.time = dt.now() # recorded the time.
+        averaged_spectrum_high.time = dt.now()  # recorded the time.
         # getting the MW frequency from agilent counter:
         mwfrq = sp_com.frequency_counter.get_MW_frequency()
         averaged_spectrum_high.mwfreq = mwfrq
+        averaged_spectrum_high.potential = pot
         averaged_spectrum_high.save(file_path+'_HIGH_n%d_%.2fmV_downwards.akku2'%(go_high_ncycles,pot))
 
-        pot = 0
-        print(' _______ potentioostat sets ' + str(pot) + 'mV. And beeps. ---- P')
-        sp_com.pstat.set_voltage(voltage_in_volts = 0)  # Двойная зашита от пыли и грязи. Not really, man.
-        gui.show_potential_in_gui(pot,max(echem_potentials))
-        sp_com.pstat.output_on()  # Its a trick. Otherwise we cant measure transients at 0 mV
-        for _ in range(stay_low_ncycles):
-            print('====== CW running high scan [ %d of %d ] ==== CW' %(scan_cntr+1,go_high_ncycles))
+        pt = 0
+        print(' _______ potentioostat sets ' + str(pt) + 'mV. And beeps. ---- P')
+        # sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
+        sp_com.pstat.set_voltage(0)  # voltage in volts, not in mV. Set voltage here.
 
+        for _ in range(stay_low_ncycles):
+            print('====== CW running low scan [ %d of %d ] ==== CW' %(_+1,stay_low_ncycles))
+
+            sp_com.pstat.output_off()  # включили выход потенциостата, он - NE ебашит. Curr transient begins now.
+            sp_com.pstat.trigger_current_transient()  # Curr transient begins now.
+
+            # -------------- doing cw scan at 0V ----------------
             low_scan = SingleCwScan(sp_com, scan_setting, plotter, 0, gui)  # record one cw scan for zero potential
-            low_scans.append(low_scan) # you always append do low scns, all the way
+            low_scan.potential = pot
+            low_scans.append(low_scan)  # you always append do low scns, all the way
+            # -------------- this has taken time ----------------
+
+            curr_transient = sp_com.pstat.query_current_transient()
+            ##print(curr_transient)  # temporarily, just to see if the machine measures really...
 
             #### saving the current transient ####
+            vls = curr_transient.split(',')
+            for i in range (0,round(len(vls)),3):
+                current_transient_file.write('%.2f, %.6e, %.6e, %.6e, %s\n'%(pot, float(vls[i]),float(vls[i+1]),float(vls[i+2]), 'DOWN LOW'))
 
-            curr_transient = sp_com.pstat.get_current_transient()
-            measured_charge_currents.append(
-                curr_transient)  # here you already have the meas done! Just read it from the pot.
-            print(measured_charge_currents)  # temporarily, just to see if the machine measures really...
-            for element in curr_transient:
-                current_transient_file.write(element + '\n')
 
     averaged_spectrum_low = cw_spectrum.make_spectrum_from_scans(low_scans, scan_setting)
     averaged_spectrum_low.time = dt.now()  # recorded the time.
+    averaged_spectrum_low.potential = 0
 
     # getting the MW frequency from agilent counter:
     mwfrq = sp_com.frequency_counter.get_MW_frequency()
     averaged_spectrum_low.mwfreq = mwfrq
-    averaged_spectrum_low.save(file_path+'_LOW_n%d.akku2' % (stay_low_ncycles*scan_setting.echem_nsteps*2))
+    averaged_spectrum_low.save(file_path+'_TOTAL_LOW_n%d.akku2' % (stay_low_ncycles*scan_setting.echem_nsteps*2))
 
     # closing the current transient file
-    current_transient_file.write(dt.now())
+    current_transient_file.write('\n'+str(dt.now())+'\n')
+    current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
+
+
     current_transient_file.close()
+
+    sp_com.pstat.delete_trace() # next time buffer is free again
+
+    sp_com.pstat.output_off()
+    sp_com.field_controller.set_field(100)
+
 
 
 
