@@ -584,7 +584,7 @@ def cw_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, pl
 
 import cw_spectrum
 
-
+############################ **************************************************** ######################################
 def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, gui:main_gui):
     import numpy as np
     from datetime import datetime as dt
@@ -599,7 +599,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
     current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
     low_scans = []  # list of echem scans with zero potential
 
-    duration_of_current_transient = 10 # s
+    duration_of_current_transient = 100 # s
     delay_between_pts_in_cur_tr = 1e-6 # s
     sp_com.pstat.configure_transient_trigger(duration_in_seconds=duration_of_current_transient, delay_in_seconds=delay_between_pts_in_cur_tr)  # 1-second transient for beginning.  # todo: make it as long as scan is.
 

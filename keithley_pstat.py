@@ -113,10 +113,10 @@ class pstat (object):
 
     def configure_transient_trigger(self,duration_in_seconds, delay_in_seconds):  # duration_in_seconds s measurements into buffer
 
-        self.write(':SENSe:CURRent:NPLCycles 0.5') # to measure faster
+        self.write(':SENSe:CURRent:NPLCycles 10') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
 
         print('setting up trigger model to DurationLoop: %.2f s'%duration_in_seconds)
-        self.write('TRAC:MAKE \"CYKA_BLYAT\", 256')  # create buffer with 2048 points
+        self.write('TRAC:MAKE \"CYKA_BLYAT\", 65536')  # create buffer with 65536 points
         self.write('TRIG:LOAD \"DurationLoop\", %.2f, %.6f, \"CYKA_BLYAT\"' % (duration_in_seconds,delay_in_seconds))  # load trigger model 0.5 us TEMPORARY!
 
 
@@ -126,7 +126,7 @@ class pstat (object):
 
     def query_current_transient(self):# returns the current readings in a string!
         print('attempting to read 1 values from CYKA_BLYAT butter ++++ P')
-        self.write('TRAC:DATA? 1, 128, \"CYKA_BLYAT\", SOUR, READ, REL') # Read the 5 data points, reading, programmed source, and relative time for each point.
+        self.write('TRAC:DATA? 1, 512, \"CYKA_BLYAT\", SOUR, READ, REL') # Read the 5 data points, reading, programmed source, and relative time for each point.
 
 
         transients = self.read()
