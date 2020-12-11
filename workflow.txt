@@ -367,7 +367,8 @@ potential current time
     potentiostat does not like to trigger...
 
 
-
+11/12/20
+    parameter import errors. .2f potential added to comment.
 
 
 
