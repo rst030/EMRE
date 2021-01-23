@@ -654,20 +654,21 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
             # now we can query the transient from the buffer. After the scan is done.
 
-        curr_transient = sp_com.pstat.query_current_transient()                                                         # after scans are done, query the current transient
-        #print(curr_transient)  # temporarily, just to see if the machine measures really...
+        try:
+            curr_transient = sp_com.pstat.query_current_transient()                                                         # after scans are done, query the current transient
+            #print(curr_transient)  # temporarily, just to see if the machine measures really...
+            # saving curr transient                                                                                         # and save it in the file
+            vls = curr_transient.split(',')
+            for i in range(0, len(vls), 3):
+                current_transient_file.write(
+                    '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'UP HIGH'))
 
-        # saving curr transient                                                                                         # and save it in the file
-        vls = curr_transient.split(',')
-        for i in range(0, len(vls), 3):
-            current_transient_file.write(
-                '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'UP HIGH'))
-
-        # closing the current transient file
-        current_transient_file.write('\n'+str(dt.now())+'\n')
-        current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
-        current_transient_file.close()                                                                                  # closing current transient file
-
+            # closing the current transient file
+            current_transient_file.write('\n'+str(dt.now())+'\n')
+            current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
+            current_transient_file.close()                                                                                  # closing current transient file
+        except:
+            print('failed reading current transient...')
             #plotter.set_y_limits_of_x_averaged_axis(min(),scan_setting.li_sens) # wit and easy
             #plotter.set_y_limits_of_y_averaged_axis(-scan_setting.li_sens, scan_setting.li_sens)  # wit and easy
             # by setting limits you can manipulate the displayed data.
@@ -715,7 +716,10 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
 
         # now we can query the transient from the buffer. After the scan is done.
-        curr_transient = sp_com.pstat.query_current_transient()                                                         # quering current transient
+        try:
+            curr_transient = sp_com.pstat.query_current_transient()                                                         # quering current transient
+        except:
+            print('no transient recorded!')
 
         #### saving the current transient ####
         vls = curr_transient.split(',')
@@ -774,18 +778,20 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
             # -----------------  this has taken time  ------------------
 
         # now we can query the transient from the buffer. After the scan is done we do it.
-        curr_transient = sp_com.pstat.query_current_transient()                                                         # quering the transient
+        try:
+            curr_transient = sp_com.pstat.query_current_transient()                                                         # quering the transient
 
-        #### saving the current transient ####
-        vls = curr_transient.split(',')
-        for i in range(0, round(len(vls)),3):                                                                           # saving current transient
-            current_transient_file.write(
-                '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'DOWN HIGH'))
-        # closing the current transient file
-        current_transient_file.write('\n'+str(dt.now())+'\n')
-        current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
-        current_transient_file.close()                                                                                  # closing current transient file
-
+            #### saving the current transient ####
+            vls = curr_transient.split(',')
+            for i in range(0, round(len(vls)),3):                                                                           # saving current transient
+                current_transient_file.write(
+                    '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'DOWN HIGH'))
+            # closing the current transient file
+            current_transient_file.write('\n'+str(dt.now())+'\n')
+            current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
+            current_transient_file.close()                                                                                  # closing current transient file
+        except:
+            print('failed reading current transient !')
             #plotter.set_y_limits_of_x_averaged_axis(min(),scan_setting.li_sens) # wit and easy
             #plotter.set_y_limits_of_y_averaged_axis(-scan_setting.li_sens, scan_setting.li_sens)  # wit and easy
             # by setting limits you can manipulate the displayed data.
@@ -835,18 +841,21 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
             # -------------- this has taken time ----------------
 
         # now we can query the transient from the buffer. After the scan is done we do it.
-        curr_transient = sp_com.pstat.query_current_transient()                                                         # quering the transient
+        try:
+            curr_transient = sp_com.pstat.query_current_transient()                                                         # quering the transient
 
-        #### saving the current transient ####
-        vls = curr_transient.split(',')
-        for i in range (0,round(len(vls)),3):
-            current_transient_file.write('%.2f, %.6e, %.6e, %.6e, %s\n'%(lowpot, float(vls[i]),float(vls[i+1]),float(vls[i+2]), 'DOWN LOW'))
+            #### saving the current transient ####
+            vls = curr_transient.split(',')
+            for i in range (0,round(len(vls)),3):
+                current_transient_file.write('%.2f, %.6e, %.6e, %.6e, %s\n'%(lowpot, float(vls[i]),float(vls[i+1]),float(vls[i+2]), 'DOWN LOW'))
 
-        # closing the current transient file
-        current_transient_file.write('\n'+str(dt.now())+'\n')
-        current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
-        current_transient_file.close()                                                                                  # closing current transient file
+            # closing the current transient file
+            current_transient_file.write('\n'+str(dt.now())+'\n')
+            current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
+            current_transient_file.close()                                                                                  # closing current transient file
 
+        except:
+            print('failed reading current transient..')
 
     averaged_spectrum_low = cw_spectrum.make_spectrum_from_scans(low_scans, scan_setting)
     averaged_spectrum_low.time = dt.now()  # recorded the time.
