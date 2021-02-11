@@ -296,9 +296,9 @@ class cw_spectrum:
         # following the structure of akku2. Fields of class must be populated before writing in file
         # the first line has to be adapted for different machines. Take care in the future.
         if self.twochannels:
-            f2w.write('%%? 1d 2ch akku\n')
+            f2w.write('%? 1d 2ch akku\n')
         else:
-            f2w.write('%%? 1d 2ch akku\n')
+            f2w.write('%? 1d 2ch akku\n') # Oi!
 
         # time was created when experiment started
 

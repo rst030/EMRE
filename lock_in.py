@@ -2,7 +2,7 @@
 Written by Ilia Kulikov on 26/10/20
 ilia.kulikov@fu-berlin.de'''
 
-import visa
+import pyvisa as visa
 
 class lockin (object):
     model = 810                   # default model is 810 that is the lock-in at Lyra

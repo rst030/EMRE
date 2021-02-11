@@ -2,7 +2,7 @@
 written by Ilia Kulikov on 11/11/2020
 ilia.kulikov@fu-berlin.de'''
 
-import visa
+import pyvisa as visa
 
 class agilent_frequency_counter (object):
     model = '53181a'                   # default model is agilent that is the freq cntr at Lyra

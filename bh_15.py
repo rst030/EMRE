@@ -2,7 +2,7 @@
 written by Ilia Kulikov on 26/10/20
 ilia.kulikov@fu-berlin.de'''
 
-import visa
+import pyvisa as visa
 
 class bh_15 (object):
     model = 'BH-15'                   # default model is BH-15 that is the field controller at Lyra

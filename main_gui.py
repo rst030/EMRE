@@ -32,10 +32,10 @@ from time import sleep
 
 
 class main_gui:
-    plotter = Plotter.Plotter # the plotter is a global field of the main gui class. it is accessible easily.
-    scan_setting = setup_scan.Scan_setup() # an instance of the Scan_setup with all its fields and methods. Useful.
+    plotter = Plotter.Plotter  # the plotter is a global field of the main gui class. it is accessible easily.
+    scan_setting = setup_scan.Scan_setup()  # an instance of the Scan_setup with all its fields and methods. Useful.
     window = tk.Tk
-    spectrometer_communicator = communication.new_communicator # there we have all hardware resources.
+    spectrometer_communicator = communication.new_communicator  # there we have all hardware resources.
     # spectrometer_communicator is constructed when the connect to spectrometer button is clicked.
 
     def __init__(self):
@@ -958,4 +958,6 @@ def startgui():
 if __name__ == "__main__":
     #gui_thread = threading.Thread(target = startgui())
     #gui_thread.start()
+    import plotter_m
+    plotter_m.run_test()
     gui = main_gui()
