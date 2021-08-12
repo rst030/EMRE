@@ -105,7 +105,7 @@ class Plotter:
 
         self.update()
 
-    def plot_live_data_x(self,xs,ys,low,high): # plot live data on the live axes.
+    def plot_live_data_x(self,xs,ys): # plot live data on the live axes.
         self.liveaxis_x.clear()
         self.liveline = self.liveaxis_x.plot(xs,ys,'r-', linewidth=0.45)
         self.liveaxis_x.autoscale(False)
@@ -114,7 +114,7 @@ class Plotter:
 
         #self.update()
 
-    def plot_live_data_y(self,xs,ys,low,high): # plot live data on the live axes.
+    def plot_live_data_y(self,xs,ys): # plot live data on the live axes.
         self.liveaxis_y.clear()
         self.liveline = self.liveaxis_y.plot(xs,ys,color = 'lime', linewidth=0.45)
         self.liveaxis_y.autoscale(False)

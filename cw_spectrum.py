@@ -343,8 +343,6 @@ class cw_spectrum:
         f2w.close()
 
 
-
-
     #TODO: make this happen and you dont need Matlab anymore ;-)
     def fsc2load(self,fsc2_spectrum_file_path):
         print("loading fsc2 spectrum from file. To be continued")
@@ -401,33 +399,3 @@ def make_spectrum_from_scans(scans: [cw_spectrum], scan_setting: setup_scan.Scan
 
     return container
     # return scan 0 with its parameters, and with the averaged channels.
-
-
-
-
-
-# file_path = filedialog.askopenfilename()
-# print("opening spectrum at %s"%file_path)
-# my_spectrum = cw_spectrum(file_path)  # create an instance of cw spectrum from file in file_path
-# my_spectrum.correct_for_frequency()
-# my_spectrum.normalize()
-#
-# ###########################
-# #         plotting        #
-# ###########################
-#
-# from matplotlib import pyplot as plt
-# import math
-#
-# fig = plt.figure()
-# ax = fig.add_axes([0.15,0.15,0.75,0.75])
-# ax.plot(my_spectrum.bvalues, my_spectrum.x_channel, linewidth = 1.0)
-# ax.plot(my_spectrum.bvalues, my_spectrum.x_channel-0.2, linewidth = 1.0)
-# ax.plot(my_spectrum.bvalues, my_spectrum.x_channel-0.4, linewidth = 1.0)
-# ax.plot(my_spectrum.bvalues, my_spectrum.x_channel-0.6, linewidth = 1.0)
-# #ax.plot(magnetic_field,baseline)
-# ax.set_title("cwEPR spectrum at 9.4 GHz")
-# ax.set_xlabel("Magnetic field, G")
-# ax.set_ylabel("amplitude, a.u.")
-# plt.show()
-#

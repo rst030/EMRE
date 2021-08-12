@@ -38,14 +38,7 @@ class main_gui:
     spectrometer_communicator = communication.new_communicator  # there we have all hardware resources.
     # spectrometer_communicator is constructed when the connect to spectrometer button is clicked.
 
-    def __init__(self,lowPotential,highPotential,rate,nDegradCycles,scansPerCycle,filePath):
-
-        self.lowPotential = lowPotential
-        self.highPotential = highPotential
-        self.rate = rate
-        self.nDegradCycles = nDegradCycles
-        self.scansPerCycle = scansPerCycle # all abvious
-        self.filePath = filePath # where to save that crap
+    def __init__(self):
 
         top = tk.Tk()
         self.window = top
@@ -272,7 +265,7 @@ class main_gui:
         self.connect_btn.configure(command = self.connect_to_spectrometer)
         self.setup_scan_btn.configure(command = self.make_scan_setting)
         self.params_to_hw_btn.configure(command = self.parameters_to_hardware)
-        self.run_btn.configure(command = self.runDegradationExperiment)
+        self.run_btn.configure(command = self.run_experiment)
         self.run_btn.configure(state='disabled') # by default you cant run experiment. You need to setup params first
 
         top.protocol("WM_DELETE_WINDOW", self.close_main_window)
@@ -326,19 +319,13 @@ class main_gui:
         self.raise_run_button()
         print('Make a separate process for plotting, man. It is time. It is unavoidable. You started this, go ahead and make a good plotting window, for Jesus Christ. For people. For all of us and for all of this.')
 
-    def runDegradationExperiment(self):
-        print('cycling between %.3f V and %.3f V at %.1f mV/s for %d cycles making %d cwEPR scans per cycle'
-              % (self.lowPotential,self.highPotential,self.rate,self.nDegradCycles,self.scansPerCycle))
+# ´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´' YOU ARE HERE '´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´
 
-        for NCYCLE in range(int(self.nDegradCycles)):
-            # take nDegradCycles cv curves
-            fileNameString = self.filePath + 'CV_cycle_' + str(NCYCLE)
-            takeCv(self.spectrometer_communicator, self.lowPotential, self.highPotential,
-                   self.rate,fileNameString)  # todo ask keithley to take a cv and save it
-            # take scansPerCycle epr scans for each curve
-            for NSCAN in range(int(self.scansPerCycle)):
-                fileNameString = self.filePath+'_EPR_cycle_'+str(NCYCLE)+'_scan_'+str(NSCAN)
-                cwScan(self.spectrometer_communicator, self.scan_setting,self.plotter,fileNameString) # one scan, one file
+    def runDegradationExperiment(self,range,rate,ncycles,scansPerCycle):
+        print('cycling between %.3f V and %.3f V at %.1f mV/s for %d cycles making %d cwEPR scans per cycle'
+              %(range[0],range[1],rate,ncycles,scansPerCycle))
+
+
 
 
 
@@ -352,28 +339,20 @@ class main_gui:
         self.window.destroy()
         self.scan_setting.gui.destroy()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def connect_to_spectrometer(self):
         '''connect to spectrometer, that is create a communicator and try creating all devices in it'''
         print('connecting to spectrometer...')
 
         self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
+        #TODO: UNCOMMENT THIS ON LYRA:
+#        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
+        # backend. This is a global field of the main_gui class.
+        # now I dont want to always write self.spectrometer_communicator, I will just write sp_comm
+        # sp_comm = self.spectrometer_communicator
+
+        # lets handshake with the field controller:
+        # fieldcontroller = sp_comm.field_controller # as easy as it sounds
+        # lockin = sp_comm.lockin # our lovely SR810 LIA at lyra. Yeas we will nead the machine files but later.
 
 
     def send_initial_parameters_to_hardware(self):
@@ -503,92 +482,6 @@ class main_gui:
 
 END = tk.END  # convenient variable for configuring entries
 
-
-def cwScan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, filePath):
-    # single scan. save to file.
-    import cw_spectrum
-
-    bstart = scan_setting.bstart
-    bstop = scan_setting.bstop
-    bstep = scan_setting.bstep
-
-    import numpy as np
-    from time import sleep
-
-    B0s = np.arange(bstart, bstop, bstep)
-
-    bvalues = []
-    signalx = [] # x channel of LIA
-    signaly = []
-
-    plotter.clear_plot()
-    plotter.add_average_plot(bstart, bstop)  # adding axes for plotting live data.
-
-    # _______ Спаси и сорхрани ______ saving spectrum as cw_spectrum.cw_spectrum.  _______________________________________
-
-    spectrum = cw_spectrum.cw_spectrum('')  # temp file. we save only R and only akku
-    from datetime import datetime  # this thing gets current time
-    spectrum.time = str(datetime.now())  # get current time, microseconds lol
-    spectrum.comment = scan_setting.comment  # from here you see, we just populate the lines as it was done in akku2
-    spectrum.nruns = scan_setting.nruns
-    spectrum.bstart = scan_setting.bstart
-    spectrum.bstop = scan_setting.bstop
-    spectrum.bstep = scan_setting.bstep
-    spectrum.modamp = scan_setting.modamp
-    spectrum.modamp_dim = scan_setting.modamp_dim
-    spectrum.modfreq = scan_setting.modfreq
-    spectrum.li_tc = scan_setting.li_tc
-    spectrum.li_level = scan_setting.li_level
-    spectrum.li_phase = scan_setting.li_phase
-    spectrum.li_sens = scan_setting.li_sens
-    spectrum.conv_time = scan_setting.conv_time
-    spectrum.mwfreq = scan_setting.mwfreq
-    spectrum.attn = scan_setting.attn
-    spectrum.temp = scan_setting.temp
-    spectrum.bvalues = B0s  # just in case you will want to plot it later.
-
-    # ----------------------------------- cycle on magnetic fields -------------------------------------------------
-    for B0 in B0s:
-
-        sp_com.field_controller.curse_BH15('MO0')  # ''' move to basic field control mode that is mode 0'''
-        sp_com.field_controller.set_center_field(B0)  # ''' set field to current B0'''
-        sp_com.field_controller.curse_BH15('MO5')  # ''' move to field measure mode that is mode 5'''
-        ledstatus = sp_com.field_controller.talk_to_BH15('LE') # '''get the led status'''
-        B0_measured_str = sp_com.field_controller.talk_to_BH15('FC') #'''measure field'''
-        B0_measured = float(B0_measured_str[3:11])
-        '''God save the magnet.'''
-
-        '''lets now talk about the microwave absorption. This is measured with the LIA. Lets talk to the LIA.'''
-        voltage_in_the_x_channel = sp_com.lockin.getX()
-        voltage_in_the_y_channel = sp_com.lockin.getY()
-        '''careful there with sleep'''
-        sleep(1e-3) # 1 ms 'conversion' time for each point!
-        '''our spectrum grows:'''
-        # -------------------------------------- data collection for real devices ----------------------------------
-        bvalues.append(B0_measured)  # B0s for the current scan
-        signalx.append(voltage_in_the_x_channel)  # signal of the current scan
-        signaly.append(voltage_in_the_y_channel)  # signal of the current scan
-
-        # --------------------------------- we collected one point of data -------------------------------------
-
-        # --------------------------------------live plotting ------------------------------------------
-        #plotter.plot_live_data_x(bvalues, signalx)
-        #plotter.plot_live_data_y(bvalues, signaly)
-
-        spectrum.x_channel = signalx
-        spectrum.y_channel = signaly
-
-    plotter.plot_averaged_data([spectrum, spectrum]) # show it to me
-    spectrum.save('%s.akku2'%filePath)  # сохранили спектр.
-
-
-
-def takeCv(sp_com: communication.new_communicator, lowPotential, highPotential,rate,filePath):
-    print('take a cv curve and save it in %s.csv'%filePath)
-    sp_com.pstat.play_reading_beep()
-    sp_com.pstat.take_cv(lowPotential,highPotential,rate,filePath)
-
-
 def cw_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter):
     #---------------------------------------------------- the cw scan happens here -------------------------------------
     """CW SCAN. the scan settings are passed by scan setting instance. That has to be already populated in the set scan procedure."""
@@ -713,10 +606,6 @@ import cw_spectrum
 
 
 ############################ ******************** ELECTROCHEMISTRY WITH EPR ********************* ######################
-
-
-
-
 def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, gui:main_gui, NRUN:int, file_path):
     # this generates a set of spectra and charge-discharge curves
     # NRUN is the current run
@@ -951,14 +840,10 @@ def SingleCwScan(sp_com: communication.new_communicator, scan_setting: setup_sca
         # lol easy. Just run spectrum.save!
 
 
+
     dtm = dt.datetime.now() # time stamp after scan ended.
     runscan()
     return spectrum
-
-
-
-
-
 
 
 def startgui():
@@ -969,24 +854,8 @@ def degradeInConsole():
     # get input of parameters
     # degradation program
 
-    lowPotential = float(input('low pot, V?'))
-    highPotential = float(input('high pot, V?'))
-    rate = float(input('rate, mV/s?'))
-    nDegradCycles = float(input('# cycles?'))
-    scansPerCycle = float(input('# scans per cycle?'))
-    from tkinter import filedialog
-    filePath = filedialog.asksaveasfilename(parent=None, initialdir="/home/ikulikov/Desktop/EMRE_DATA/",
-                                                 title="Filename?")
-    print(
-            "saving spectra as %s.akku2" % filePath)  # todo save also ch1 and ch2 files! it is <important> for the analysis.
-    print(
-            "saving CV curves as %s.csv" % filePath)
-
-    Emre = main_gui(lowPotential,highPotential,rate,nDegradCycles,scansPerCycle,filePath) # only for plotting
-    # there you press all settings then run and it must run the degradation experiment.
-
-
-
+    sleep(1)
+    lowPotential = input('low pot, V?')
     print('you suck')
 
 if __name__ == "__main__":

@@ -165,3 +165,62 @@ class pstat (object):
         sleep(0.25)
         self.play_short_beep()  # twice
 
+    def take_cv(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
+        from time import sleep
+        # ____________________________ recording CV curve
+        i = [0,1,2,3,4,5] # CONTINUE HERE !!! TODO
+        v = [0, 1, 5, 1, 0, -1]
+
+        #lets set voltages with intervals...
+        nstepsup = 100
+        dv = (highPotential-lowPotential)/nstepsup # step in voltages assuming nstepsup steps up and 100 down
+        R = rate / 1000 # in volts per second.
+        dt = dv/R
+        print('pstat:cv: dt=%.2e s'%dt)
+        print('pstat:cv: dv=%.2e V' % dv)
+        print('pstat:cv: R=%.2e V/s' % R)
+
+        setVoltages = []  # to be appended
+        measuredCurrents = [] # to be measured and appended
+        self.output_on()
+        for ctr in range(0,nstepsup,1):
+            voltagetoset = lowPotential+ctr*dv
+            self.set_voltage(voltagetoset)
+            sleep(dt)
+            setVoltages.append(voltagetoset)
+            measuredCurrents.append(-1)
+
+            #todo: measure the current!
+
+        voltagetoset = highPotential
+        self.set_voltage(voltagetoset)
+
+        for ctr in range(0, nstepsup, 1):
+            voltagetoset = highPotential - ctr * dv
+            self.set_voltage(voltagetoset)
+            sleep(dt)
+            setVoltages.append(voltagetoset)
+            measuredCurrents.append(-1)
+
+            # todo: measure the current!
+
+        voltagetoset = lowPotential
+        self.set_voltage(voltagetoset)
+
+        self.output_off()
+
+        # ____________________________ saving CV to csv file
+        savefile = open(filePath+'.csv', 'w')  # open the file
+        f2w = savefile
+        from datetime import datetime  # this thing gets current time
+        time = str(datetime.now())  # get current time, microseconds lol
+        f2w.write('time, %s\n' % (str(time)))
+        f2w.write('low, %.3f, V\n' % float(lowPotential))
+        f2w.write('high, %.3f, V\n' % float(highPotential))
+        f2w.write('rate, %.3f, mV/s\n' % float(rate))
+
+        # now populating the values
+        for idx in range(len(measuredCurrents)):
+            f2w.write("%.8e, %.8e,\n" % (setVoltages[idx],measuredCurrents[idx]))
+
+        f2w.close()
