@@ -33,10 +33,59 @@ class new_communicator(object):
         # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
         self.rm = visa.ResourceManager('%s'%backend) # forget about Windows for a while.
         # populating devices:
-        self.lockin = lock_in.lockin(rm = self.rm, model = 810) # creating lia, that easy.
+        self.lockin = lock_in.lockin(rm = self.rm, model = '810') # creating lia, that easy.
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
         self.pstat = keithley_pstat.pstat(rm = self.rm, model = '2450') # creating pstat. That easy
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class old_communicator (object):

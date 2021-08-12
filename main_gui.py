@@ -302,13 +302,31 @@ class main_gui:
 
 
     def run_echem_experiment(self):
-        print('just running the echem_scan method')
-        #experiment_thread = threading.Thread(target=cw_scan, args= (self.spectrometer_communicator,self.scan_setting,self.plotter))# here starts the cw scan in a separate process! Dont forget to finish it.
-        #experiment_thread.start()
-        self.sink_run_button()
-        echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter, self)
+        # temp: making 64 runs of the same script. To average. To see the degradation:
+        NRUNS = 64
+        from tkinter import filedialog
+        file_path = filedialog.asksaveasfilename(parent=None, initialdir="/home/ikulikov/Desktop/EMRE_DATA/",
+                                                 title="Select file to save spectrum")  # ,filetypes = (("akku2 files","*.akku2"),("all files","*.*")))
+        print(
+            "saving spectra as %s.akku2" % file_path)  # todo save also ch1 and ch2 files! it is important for analysis.
+        print(
+            "saving potentials and charging currents as %s_charging.chg" % file_path)
+
+        for NRUN in range(NRUNS):
+            print(' ------------- echem_scan. for the %d th time ------------- '%NRUN)
+            self.sink_run_button()
+            echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter, self, NRUN, file_path)
         self.raise_run_button()
-        print('make a separate process for plotting, man')
+        print('Make a separate process for plotting, man. It is time. It is unavoidable. You started this, go ahead and make a good plotting window, for Jesus Christ. For people. For all of us and for all of this.')
+
+
+
+    def runDegradationExperiment(self,range,rate,ncycles,scansPerCycle):
+        print('cycling between %.3f V and %.3f V at %.1f mV/s for %d cycles'%(range[0],range[1],rate,ncycles))
+
+
+
+
 
     def sink_run_button(self):
         self.run_btn.configure(relief=tk.SUNKEN)
@@ -316,7 +334,7 @@ class main_gui:
     def raise_run_button(self):
         self.run_btn.configure(relief=tk.RAISED)
 
-    def close_main_window(self): # hell yeah
+    def close_main_window(self):  # hell yeah
         self.window.destroy()
         self.scan_setting.gui.destroy()
 
@@ -324,16 +342,16 @@ class main_gui:
         '''connect to spectrometer, that is create a communicator and try creating all devices in it'''
         print('connecting to spectrometer...')
 
-        self.spectrometer_communicator = communication.new_communicator('')  # create a communicator with pyvisa-py
+        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
         #TODO: UNCOMMENT THIS ON LYRA:
 #        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
         # backend. This is a global field of the main_gui class.
         # now I dont want to always write self.spectrometer_communicator, I will just write sp_comm
-        sp_comm = self.spectrometer_communicator
+        # sp_comm = self.spectrometer_communicator
 
         # lets handshake with the field controller:
-        fieldcontroller = sp_comm.field_controller # as easy as it sounds
-        lockin = sp_comm.lockin # our lovely SR810 LIA at lyra. Yeas we will nead the machine files but later.
+        # fieldcontroller = sp_comm.field_controller # as easy as it sounds
+        # lockin = sp_comm.lockin # our lovely SR810 LIA at lyra. Yeas we will nead the machine files but later.
 
 
     def send_initial_parameters_to_hardware(self):
@@ -584,30 +602,27 @@ def cw_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, pl
 
 import cw_spectrum
 
+
+
 ############################ ******************** ELECTROCHEMISTRY WITH EPR ********************* ######################
-def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, gui:main_gui):
+def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan, plotter: Plotter.Plotter, gui:main_gui, NRUN:int, file_path):
+    # this generates a set of spectra and charge-discharge curves
+    # NRUN is the current run
+
+    #FILE_COUNTER = 0  # a counter for labneling files chronologically
+
     import numpy as np
     from datetime import datetime as dt
-
-    ################## lets ask how to save the file #######################
-    from tkinter import filedialog
-    file_path = filedialog.asksaveasfilename(initialdir = "/home/ikulikov/Desktop/EMRE_DATA/",title = "Select file to save spectrum")#,filetypes = (("akku2 files","*.akku2"),("all files","*.*")))
-    print("saving spectra as %s.akku2" % file_path) #todo save also ch1 and ch2 files! it is important for analysis.
-    print("saving potentials and charging currents as %s_charging.chg" % file_path)
 
 
     low_scans = []  # list of echem scans with zero potential
 
-
-
-
-
                                 ################### upwards potential scan ##############################
 
-    duration_of_current_transient = 50 # s                                                                              # charging transients duration
+    duration_of_current_transient = 30 # s                                                                              # charging transients duration
     delay_between_pts_in_cur_tr = 0.05 # s                                                                              # charging transients point distances (useless number because of NPLC)
+    NPTS_for_current_transient = 128
     sp_com.pstat.configure_transient_trigger(duration_in_seconds=duration_of_current_transient, delay_in_seconds=delay_between_pts_in_cur_tr)  # 1-second transient for beginning.  # todo: make it as long as scan is.
-
 
 
     echem_potentials = np.linspace(start = scan_setting.echem_low, stop = scan_setting.echem_high, num=scan_setting.echem_nsteps)
@@ -631,7 +646,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
         #sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
 
         #  file for saving current transients. new file for each potential! Transients are large:
-        current_transient_file = open('%s_charging_%.2f_upwards.chg' %(file_path,pot), 'w')  # open the file            #  creating a file for the current transient
+        current_transient_file = open('%s_charging_%.2f_upwards_RUN_%d.chg' %(file_path,pot,NRUN), 'w')  # open the file            #  creating a file for the current transient
         current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
 
         sp_com.pstat.set_voltage(voltage_in_volts=pot/1000) # voltage in volts, not in mV. Set next potential here.
@@ -655,7 +670,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
             # now we can query the transient from the buffer. After the scan is done.
 
         try:
-            curr_transient = sp_com.pstat.query_current_transient()                                                         # after scans are done, query the current transient
+            curr_transient = sp_com.pstat.query_current_transient(NPTS=NPTS_for_current_transient)                                                         # after scans are done, query the current transient
             #print(curr_transient)  # temporarily, just to see if the machine measures really...
             # saving curr transient                                                                                         # and save it in the file
             vls = curr_transient.split(',')
@@ -685,7 +700,10 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
         # getting the MW frequency from agilent counter:
         mwfrq = sp_com.frequency_counter.get_MW_frequency()
         averaged_spectrum_high.mwfreq = mwfrq
-        averaged_spectrum_high.save(file_path+'_HIGH_n%d_%.2fmV_upwards.akku2'%(go_high_ncycles,pot))
+
+        # saving the high spectrum:
+
+        averaged_spectrum_high.save(file_path+'_HIGH_n%d_%.2fmV_upwards_RUN_%d.akku2'%(go_high_ncycles,pot,NRUN))
 
                                                 #### discharging direction upwards ###
 
@@ -700,7 +718,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
         sp_com.pstat.set_voltage(voltage_in_volts=lowpot)  # voltage in volts, not in mV. Set 0V here.
 
         #  file for saving current transients. new file for each potential! Transients are large:
-        current_transient_file = open('%s_discharging_from_%.2f_upwards.chg' %(file_path,pot), 'w')                     # creating a file for the current transient
+        current_transient_file = open('%s_discharging_from_%.2f_upwards_RUN_%d.chg' %(file_path,pot,NRUN), 'w')                     # creating a file for the current transient
         current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
 
         sp_com.pstat.output_off()  # включили выход потенциостата, он - ебашит. Pust i nuljom, no ebashit.
@@ -717,7 +735,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
 
         # now we can query the transient from the buffer. After the scan is done.
         try:
-            curr_transient = sp_com.pstat.query_current_transient()                                                         # quering current transient
+            curr_transient = sp_com.pstat.query_current_transient(NPTS=NPTS_for_current_transient)                                                         # quering current transient
         except:
             print('no transient recorded!')
 
@@ -731,131 +749,6 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
         current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
         current_transient_file.close()                                                                                  # closing current transient file
 
-                   #***#                ############## downward potential scan ################            #***#
-
-
-    #duration_of_current_transient = 50 # s                                                                              # charging transients duration
-    #delay_between_pts_in_cur_tr = 0.05 # s                                                                              # charging transients point distances (useless number because of NPLC)
-    #sp_com.pstat.configure_transient_trigger(duration_in_seconds=duration_of_current_transient, delay_in_seconds=delay_between_pts_in_cur_tr)  # 1-second transient for beginning.  # todo: make it as long as scan is.
-
-
-    echem_potentials = np.linspace(start = scan_setting.echem_high, stop = scan_setting.echem_low, num=scan_setting.echem_nsteps)
-
-    print('we will go through following potentials downwards:')
-    for pot in echem_potentials:
-        print(str(pot)+'mV')
-
-    stay_low_ncycles = scan_setting.echem_go_low
-    go_high_ncycles = scan_setting.echem_stay_high
-
-    #  plotting: averaged plot at the averaged axes.
-    #plotter.add_average_plot(bstart=scan_setting.bstart, bstop = scan_setting.bstop)
-
-    print('echem experiment running:')
-    for pot in echem_potentials:
-        # sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
-        sp_com.pstat.set_voltage(voltage_in_volts=pot/1000)  # voltage in volts, not in mV. Set voltage here.
-
-        #  file for saving current transients. new file for each potential! Transients are large:
-        current_transient_file = open('%s_charging_%.2f_downwards.chg' %(file_path,pot), 'w')                           # creating a file for the current transient
-        current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
-
-        print(' _______ potentiostat sets ' + str(pot) + 'mV. And beeps. ++++ P')
-        gui.show_potential_in_gui(pot, max(echem_potentials))
-
-        high_scans = []  # list of electrochemical scans with nonzero potential
-        for scan_cntr in range(go_high_ncycles):
-            print('====== CW running high scan [ %d of %d ] ==== CW' %(scan_cntr+1, go_high_ncycles))
-            gui.show_nscan_in_gui(scan_cntr+1)  # absolutely excessive useless function, yeah. Of course.
-
-            sp_com.pstat.output_on()  # включили выход потенциостата, он - ебашит. Curr transient begins now.
-            sp_com.pstat.trigger_current_transient()                                                                    # Curr transient begins now.
-
-            # ------------------   run a cw scan ------------------------
-            high_scan = SingleCwScan(sp_com,scan_setting,plotter,pot,gui) # record one cw scan
-            high_scans.append(high_scan)
-            plotter.plot_averaged_data(high_scans)
-            # -----------------  this has taken time  ------------------
-
-        # now we can query the transient from the buffer. After the scan is done we do it.
-        try:
-            curr_transient = sp_com.pstat.query_current_transient()                                                         # quering the transient
-
-            #### saving the current transient ####
-            vls = curr_transient.split(',')
-            for i in range(0, round(len(vls)),3):                                                                           # saving current transient
-                current_transient_file.write(
-                    '%.2f, %.6e, %.6e, %.6e, %s\n' % (pot, float(vls[i]), float(vls[i + 1]), float(vls[i + 2]), 'DOWN HIGH'))
-            # closing the current transient file
-            current_transient_file.write('\n'+str(dt.now())+'\n')
-            current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
-            current_transient_file.close()                                                                                  # closing current transient file
-        except:
-            print('failed reading current transient !')
-            #plotter.set_y_limits_of_x_averaged_axis(min(),scan_setting.li_sens) # wit and easy
-            #plotter.set_y_limits_of_y_averaged_axis(-scan_setting.li_sens, scan_setting.li_sens)  # wit and easy
-            # by setting limits you can manipulate the displayed data.
-
-
-            #this averaged plot is plotted once per scan
-
-        # at this point we have done go_high_cycles cw scans at potential pot.
-        # let us save it as TMP_n%d_%.2fmV.akku2
-        # first make a cw_spectrum from these scans.
-
-        averaged_spectrum_high = cw_spectrum.make_spectrum_from_scans(high_scans,scan_setting)
-        averaged_spectrum_high.time = dt.now()  # recorded the time.
-
-        # getting the MW frequency from agilent counter:
-        mwfrq = sp_com.frequency_counter.get_MW_frequency()
-        averaged_spectrum_high.mwfreq = mwfrq
-        averaged_spectrum_high.potential = pot
-        averaged_spectrum_high.save(file_path+'_HIGH_n%d_%.2fmV_downwards.akku2'%(go_high_ncycles,pot))
-
-                                                #### discharging direction upwards ###
-
-        lowpot = 0
-        print(' _______ potentiostat sets ' + str(lowpot) + 'mV. And beeps. ---- P')
-        # sp_com.pstat.play_tune() # scare your colleagues by uncommenting this line
-        sp_com.pstat.set_voltage(lowpot)  # voltage in volts, not in mV. Set voltage here.
-
-        #duration_of_current_transient = 50  # s                                                                              # discharging transients duration
-        #delay_between_pts_in_cur_tr = 0.1  # s                                                                              # discharging transients point distances (useless number because of NPLC)
-        #sp_com.pstat.configure_transient_trigger(duration_in_seconds=duration_of_current_transient,
-        #                                         delay_in_seconds=delay_between_pts_in_cur_tr)  # 1-second transient for beginning.  # todo: make it as long as scan is.
-
-        #  file for saving current transients. new file for each potential! Transients are large:
-        current_transient_file = open('%s_discharging_from_%.2f_downwards.chg' %(file_path, pot), 'w')                  # creating a file for the current transient
-        current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
-
-        sp_com.pstat.output_off()  # включили выход потенциостата, он - NE ебашит. Curr transient begins now.
-        sp_com.pstat.trigger_current_transient()                                                                        # Curr transient begins now.
-
-        for _ in range(stay_low_ncycles):
-            print('====== CW running low scan [ %d of %d ] ==== CW' %(_+1,stay_low_ncycles))
-
-            # -------------- doing cw scan at 0V ----------------
-            low_scan = SingleCwScan(sp_com, scan_setting, plotter, 0, gui)  # record one cw scan for zero potential
-            low_scan.potential = pot
-            low_scans.append(low_scan)  # you always append do low scns, all the way
-            # -------------- this has taken time ----------------
-
-        # now we can query the transient from the buffer. After the scan is done we do it.
-        try:
-            curr_transient = sp_com.pstat.query_current_transient()                                                         # quering the transient
-
-            #### saving the current transient ####
-            vls = curr_transient.split(',')
-            for i in range (0,round(len(vls)),3):
-                current_transient_file.write('%.2f, %.6e, %.6e, %.6e, %s\n'%(lowpot, float(vls[i]),float(vls[i+1]),float(vls[i+2]), 'DOWN LOW'))
-
-            # closing the current transient file
-            current_transient_file.write('\n'+str(dt.now())+'\n')
-            current_transient_file.write('dt = %.3e s, t = %.3e s s\n'%(delay_between_pts_in_cur_tr,duration_of_current_transient))
-            current_transient_file.close()                                                                                  # closing current transient file
-
-        except:
-            print('failed reading current transient..')
 
     averaged_spectrum_low = cw_spectrum.make_spectrum_from_scans(low_scans, scan_setting)
     averaged_spectrum_low.time = dt.now()  # recorded the time.
@@ -864,7 +757,7 @@ def echem_scan(sp_com: communication.new_communicator, scan_setting: setup_scan,
     # getting the MW frequency from agilent counter:
     mwfrq = sp_com.frequency_counter.get_MW_frequency()
     averaged_spectrum_low.mwfreq = mwfrq
-    averaged_spectrum_low.save(file_path+'_TOTAL_LOW_n%d.akku2' % (stay_low_ncycles*scan_setting.echem_nsteps*2))
+    averaged_spectrum_low.save(file_path+'_TOTAL_LOW_n%d_RUN_%d.akku2' % (stay_low_ncycles*scan_setting.echem_nsteps*2,NRUN))
 
     sp_com.pstat.delete_trace() # next time buffer is free again
 
@@ -958,6 +851,6 @@ def startgui():
 if __name__ == "__main__":
     #gui_thread = threading.Thread(target = startgui())
     #gui_thread.start()
-    import plotter_m
-    plotter_m.run_test()
+    #import plotter_m
+    #plotter_m.run_test()
     gui = main_gui()

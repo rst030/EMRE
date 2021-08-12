@@ -167,17 +167,17 @@ class Plotter:
                 averaged_signal_x = averaged_signal_x + np.array(sctrm.x_channel)
                 averaged_signal_y = averaged_signal_y + np.array(sctrm.y_channel)
 
-            averaged_signal_x = averaged_signal_x/len(list_of_cw_spectra) # normalization
-            averaged_signal_y = averaged_signal_y/len(list_of_cw_spectra) # normalization
+            averaged_signal_x = averaged_signal_x/(len(list_of_cw_spectra)+1) # normalization
+            averaged_signal_y = averaged_signal_y/(len(list_of_cw_spectra)+1) # normalization
 
             self.averaged_axis_x.clear()
             self.averaged_axis_y.clear()
 
-            self.averaged_line_x = self.averaged_axis_x.plot(bvalues, averaged_signal_x, 'y-', linewidth=0.5)
-            self.averaged_line_y = self.averaged_axis_y.plot(bvalues, averaged_signal_y, 'c-', linewidth=0.5)
+            self.averaged_line_x = self.averaged_axis_x.plot(bvalues, averaged_signal_x, 'y-', linewidth=1)
+            self.averaged_line_y = self.averaged_axis_y.plot(bvalues, averaged_signal_y, 'c-', linewidth=1)
 
-            self.set_y_limits_of_x_averaged_axis(min(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X,max(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X)
-            self.set_y_limits_of_y_averaged_axis(min(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y, max(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y)
+#            self.set_y_limits_of_x_averaged_axis(min(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X,max(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X)
+#            self.set_y_limits_of_y_averaged_axis(min(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y, max(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y)
 
             self.update()
 

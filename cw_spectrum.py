@@ -2,6 +2,8 @@
 import datetime
 import numpy as np
 
+# copy it from the plotting module, disgraceful!
+
 class cw_spectrum:
     '''cw EPR spectrum recorded on lyra
     and some methods for processing it'''

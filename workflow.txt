@@ -371,6 +371,17 @@ potential current time
     parameter import errors. .2f potential added to comment.
 
 
+28/01/21
+    plotter.plot_averaged_data adds a negative shift to y every time :/
+    fix?
+
+03/02/21
+    added NRUN:int to echem_scan in main_gui.py
+    to run multiple scans
+
+    removed setting the limits in the plotter.plot_averaged_data
+
 
     plotting: add https://pypi.org/project/mpldatacursor/
     datacursor
+
