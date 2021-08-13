@@ -1,7 +1,7 @@
 '''Communication to the Keithley 2450 source-measure unit.
 written by Ilia Kulikov on 27/10/20
 ilia.kulikov@fu-berlin.de'''
-
+import numpy as np
 import pyvisa as visa
 
 class pstat (object):
@@ -29,14 +29,16 @@ class pstat (object):
         self.write('SOUR:FUNC VOLT')
         self.write('SOUR:VOLT 0')
         self.write('SOUR:VOLT:ILIM 0.01')
-        self.write('COUNT 125') # 250 points of current to measuer
+        self.write('COUNT 5') # 5 points of current to measuer
+
+       # self.write('TRAC:MAKE \"CYKA_BLYAT\", 5')  # create buffer with n points
 
 
 
         #self.write(':DISP:CURR:DIG 5') # 5 digits to show on current display
         #self.write(':DISPlay:LIGHt:STATe ON100') # full brightness
-        #self.write(':SENSe:CURRent:RSENse ON') #for 4 wire measurements.
-        #self.write(':DISPlay:SCReen HOME_LARGe_reading') # show large readings on the display
+        self.write(':SENSe:CURRent:RSENse ON') #for 4 wire measurements.
+        self.write(':DISPlay:SCReen HOME_LARGe_reading') # show large readings on the display
         #self.write('CURR:NPLC 0.5') # how quickly meas current 0.5/60 s
 
         print('Potentiostat: '+response)
@@ -165,13 +167,27 @@ class pstat (object):
         sleep(0.25)
         self.play_short_beep()  # twice
 
+    def configureCv(self):
+        self.write(':SENS:FUNC \"CURR\"')
+        self.write(':SENS:RES:RANG:AUTO ON')
+        self.write(':SENSe:CURRent:NPLCycles 0.05')  # change to 0.5 to measure faster.
+        self.write(':OUTP ON')
+
+    def getCvPoint(self,voltage_in_volts):
+        self.write(':COUN 10') # 5 points to record
+        self.write(':SOUR:VOLT %.3f' % voltage_in_volts)
+        self.write(':TRAC:CLEAR')
+        self.write(':MEAS?')
+        self.write(':TRAC:DATA? 2, 9')
+
+        values = np.mean(np.array(self.read().split(',')).astype(float))
+        return values
+
+
     def take_cv(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
         from time import sleep
-        # ____________________________ recording CV curve
-        i = [0,1,2,3,4,5] # CONTINUE HERE !!! TODO
-        v = [0, 1, 5, 1, 0, -1]
+        self.configureCv()
 
-        #lets set voltages with intervals...
         nstepsup = 100
         dv = (highPotential-lowPotential)/nstepsup # step in voltages assuming nstepsup steps up and 100 down
         R = rate / 1000 # in volts per second.
@@ -182,15 +198,16 @@ class pstat (object):
 
         setVoltages = []  # to be appended
         measuredCurrents = [] # to be measured and appended
-        self.output_on()
+
         for ctr in range(0,nstepsup,1):
             voltagetoset = lowPotential+ctr*dv
-            self.set_voltage(voltagetoset)
+            currents = self.getCvPoint(voltage_in_volts=voltagetoset)
             sleep(dt)
             setVoltages.append(voltagetoset)
-            measuredCurrents.append(-1)
-
-            #todo: measure the current!
+            print('cv down, step: %d'%ctr)
+            print('...voltage: %.2e V' % voltagetoset)
+            print('...%.2e A'%currents)
+            measuredCurrents.append(currents)
 
         voltagetoset = highPotential
         self.set_voltage(voltagetoset)
@@ -198,11 +215,13 @@ class pstat (object):
         for ctr in range(0, nstepsup, 1):
             voltagetoset = highPotential - ctr * dv
             self.set_voltage(voltagetoset)
+            currents = self.getCvPoint(voltage_in_volts=voltagetoset)
             sleep(dt)
             setVoltages.append(voltagetoset)
-            measuredCurrents.append(-1)
-
-            # todo: measure the current!
+            print('cv down, step: %d' % ctr)
+            print('...voltage: %.2e V' % voltagetoset)
+            print('...%.2e A' %currents)
+            measuredCurrents.append(currents)
 
         voltagetoset = lowPotential
         self.set_voltage(voltagetoset)

@@ -528,7 +528,7 @@ def cwScan(sp_com: communication.new_communicator, scan_setting: setup_scan, plo
 
     spectrum = cw_spectrum.cw_spectrum('')  # temp file. we save only R and only akku
     from datetime import datetime  # this thing gets current time
-    spectrum.time = str(datetime.now())  # get current time, microseconds lol
+
     spectrum.comment = scan_setting.comment  # from here you see, we just populate the lines as it was done in akku2
     spectrum.nruns = scan_setting.nruns
     spectrum.bstart = scan_setting.bstart
@@ -577,6 +577,10 @@ def cwScan(sp_com: communication.new_communicator, scan_setting: setup_scan, plo
 
         spectrum.x_channel = signalx
         spectrum.y_channel = signaly
+
+    spectrum.time = str(datetime.now())  # get current time, microseconds lol
+    # getting the MW frequency from agilent counter:
+    spectrum.mwfreq = sp_com.frequency_counter.get_MW_frequency()
 
     plotter.plot_averaged_data([spectrum, spectrum]) # show it to me
     spectrum.save('%s.akku2'%filePath)  # сохранили спектр.
