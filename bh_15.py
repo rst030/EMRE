@@ -2,7 +2,19 @@
 written by Ilia Kulikov on 26/10/20
 ilia.kulikov@fu-berlin.de'''
 
+# hardware constants. Values are in Gauss
+
+EOS = '\r'
+BH15_FC_MIN_FIELD      = -50.0
+BH15_FC_MAX_FIELD      = 23000.0
+BH15_FC_MAX_SWEEP_WIDTH= 16000.0
+BH15_FC_MIN_FIELD_STEP = 1e-3
+MIN_SWA        =    0
+CENTER_SWA     =    2048
+MAX_SWA        =    4095
+
 import pyvisa as visa
+from time import sleep
 
 class bh_15 (object):
     model = 'BH-15'                   # default model is BH-15 that is the field controller at Lyra
@@ -10,11 +22,47 @@ class bh_15 (object):
     device = visa.Resource                        # pyvisa device that is populated with the constructor
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
+    header = 'BH-15 Field Controller: ' # header, used for the prompt output.
 
     def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
         '''create an instance of the BH-15 field controller object'''
         self.rm = rm
         self.connect(model)
+
+    def connect(self, model):
+        if 'BH-15' in model:
+            self.address = 'GPIB0::8::INSTR'  # pad 8
+            try:
+                self.device = self.rm.open_resource(self.address, write_termination='\r')
+                self.print('got instrument: %s'%self.device)
+
+                # Switch off service requests. */
+                self.curse_BH15('SR0')
+                # Switch to mode 0, i.e. field-controller mode via internal sweep-address-generator. */
+                self.curse_BH15('MO0')
+                # Set IM0 sweep mode (we don't use it, just to make sure we don't trigger a sweep start inadvertently). */
+                self.curse_BH15('IM0')
+                # The device seems to need a bit of time after being switched to remote mode */
+                sleep(1)
+
+                #TODO: set central field at 3400 G, sweep width to 100 G and sweep address to 0.
+                # sweep through the sweep addresses, get the magnetic field changing.
+
+                #self.curse_BH15('MO5')  # ''' move to mode 5# OR basic field control mode that is mode 0'''
+                #self.curse_BH15('RU')  # and run
+                #self.write('MO5')  # fsdc2 does that on hookup, we may need it, too. This is to go to run mode
+                #self.write('RU')    # run
+                #self.print('run mode')
+                #sleep(5) # the FC seems to need this...
+
+
+
+            except:
+                self.print('failed to get a BH-15 device. Using fake device')
+                self.fake = True
+                self.device = 0
+
+
 
     def set_field(self, magnetic_field_in_gauss: float):
         'sets magnetic field, returns field measured by the field controller'
@@ -24,10 +72,11 @@ class bh_15 (object):
         #self.curse_BH15('MO5')                          # move to field measure mode that is mode 5
         #ledstatus = self.talk_to_BH15('LE')             # '''get the led status''' use it later
         B0_measured_str = self.talk_to_BH15('FC')       # measure field
-        B0_measured = float(B0_measured_str[3:11])      # convert response to float
+        B0_measured = float(B0_measured_str[3:13])      # convert response to float
         #todo: if ledstatus shows overload, wait here until it is ok.
         return B0_measured
-        '''God save the magnet.'''
+
+    '''God save the magnet.'''
 
 
     def write(self, command):
@@ -36,26 +85,20 @@ class bh_15 (object):
             try:
                 self.device.write(command)
             except:
-                print('write operation to BH-15 failed')
+                self.print('write failed: %s'%command)
         else:
-            print('BH-15: No device. Writing %s to fake BH-15'%command)
+            self.print('No device. Writing to fake: %s'%command)
 
     def read(self):
         if not self.fake:
             return self.device.read()
         else:
+            self.print('Fake device! Reading dummy values!')
             return 4000
 
-    def connect(self, model):
-        if 'BH-15' in model:
-            self.address = 'GPIB0::8::INSTR'  # pad 8
-            try:
-                self.device = self.rm.open_resource(self.address, write_termination='\r')
-                print('got instrument for BH-15: %s'%self.device)
-            except:
-                print('failed to get a BH-15 device. Using fake device')
-                self.fake = True
-                self.device = 0
+    def print(self, s:str): # adds a header to string and prints it to prompt
+        print(self.header+s)
+
 
     def device_clear(self):
         mnemonic = "SDC"
@@ -65,26 +108,26 @@ class bh_15 (object):
     def get_led_status(self):
         '''get a sting with LED statuses on the front panel of BH-15. Identify states.'''
         try:
-            print('BH-15 quering LED status')
+            self.print('quering LED status')
             self.write('LE')
             response = self.read()
-            print('BH-15: %s'%response)
+            self.print(response)
             if ('1' in str(response)):
-                print('overload')
+                self.print('overload')
             if ('2' in str(response)):
-                print('thermostat')
+                self.print('thermostat')
             if ('3' in str(response)):
-                print('ext. sweep')
+                self.print('ext. sweep')
             if ('4' in str(response)):
-                print('remote')
+                self.print('remote')
 
         except:
-            print('BH-15 LE query failed')
+            self.print('LE query failed')
 
     def go_remote(self):
         mnemonic = "CO"
         command = mnemonic
-        print('BH-15 going remote')
+        self.print('going remote')
         self.write(command)
 
     def set_center_field(self,field_):
@@ -92,7 +135,7 @@ class bh_15 (object):
         field = '%.4f'%field_
         mnemonic = "CF"
         command = mnemonic + field
-        #print('BH-15 setting field: %s'%command)
+        self.print(command) # comment out for performance!
         self.write(command)
 
     def reset(self):

@@ -40,16 +40,16 @@ class Scan_setup:
     gaussmeter = False  # gaussmeter used?
     date = 0          # date of experiment
     time = 0          # time of experiment
-    bstart = 3365       # start value of magnetic field, N@C60 is in this range
-    bstop = 3396         # upper limit of magnetic field
-    bstep = 0.1         # step of magnetic field
+    bstart = 3369.4       # start value of magnetic field, N@C60 is in this range
+    bstop = 3371.5         # upper limit of magnetic field
+    bstep = 0.01         # step of magnetic field
 
-    modamp = 1        # modulation amplitude. This Must be in gauss!
-    modamp_dim = 'V\n'  # V or G
+    modamp = 0.1        # modulation amplitude. This Must be in gauss!
+    modamp_dim = 'G\n'  # V or G
 
     modampingauss = True   # for the time being
     modfreq = 100000       # modulation frequency in Hz
-    li_tc = 1e-2           # LIA TC [s]
+    li_tc = 3e-3           # LIA TC [s]
     li_level = 0           # LIA level [V] that is calculated from the reauired modamp that is given in G
     li_phase = 338.0       # LIA phase [deg] 338 deg for 100 kHz and 291 [deg] for 10 kHz default state in gui: auto
 
@@ -959,13 +959,12 @@ class Scan_setup:
         # modamp in gauss or in volts?
         self.Gauss_Volt_Combobox.configure(state='readonly',values = ["G","V"])
         if 'V' in self.modamp_dim:
-            self.Gauss_Volt_Combobox.current(1)  # for mod in Volts
-            print('modulation set in V')
+            self.Gauss_Volt_Combobox.current(0)  # for mod in Gauss
+            print('modulation set in G')
         else:
-            if 'G' in self.modamp_dim:
-                self.Gauss_Volt_Combobox.current(0)  # for mod in Gauss
-                print('modulation set in G')
-
+            if 'V' in self.modamp_dim:
+                self.Gauss_Volt_Combobox.current(1)  # for mod in Volts
+                print('modulation set in V')
 
 
         # modulation frequency

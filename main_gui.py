@@ -523,6 +523,7 @@ def cwScan(sp_com: communication.new_communicator, scan_setting: setup_scan, plo
 
     plotter.clear_plot()
     plotter.add_average_plot(bstart, bstop)  # adding axes for plotting live data.
+    plotter.add_live_plot(bstart,bstop)
 
     # _______ Спаси и сорхрани ______ saving spectrum as cw_spectrum.cw_spectrum.  _______________________________________
 
@@ -547,33 +548,42 @@ def cwScan(sp_com: communication.new_communicator, scan_setting: setup_scan, plo
     spectrum.temp = scan_setting.temp
     spectrum.bvalues = B0s  # just in case you will want to plot it later.
 
-    # ----------------------------------- cycle on magnetic fields -------------------------------------------------
-    for B0 in B0s:
+    sleep_time = scan_setting.li_tc * scan_setting.conv_time # how long to wait for the next point
 
-        sp_com.field_controller.curse_BH15('MO0')  # ''' move to basic field control mode that is mode 0'''
+    # ----------------------------------- cycle on magnetic fields -------------------------------------------------
+
+    for B0 in B0s:
+        print('new point!')
+
         sp_com.field_controller.set_center_field(B0)  # ''' set field to current B0'''
-        sp_com.field_controller.curse_BH15('MO5')  # ''' move to field measure mode that is mode 5'''
-        ledstatus = sp_com.field_controller.talk_to_BH15('LE') # '''get the led status'''
-        B0_measured_str = sp_com.field_controller.talk_to_BH15('FC') #'''measure field'''
-        B0_measured = float(B0_measured_str[3:11])
+        #sp_com.field_controller.curse_BH15('MO5')  # ''' move to field measure mode that is mode 5'''
+        #ledstatus = sp_com.field_controller.talk_to_BH15('LE') # '''get the led status'''
         '''God save the magnet.'''
 
-        '''lets now talk about the microwave absorption. This is measured with the LIA. Lets talk to the LIA.'''
+        '''careful there with sleep'''
+
+        sleep(sleep_time) # 1 ms 'conversion' time for each point!
+
+        #B0_measured_str = sp_com.field_controller.talk_to_BH15('FC') # measure field. it has to move and we had to wait!
+        #print(B0_measured_str)
+        #B0_measured = float(B0_measured_str[3:13])
+        # here should be the gaussmeter! Field controller lies!
+        '''get signal from LIA.'''
         voltage_in_the_x_channel = sp_com.lockin.getX()
         voltage_in_the_y_channel = sp_com.lockin.getY()
-        '''careful there with sleep'''
-        sleep(1e-3) # 1 ms 'conversion' time for each point!
+
+
         '''our spectrum grows:'''
         # -------------------------------------- data collection for real devices ----------------------------------
-        bvalues.append(B0_measured)  # B0s for the current scan
+        bvalues.append(B0)  # B0s for the current scan
         signalx.append(voltage_in_the_x_channel)  # signal of the current scan
         signaly.append(voltage_in_the_y_channel)  # signal of the current scan
 
         # --------------------------------- we collected one point of data -------------------------------------
 
         # --------------------------------------live plotting ------------------------------------------
-        #plotter.plot_live_data_x(bvalues, signalx)
-        #plotter.plot_live_data_y(bvalues, signaly)
+        plotter.plot_live_data_x(bvalues, signalx)
+        plotter.plot_live_data_y(bvalues, signaly)
 
         spectrum.x_channel = signalx
         spectrum.y_channel = signaly
@@ -988,10 +998,13 @@ def degradeInConsole():
 
     Emre = main_gui(lowPotential,highPotential,rate,nDegradCycles,scansPerCycle,filePath) # only for plotting
     # there you press all settings then run and it must run the degradation experiment.
-
-
-
     print('you suck')
 
+def runOneScan():
+    Emre = main_gui(0, 0.1, 100, 1, 1, '/home/ikulikov/Desktop/EMRE_DATA/tstzz.akku2')  # only for plotting
+
+
+
 if __name__ == "__main__":
-    degradeInConsole()
+    # degradeInConsole() # uncomment for pdits degradation
+    runOneScan()

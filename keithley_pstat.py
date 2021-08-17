@@ -188,7 +188,7 @@ class pstat (object):
         from time import sleep
         self.configureCv()
 
-        nstepsup = 100
+        nstepsup = 10
         dv = (highPotential-lowPotential)/nstepsup # step in voltages assuming nstepsup steps up and 100 down
         R = rate / 1000 # in volts per second.
         dt = dv/R

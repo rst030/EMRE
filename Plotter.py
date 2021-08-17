@@ -106,16 +106,16 @@ class Plotter:
         self.update()
 
     def plot_live_data_x(self,xs,ys): # plot live data on the live axes.
-        self.liveaxis_x.clear()
+        self.liveaxis_x.cla()
         self.liveline = self.liveaxis_x.plot(xs,ys,'r-', linewidth=0.45)
         self.liveaxis_x.autoscale(False)
 
         #self.set_y_limits_of_x_live_axis(low + self.OFFSET_FOR_LIVE_DATA_X, high + self.OFFSET_FOR_LIVE_DATA_X)
 
-        #self.update()
+        self.update()
 
     def plot_live_data_y(self,xs,ys): # plot live data on the live axes.
-        self.liveaxis_y.clear()
+        self.liveaxis_y.cla()
         self.liveline = self.liveaxis_y.plot(xs,ys,color = 'lime', linewidth=0.45)
         self.liveaxis_y.autoscale(False)
         #if high > low:
@@ -170,11 +170,11 @@ class Plotter:
             averaged_signal_x = averaged_signal_x/(len(list_of_cw_spectra)+1) # normalization
             averaged_signal_y = averaged_signal_y/(len(list_of_cw_spectra)+1) # normalization
 
-            self.averaged_axis_x.clear()
-            self.averaged_axis_y.clear()
+            self.averaged_axis_x.cla()
+            self.averaged_axis_y.cla()
 
-            self.averaged_line_x = self.averaged_axis_x.plot(bvalues, averaged_signal_x, 'y-', linewidth=1)
-            self.averaged_line_y = self.averaged_axis_y.plot(bvalues, averaged_signal_y, 'c-', linewidth=1)
+            self.averaged_line_x = self.averaged_axis_x.plot(bvalues, averaged_signal_x, 'y-', linewidth=0.2)
+            self.averaged_line_y = self.averaged_axis_y.plot(bvalues, averaged_signal_y, 'c-', linewidth=0.2)
 
 #            self.set_y_limits_of_x_averaged_axis(min(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X,max(averaged_signal_x)+self.OFFSET_FOR_AVERAGED_DATA_X)
 #            self.set_y_limits_of_y_averaged_axis(min(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y, max(averaged_signal_y)+self.OFFSET_FOR_AVERAGED_DATA_Y)
