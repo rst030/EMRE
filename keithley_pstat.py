@@ -3,6 +3,9 @@ written by Ilia Kulikov on 27/10/20
 ilia.kulikov@fu-berlin.de'''
 import numpy as np
 import pyvisa as visa
+from time import sleep
+from datetime import datetime  # this thing gets current time
+import Plotter
 
 class pstat (object):
     model = '2450'                    # default model is 2450 that is the pstat at Lyra
@@ -12,7 +15,10 @@ class pstat (object):
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
 
-    def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
+    plotter = Plotter.Plotter
+
+
+    def __init__(self, rm: visa.ResourceManager, model: str, plotter: Plotter.CvPlotter): # when create a lia you'd better have a resource manager already working
         '''create an instance of the pstat object''' # создать объект потенциостата.
         self.rm = rm
         self.connect(model)
@@ -43,6 +49,11 @@ class pstat (object):
 
         print('Potentiostat: '+response)
 
+        self.plotter = plotter #
+        self.plotter.subplot.set_title('TEST')
+        tstx = [-1, 0, 1]
+        tsty = [1e-6, 0, 1e-3]
+        self.plotter.plotCvData(tstx,tsty)
 
     def write(self, command):
         '''write data to BH-15, many lines can be accepted as an argument. Useful for pre-setting'''
@@ -161,34 +172,32 @@ class pstat (object):
         #self.write('TRAC:TRIG \"defbuffer1\"') # this puts readings on its face.
 
     def output_off(self): # self explanatory
-        from time import sleep
         self.write('OUTP OFF')  # here we turn output off
         self.play_short_beep()  # short beep when pot on
-        sleep(0.25)
+        sleep(0.2)
         self.play_short_beep()  # twice
 
     def configureCv(self):
-        self.write(':SENS:FUNC \"CURR\"')
-        self.write(':SENS:RES:RANG:AUTO ON')
-        self.write(':SENSe:CURRent:NPLCycles 0.05')  # change to 0.5 to measure faster.
-        self.write(':OUTP ON')
+        self.write(':SENS:FUNC CURR') # measure current
+        self.write('SOUR:VOLT:ILIM 0.1') # 100 mA
+        self.write(':SENSe:CURRent:NPLC 5')  # change to measure faster. 1 PLC = 20 ms. 5 plc = 100 ms
+        # self.write(':OUTP ON')
 
-    def getCvPoint(self,voltage_in_volts):
-        self.write(':COUN 10') # 5 points to record
+    def getCvPoint(self, voltage_in_volts):
+        self.write(':COUN 1') # 1 point to record
         self.write(':SOUR:VOLT %.3f' % voltage_in_volts)
         self.write(':TRAC:CLEAR')
-        self.write(':MEAS?')
-        self.write(':TRAC:DATA? 2, 9')
-
-        values = np.mean(np.array(self.read().split(',')).astype(float))
-        return values
-
+        self.write(':MEASure:CURRent?') # 1 point it is supposed to be.
+        self.write(':TRAC:DATA?')# 2, 9')
+        sleep(0.12) # nplc = 0.5
+        currentString = self.read()
+        current = float(currentString)#np.mean(np.array(self.read().split(',')).astype(float))
+        return current
 
     def take_cv(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
-        from time import sleep
         self.configureCv()
 
-        nstepsup = 10
+        nstepsup = 100
         dv = (highPotential-lowPotential)/nstepsup # step in voltages assuming nstepsup steps up and 100 down
         R = rate / 1000 # in volts per second.
         dt = dv/R
@@ -198,6 +207,19 @@ class pstat (object):
 
         setVoltages = []  # to be appended
         measuredCurrents = [] # to be measured and appended
+
+
+        # ------------------------- saving CV to csv file ------------------------------
+        savefile = open(filePath+'.csv', 'w')  # open the file
+        f2w = savefile
+
+        time = str(datetime.now())  # get current time. start of the cv
+        f2w.write('start, %s\n' % (str(time)))
+
+        f2w.write('low, %.3f, V\n' % float(lowPotential))
+        f2w.write('high, %.3f, V\n' % float(highPotential))
+        f2w.write('rate, %.3f, mV/s\n' % float(rate))
+
 
         for ctr in range(0,nstepsup,1):
             voltagetoset = lowPotential+ctr*dv
@@ -219,27 +241,18 @@ class pstat (object):
             sleep(dt)
             setVoltages.append(voltagetoset)
             print('cv down, step: %d' % ctr)
-            print('...voltage: %.2e V' % voltagetoset)
-            print('...%.2e A' %currents)
+            print('cv: voltage: %.2e V' % voltagetoset)
+            print('cv%.2e A' %currents)
             measuredCurrents.append(currents)
+            # writing to file at the same time
+            f2w.write("%.8e, %.8e,\n" % (voltagetoset, currents))
 
         voltagetoset = lowPotential
         self.set_voltage(voltagetoset)
 
         self.output_off()
 
-        # ____________________________ saving CV to csv file
-        savefile = open(filePath+'.csv', 'w')  # open the file
-        f2w = savefile
-        from datetime import datetime  # this thing gets current time
-        time = str(datetime.now())  # get current time, microseconds lol
-        f2w.write('time, %s\n' % (str(time)))
-        f2w.write('low, %.3f, V\n' % float(lowPotential))
-        f2w.write('high, %.3f, V\n' % float(highPotential))
-        f2w.write('rate, %.3f, mV/s\n' % float(rate))
-
-        # now populating the values
-        for idx in range(len(measuredCurrents)):
-            f2w.write("%.8e, %.8e,\n" % (setVoltages[idx],measuredCurrents[idx]))
+        time = str(datetime.now())  # get current time. start of the cv
+        f2w.write('end, %s\n' % (str(time)))
 
         f2w.close()

@@ -22,6 +22,47 @@ from tkinter import Frame, BOTH, NW, TOP
 import numpy as np
 
 # you can have lines as a result of plot(). lines can ghave visibility 1 or 0. We use it for disabling spectra
+
+class CvPlotter:
+    xlabel = 'voltage [V, vs RE]'
+    ylabel = 'current [A]'
+    title = 'cv'
+
+    def __init__(self, rootframe: Frame):
+
+        plt.style.use('dark_background')
+        self.figure = plt.Figure(figsize=(1,1), dpi=120)
+        fig = self.figure
+        self.subplot = fig.add_subplot(111)
+
+        #self.subplot = self.figure.add_subplot(111)
+
+        #self.subplot.plot([1,20,3,1,3,2,4,1,1,1,3,2,4,1,2])
+        self.subplot.set_xlabel(self.xlabel)
+        self.subplot.set_ylabel(self.ylabel)
+        self.subplot.set_title(self.title)
+        self.frame = rootframe
+        self.canvas = FigureCanvasTkAgg(self.figure, self.frame)
+        toolbar = NavigationToolbar2Tk(self.canvas, self.frame)  # nav toolbar
+        toolbar.update()
+
+        self.canvas.get_tk_widget().pack(fill = BOTH, anchor = NW, expand = True)
+        self.canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
+
+
+        # implement dataframes? df.plot(kind='Chart Type such as bar', legend=True, ax=ax)
+
+    def add_live_plot(self,vstart,vstop): # adding axes for the live plot. plot live data on this axes
+        self.subplot.cla() #
+        self.subplot.set_xlim(vstart, vstop)
+        self.subplot.autoscale(True)
+        self.subplot.set_ylim(-1e-2, 1e-2)
+
+    def plotCvData(self, voltages, currents):
+        self.subplot.cla()
+        self.subplot.plot(voltages, currents, 'm+:', linewidth=1)
+
+
 class Plotter:
     title = ''
     xlabel = 'B [G]'
