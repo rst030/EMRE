@@ -17,6 +17,7 @@ import lock_in  # lock in amplifier class.
 import bh_15   # field controller class
 import keithley_pstat  # potentiostat keithley model 2450 source meter
 import agilent_53181a  # frequency counter class.
+import Plotter
 
 class new_communicator(object):
     rm = 0 # no resource manager for beginning
@@ -27,15 +28,15 @@ class new_communicator(object):
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
-    def __init__(self, backend):
+    def __init__(self, backend, cvPlotter: Plotter.CvPlotter):
         '''The constructor of the communicator class.'''
-        #visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
+        visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
         self.rm = visa.ResourceManager('%s'%backend) # forget about Windows for a while.
         # populating devices:
         self.lockin = lock_in.lockin(rm = self.rm, model = '810') # creating lia, that easy.
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
-        self.pstat = keithley_pstat.pstat(rm = self.rm, model = '2450') # creating pstat. That easy
+        self.pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
 
 

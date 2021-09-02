@@ -105,11 +105,23 @@ class main_gui:
 
         self.plotter_frame = tk.Frame(top)
         self.plotter_frame.place(relx=0.143, rely=0.088, relheight=0.795
-                , relwidth=0.842)
+                , relwidth=0.5) # CHANGED!!!!! BY HANDS!!!!!!!!!
         self.plotter_frame.configure(relief='groove')
         self.plotter_frame.configure(borderwidth="2")
         self.plotter_frame.configure(relief="groove")
         self.plotter_frame.configure(background="#d9d9d9")
+
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! added by habnd!!!!! dont delete!!!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.cvPlotter_frame = tk.Frame(top)
+        self.cvPlotter_frame.place(relx=0.643, rely=0.088, relheight=0.795
+                , relwidth=0.34) # CHANGED!!!!! BY HANDS!!!!!!!!!
+        self.cvPlotter_frame.configure(relief='groove')
+        self.cvPlotter_frame.configure(borderwidth="2")
+        self.cvPlotter_frame.configure(relief="groove")
+        self.cvPlotter_frame.configure(background="#d9d9d9")
+
+################################################################################################################################### !
 
         self.Frame1 = tk.Frame(top)
         self.Frame1.place(relx=0.143, rely=0.888, relheight=0.104
@@ -268,6 +280,9 @@ class main_gui:
         # first of all lets insert the plotter to the plotting frame.
         self.plotter = Plotter.Plotter(rootframe=self.plotter_frame)
 
+        # adding another default plotter
+        self.cvPlotter = Plotter.CvPlotter(rootframe=self.cvPlotter_frame)
+
         # now let us configure buttons. set up scan button should create an instance of setup scan.
         self.connect_btn.configure(command = self.connect_to_spectrometer)
         self.setup_scan_btn.configure(command = self.make_scan_setting)
@@ -330,13 +345,13 @@ class main_gui:
         print('cycling between %.3f V and %.3f V at %.1f mV/s for %d cycles making %d cwEPR scans per cycle'
               % (self.lowPotential,self.highPotential,self.rate,self.nDegradCycles,self.scansPerCycle))
 
-        for NCYCLE in range(int(self.nDegradCycles)):
+        for NCYCLE in range(int(self.nDegradCycles)): # NCYCLE : which degradation cycle is on
             # take nDegradCycles cv curves
             fileNameString = self.filePath + 'CV_cycle_' + str(NCYCLE)
             takeCv(self.spectrometer_communicator, self.lowPotential, self.highPotential,
                    self.rate,fileNameString)  # todo ask keithley to take a cv and save it
             # take scansPerCycle epr scans for each curve
-            for NSCAN in range(int(self.scansPerCycle)):
+            for NSCAN in range(int(self.scansPerCycle)): # NSCAN : which scan of the present cycle
                 fileNameString = self.filePath+'_EPR_cycle_'+str(NCYCLE)+'_scan_'+str(NSCAN)
                 cwScan(self.spectrometer_communicator, self.scan_setting,self.plotter,fileNameString) # one scan, one file
 
@@ -373,7 +388,8 @@ class main_gui:
         '''connect to spectrometer, that is create a communicator and try creating all devices in it'''
         print('connecting to spectrometer...')
 
-        self.spectrometer_communicator = communication.new_communicator('@py')  # create a communicator with pyvisa-py
+        self.spectrometer_communicator = communication.new_communicator('@py',self.cvPlotter)  # create a communicator with pyvisa-py
+        #MESS!
 
 
     def send_initial_parameters_to_hardware(self):
