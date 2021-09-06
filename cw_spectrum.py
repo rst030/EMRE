@@ -305,6 +305,7 @@ class cw_spectrum:
         # time was created when experiment started
 
         f2w.write('%%? %s\n' % (str(self.time)))
+        f2w.write('%%? addcols EMRE\n')
         f2w.write('%%. %.2f mV %s' % (self.potential, self.comment))
         f2w.write('%%! nruns %d\n' % self.nruns)
         f2w.write('%%! npoints %d\n' % int(len(self.bvalues)+1))

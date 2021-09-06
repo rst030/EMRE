@@ -61,6 +61,10 @@ class CvPlotter:
     def plotCvData(self, voltages, currents):
         self.subplot.cla()
         self.subplot.plot(voltages, currents, 'm+:', linewidth=1)
+        self.subplot.autoscale(False)
+        self.subplot.set_xlabel(self.xlabel)
+        self.subplot.set_ylabel(self.ylabel)
+        self.subplot.set_title('CV')
 
 
 class Plotter:

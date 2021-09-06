@@ -40,12 +40,19 @@ class main_gui:
 
     def __init__(self,lowPotential,highPotential,rate,nDegradCycles,scansPerCycle,filePath):
 
-        self.lowPotential = lowPotential
-        self.highPotential = highPotential
-        self.rate = rate
-        self.nDegradCycles = nDegradCycles
-        self.scansPerCycle = scansPerCycle # all abvious
-        self.filePath = filePath # where to save that crap
+        self.lowPotential = int(input('low Potential, V?'))
+        self.highPotential = int(input('high Potential, V?'))
+        self.rate = int(input('cv scan rate, mv/s?'))
+        self.nDegradCycles = int(input('n Degrad Cycles?'))
+        self.scansPerCycle = int(input('EPR scans Per Degrad Cycle?')) # all abvious
+        from tkinter import filedialog
+
+        self.filePath = filedialog.asksaveasfilename(parent=None, initialdir="/home/ikulikov/Desktop/EMRE_DATA/",
+                                                 title="Select file to save spectrum")  # ,filetypes = (("akku2 files","*.akku2"),("all files","*.*")))
+        print(
+            "saving spectra as %s.akku2" % self.filePath)  # todo save also ch1 and ch2 files! it is important for analysis.
+        print(
+            "saving CV curves as %s.csv"  % self.filePath)
 
         top = tk.Tk()
         self.window = top
@@ -340,6 +347,8 @@ class main_gui:
             echem_scan(self.spectrometer_communicator,self.scan_setting,self.plotter, self, NRUN, file_path)
         self.raise_run_button()
         print('Make a separate process for plotting, man. It is time. It is unavoidable. You started this, go ahead and make a good plotting window, for Jesus Christ. For people. For all of us and for all of this.')
+
+######### THATS WHAT WE NEED TODAY, 2nd September 2021.                                                                 <-
 
     def runDegradationExperiment(self):
         print('cycling between %.3f V and %.3f V at %.1f mV/s for %d cycles making %d cwEPR scans per cycle'
@@ -1017,8 +1026,7 @@ def degradeInConsole():
     print('you suck')
 
 def runOneScan():
-    Emre = main_gui(0, 0.1, 100, 1, 1, '/home/ikulikov/Desktop/EMRE_DATA/tstzz.akku2')  # only for plotting
-
+    Emre = main_gui(lowPotential=0.3, highPotential=1.1, rate = 100, nDegradCycles=2, scansPerCycle=1, filePath='/home/ikulikov/Desktop/EMRE_DATA/210902/test/tst_AA.akku2')  # only for plotting
 
 
 if __name__ == "__main__":

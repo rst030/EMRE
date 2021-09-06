@@ -178,21 +178,27 @@ class pstat (object):
         self.play_short_beep()  # twice
 
     def configureCv(self):
+        #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
         self.write(':SENS:FUNC CURR') # measure current
-        self.write('SOUR:VOLT:ILIM 0.1') # 100 mA
-        self.write(':SENSe:CURRent:NPLC 5')  # change to measure faster. 1 PLC = 20 ms. 5 plc = 100 ms
-        # self.write(':OUTP ON')
+        self.write(':SOUR:VOLT:ILIM 0.1') # 100 mA
+        #self.write(':SENSe:CURRent:NPLC 5')  # change to measure faster. 1 PLC = 20 ms. 5 plc = 100 ms
+        self.write(':OUTP ON')
 
     def getCvPoint(self, voltage_in_volts):
-        self.write(':COUN 1') # 1 point to record
+        self.write('SENSe:COUNt 1') # 1 point to record
         self.write(':SOUR:VOLT %.3f' % voltage_in_volts)
-        self.write(':TRAC:CLEAR')
-        self.write(':MEASure:CURRent?') # 1 point it is supposed to be.
-        self.write(':TRAC:DATA?')# 2, 9')
+        #self.write(':TRAC:CLEAR')
+        self.write('MEASure:CURRent:DC?') # 1 point it is supposed to be.
+        #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
         sleep(0.12) # nplc = 0.5
         currentString = self.read()
+        print(currentString) # temp
         current = float(currentString)#np.mean(np.array(self.read().split(',')).astype(float))
         return current
+
+
+
+
 
     def take_cv(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
         self.configureCv()
@@ -209,17 +215,7 @@ class pstat (object):
         measuredCurrents = [] # to be measured and appended
 
 
-        # ------------------------- saving CV to csv file ------------------------------
-        savefile = open(filePath+'.csv', 'w')  # open the file
-        f2w = savefile
-
-        time = str(datetime.now())  # get current time. start of the cv
-        f2w.write('start, %s\n' % (str(time)))
-
-        f2w.write('low, %.3f, V\n' % float(lowPotential))
-        f2w.write('high, %.3f, V\n' % float(highPotential))
-        f2w.write('rate, %.3f, mV/s\n' % float(rate))
-
+        starttime = str(datetime.now())  # get current time. start of the cv
 
         for ctr in range(0,nstepsup,1):
             voltagetoset = lowPotential+ctr*dv
@@ -230,6 +226,8 @@ class pstat (object):
             print('...voltage: %.2e V' % voltagetoset)
             print('...%.2e A'%currents)
             measuredCurrents.append(currents)
+            # now plotting it irl also
+            self.plotter.plotCvData(setVoltages,measuredCurrents)
 
         voltagetoset = highPotential
         self.set_voltage(voltagetoset)
@@ -244,15 +242,27 @@ class pstat (object):
             print('cv: voltage: %.2e V' % voltagetoset)
             print('cv%.2e A' %currents)
             measuredCurrents.append(currents)
-            # writing to file at the same time
-            f2w.write("%.8e, %.8e,\n" % (voltagetoset, currents))
+            # now plotting it irl also
+            self.plotter.plotCvData(setVoltages, measuredCurrents)
 
         voltagetoset = lowPotential
         self.set_voltage(voltagetoset)
 
         self.output_off()
 
-        time = str(datetime.now())  # get current time. start of the cv
-        f2w.write('end, %s\n' % (str(time)))
+
+        # ------------------------- saving CV to csv file ------------------------------
+        savefile = open(filePath+'.csv', 'w')  # open the file
+        f2w = savefile
+        f2w.write('start, %s\n' % (str(starttime)))
+        endtime = str(datetime.now())  # get current time. start of the cv
+        f2w.write('end, %s\n' % (str(endtime)))
+
+        f2w.write('low, %.3f, V\n' % float(lowPotential))
+        f2w.write('high, %.3f, V\n' % float(highPotential))
+        f2w.write('rate, %.3f, mV/s\n' % float(rate))
+
+        for i in range(len(measuredCurrents)):
+            f2w.write("%.8e, %.8e,\n" % (setVoltages[i], measuredCurrents[i]))
 
         f2w.close()
