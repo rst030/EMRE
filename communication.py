@@ -30,7 +30,7 @@ class new_communicator(object):
 
     def __init__(self, backend, cvPlotter: Plotter.CvPlotter):
         '''The constructor of the communicator class.'''
-        visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
+        # visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
         self.rm = visa.ResourceManager('%s'%backend) # forget about Windows for a while.
         # populating devices:
@@ -108,7 +108,7 @@ class old_communicator (object):
     field_controller = 0     # B-H 15 Field controller by Bruker  | GPIB
     gaussmeter = 0           # ER 035 M NMR Gaussmeter by Bruker  | Serial
     keithley_potentiostat = 0# Keithley 2450 source-measure unit. | GPIB
-    t_sensor = 0   # Oxford temperature controller.     | GPIB
+    t_sensor = 0   # Oxford temperature controller.       | GPIB
 
     '''Here come some labels aka flags. 
     The following fields needed when we want to use a fancy GUI which indicates states of devices in real time.
@@ -741,3 +741,57 @@ class old_communicator (object):
     def shutdown_output_sourcemeter(self):
         self.sourcemeter.write("smua.source.output=smua.OUTPUT_OFF")
         return 0
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+  #      f2w = open('haram.txt','w')  # create and open a file for writing
+    
+ #       c = self.machine.process_text('WAKEUPNEO', replace_char='X') #KLOWCYJVF CFAUPBURPFRHLTY YWZABSLJHLSOQLCLXYGV
+#        f2w.write('%s\n'%c)
+
+     #   f2w.write('%s\n'%c)
+    #    c = self.machine.process_text('thebodycannotlivewithoutthemind', replace_char='X') #KLOWCYJVF CFAUPBURPFRHLTY YWZABSLJHLSOQLCLXYGV
+   #     self.machine.set_display('EAC')
+  #      msg_key = self.machine.process_text('RST')
+        
+    #    f2w.write('%s\n'%c)
+   #     c = self.machine.process_text('mindyourfreedom', replace_char='X') #KLOWCYJVF CFAUPBURPFRHLTY YWZABSLJHLSOQLCLXYGV
+  #      self.machine.set_display('EAC')
+ #       msg_key = self.machine.process_text('RST')
+        
+   #     f2w.write('%s\n'%c)
+  #      c = self.machine.process_text('whatdoallmenwithpowerwant?Morepower', replace_char='X') #KLOWCYJVF CFAUPBURPFRHLTY YWZABSLJHLSOQLCLXYGV
+ #       self.machine.set_display('EAC')
+#        msg_key = self.machine.process_text('RST')
+        
+        #f2w.write('%s\n'%c)
+        #c = self.machine.process_text('perhapsweareaskingthewrongquestion', replace_char='X') #KLOWCYJVF CFAUPBURPFRHLTY YWZABSLJHLSOQLCLXYGV
+       # self.machine.set_display('EAC')
+      #  msg_key = self.machine.process_text('RST')
+        
+   #     f2w.write('%s\n'%c)
+    #    c = self.machine.process_text('youhaveaproblemwithauthority,Mr.Anderson.Youbelieveyouarespecial,thatsomehowtherulesdonotapplytoyou.Obviously,youaremistaken', replace_char='X') #KLOWCYJVF CFAUPBURPFRHLTY YWZABSLJHLSOQLCLXYGV
+     #   self.machine.set_display('EAC')
+  #      msg_key = self.machine.process_text('RST')
+        
+ #       f2w.write('%s\n'%c)
+
+    
+#        f2w.close()
