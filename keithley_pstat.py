@@ -1,11 +1,14 @@
 '''Communication to the Keithley 2450 source-measure unit.
-written by Ilia Kulikov on 27/10/20
+written by rst on 27/10/20
 ilia.kulikov@fu-berlin.de'''
+
 import numpy as np
 import pyvisa as visa
 from time import sleep
 from datetime import datetime  # this thing gets current time
 import Plotter
+
+CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
 
 class pstat (object):
     model = '2450'                    # default model is 2450 that is the pstat at Lyra
@@ -26,33 +29,29 @@ class pstat (object):
         self.write('*IDN?') # и спросим, как его зовут
         response = self.read()
         self.play_tune()
-        self.write(':DISPlay:SCReen SOURce')
-        self.write(':SENSe:CURRent:RSENse ON')
+        self.write('DISP:SCR SWIPE_GRAP')
+        self.write('SENS:CURR:RSEN ON') # 4 WIRE SENSING MODE.
         self.write('SENS:FUNC \'CURR\'')
-        self.write('SENS:CURR:RANG:AUTO ON')
+        self.write('SENS:CURR:RANG:AUTO OFF')
+        self.write('SENS:CURR:RANG %.4f'%CURRENTSENSITIVITYLIMIT)
         self.write('SENS:CURR:UNIT AMP') # double check it
         self.write('SENS:CURR:OCOM ON')
         self.write('SOUR:FUNC VOLT')
         self.write('SOUR:VOLT 0')
-        self.write('SOUR:VOLT:ILIM 0.01')
-        self.write('COUNT 5') # 5 points of current to measuer
+        self.write('SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT)
+        
+        self.write('COUNT 1') # 1 points of current to measuer
 
-       # self.write('TRAC:MAKE \"CYKA_BLYAT\", 5')  # create buffer with n points
+################## CHANGE THIS FOR DITS!!! ######################
+        self.ConfigureForTransient() # ! change for PDITS. for testing ok.
+#################################################################
 
-
-
-        #self.write(':DISP:CURR:DIG 5') # 5 digits to show on current display
-        #self.write(':DISPlay:LIGHt:STATe ON100') # full brightness
-        self.write(':SENSe:CURRent:RSENse ON') #for 4 wire measurements.
-        self.write(':DISPlay:SCReen HOME_LARGe_reading') # show large readings on the display
-        #self.write('CURR:NPLC 0.5') # how quickly meas current 0.5/60 s
-
-        print('Potentiostat: '+response)
+        self.print(response)
 
         self.plotter = plotter #
         self.plotter.subplot.set_title('TEST')
-        tstx = [-1, 0, 1]
-        tsty = [1e-6, 0, 1e-3]
+        tstx = [-1, 0, 1, 2, 3]
+        tsty = [1, 0, 3, 5, 3.14159265358979323846264338327950288419716939937510]
         self.plotter.plotCvData(tstx,tsty)
 
     def write(self, command):
@@ -74,7 +73,7 @@ class pstat (object):
 
     def connect(self, model):
         if '2450' in model:
-            self.address = 'GPIB0::18::INSTR'  # pad 8
+            self.address = 'GPIB0::18::INSTR'  # pad 18
             try:
                 self.device = self.rm.open_resource(self.address)
                 print('got GPIB instrument for Potentiostat: %s'%self.device)
@@ -100,16 +99,23 @@ class pstat (object):
         self.beep_tone(1413,0.1)
 
     def play_tune(self):
-        for offtune in range(10):
+        for offtune in range(66):
             for _ in range(1):
                 # happy C goes wild:
-                self.beep_tone(523.251+ 25*offtune, 0.01)
-                self.beep_tone(783.991- 15*offtune, 0.01)
-                self.beep_tone(659.255+ 25*offtune, 0.01)
+                self.beep_tone(523.251+ 35*offtune, 0.005)
+                self.beep_tone(783.991+ 35*offtune, 0.005)
+                self.beep_tone(659.255+ 35*offtune, 0.005)
+        for offtune in range(66,0,-1):
+            for _ in range(1):
+                # happy C goes wild:
+                self.beep_tone(523.251+ 35*offtune, 0.005)
+                self.beep_tone(783.991+ 35*offtune, 0.005)
+                self.beep_tone(659.255+ 35*offtune, 0.005)
+        self.print('call the police.')
 
 
     def set_voltage(self,voltage_in_volts):  # sets voltage and presets the trigger (1 second transient for now)
-        # ставим напряждение в вольтах на выход пстата и маряем ток. На морде показываем ток. Сам показывается он.
+        # ставим напряждение в вольтах на выход пстата и марuм ток. На морде показываем ток. Сам показывается он.
         # nope, we just set the measurement and trigger it maually.
 
         self.write('SOUR:VOLT %.3f'%voltage_in_volts)
@@ -129,26 +135,33 @@ class pstat (object):
 
     def configure_transient_trigger(self,duration_in_seconds, delay_in_seconds):  # duration_in_seconds s measurements into buffer
 
-        self.write(':SENSe:CURRent:NPLCycles 1.73') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
+        self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
 
-        print('setting up trigger model to DurationLoop: %.2f s'%duration_in_seconds)
-        self.write('TRAC:MAKE \"CYKA_BLYAT\", 512')  # create buffer with n points
-        self.write('TRIG:LOAD \"DurationLoop\", %.2f, %.6f, \"CYKA_BLYAT\"' % (duration_in_seconds,delay_in_seconds))  # load trigger model 0.5 us TEMPORARY!
+        self.print('setting up trigger model to DurationLoop: %.2f s'%duration_in_seconds)
+        self.write('TRIG:LOAD \"DurationLoop\", %.2f, %.4f, \"CYKA_BLYAT\"' % (duration_in_seconds,delay_in_seconds))  # load trigger model 0.5 us TEMPORARY!
 
 
     def delete_trace(self):
         self.write(':TRACe:DELete \"CYKA_BLYAT\"')
 
+    def trigger_current_transient(self): # starts current transient measurement.
+        print('trigger current transient [NOW] <-')
+        self.write('INIT') # initiate the readings of current WOUD THIS WORK ??? apparently it does
+        self.write('*WAI') # postpone execution of successive commands while this is executed.
+        self.write('OUTP ON')  # keep output on
+
+        # This sets the trigger on time loop
+        # and store the readings in the \"CYKA_BLYAT\" reading buffer.
+
+        self.write('TRAC:TRIG \"CYKA_BLYAT\"') # this puts readings on its face / also to the buffer.
 
     def query_current_transient(self, NPTS: int):# returns the current readings in a string!
-        print('attempting to read NPTS values from CYKA_BLYAT buffer ++++ P')
+        print('attempting to read %d values from CYKA_BLYAT buffer ++++ P'%NPTS)
         self.play_reading_beep()
         self.write('TRAC:DATA? 1, %d, \"CYKA_BLYAT\", SOUR, READ, REL'%NPTS) # Read the NPTS data points, reading, programmed source, and relative time for each point.
 
+        return self.read()
 
-        transients = self.read()
-
-        return transients
 
     def output_on(self): # self explanatory
         self.play_short_beep()  # short beep when pot on
@@ -160,17 +173,6 @@ class pstat (object):
         # #self.write('TRAC:TRIG \“defbuffer1\”') # this is for measurement trace. So far not in use.
         #self.write('TRAC:DATA? 1, 5, \“defbuffer1\”, SOUR, READ') # not sure if we need it
 
-    def trigger_current_transient(self): # starts current transient measurement.
-        print('__________ ptriggering the measurement of a current transient NOW! ++++ P')
-        self.write('INIT') # initiate the readings of current WOUD THIS WORK ???
-        self.write('*WAI') # postpone execution of successive commands while this is executed.
-        self.write('OUTP ON')  # keep output on
-
-        # This sets the trigger on time loop
-        # and store the readings in the buf100 reading buffer.
-
-        #self.write('TRAC:TRIG \"defbuffer1\"') # this puts readings on its face.
-
     def output_off(self): # self explanatory
         self.write('OUTP OFF')  # here we turn output off
         self.play_short_beep()  # short beep when pot on
@@ -178,30 +180,37 @@ class pstat (object):
         self.play_short_beep()  # twice
 
     def configureCv(self):
-        self.write(':SENS:FUNC CURR') # measure current
-        self.write('SOUR:VOLT:ILIM 0.1') # 100 mA
-        self.write(':SENSe:CURRent:NPLC 5')  # change to measure faster. 1 PLC = 20 ms. 5 plc = 100 ms
-        # self.write(':OUTP ON')
+        #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
+        self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
+        self.print('goddamnit i am quick')
+        self.write(':SENS:FUNC \"CURR\"') # measure current
+        self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA typically
+        self.write('SENSe:COUNt 1') # 1 point to record
+        self.print('CV measurement configured. Turning output ON. Jesus Christ saves your battery.')
+        self.write(':OUTP ON')
 
     def getCvPoint(self, voltage_in_volts):
-        self.write(':COUN 1') # 1 point to record
+        
         self.write(':SOUR:VOLT %.3f' % voltage_in_volts)
-        self.write(':TRAC:CLEAR')
-        self.write(':MEASure:CURRent?') # 1 point it is supposed to be.
-        self.write(':TRAC:DATA?')# 2, 9')
-        sleep(0.12) # nplc = 0.5
-        currentString = self.read()
+        #self.write(':TRAC:CLEAR')
+        currentString = self.device.query('MEASure:CURRent:DC?') # 1 point it is supposed to be.
+        #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
+        #currentString = self.read() instead of query if you want to wait for a few plc. 
+        #print(currentString) # temp
         current = float(currentString)#np.mean(np.array(self.read().split(',')).astype(float))
         return current
 
-    def take_cv(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
-        self.configureCv()
 
+
+
+
+    def TakeCV(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
+        
         nstepsup = 100
         dv = (highPotential-lowPotential)/nstepsup # step in voltages assuming nstepsup steps up and 100 down
         R = rate / 1000 # in volts per second.
         dt = dv/R
-        print('pstat:cv: dt=%.2e s'%dt)
+        print('pstat:cv: dt=%.2e s'% dt)
         print('pstat:cv: dv=%.2e V' % dv)
         print('pstat:cv: R=%.2e V/s' % R)
 
@@ -209,28 +218,23 @@ class pstat (object):
         measuredCurrents = [] # to be measured and appended
 
 
-        # ------------------------- saving CV to csv file ------------------------------
-        savefile = open(filePath+'.csv', 'w')  # open the file
-        f2w = savefile
-
-        time = str(datetime.now())  # get current time. start of the cv
-        f2w.write('start, %s\n' % (str(time)))
-
-        f2w.write('low, %.3f, V\n' % float(lowPotential))
-        f2w.write('high, %.3f, V\n' % float(highPotential))
-        f2w.write('rate, %.3f, mV/s\n' % float(rate))
+        starttime = str(datetime.now())  # get current time. start of the cv
 
 
+
+        self.configureCv()
         for ctr in range(0,nstepsup,1):
             voltagetoset = lowPotential+ctr*dv
             currents = self.getCvPoint(voltage_in_volts=voltagetoset)
             sleep(dt)
             setVoltages.append(voltagetoset)
-            print('cv down, step: %d'%ctr)
-            print('...voltage: %.2e V' % voltagetoset)
-            print('...%.2e A'%currents)
+            #print('cv up, step: %d'%ctr)
+            #print('...voltage: %.2e V' % voltagetoset)
+            #print('...%.2e A'%currents)
             measuredCurrents.append(currents)
-
+            # now plotting it irl also
+        
+            self.plotter.plotCvData(setVoltages,measuredCurrents)
         voltagetoset = highPotential
         self.set_voltage(voltagetoset)
 
@@ -240,19 +244,90 @@ class pstat (object):
             currents = self.getCvPoint(voltage_in_volts=voltagetoset)
             sleep(dt)
             setVoltages.append(voltagetoset)
-            print('cv down, step: %d' % ctr)
-            print('cv: voltage: %.2e V' % voltagetoset)
-            print('cv%.2e A' %currents)
+            #print('cv down, step: %d' % ctr)
+            #print('cv: voltage: %.2e V' % voltagetoset)
+            #print('cv%.2e A' %currents)
             measuredCurrents.append(currents)
-            # writing to file at the same time
-            f2w.write("%.8e, %.8e,\n" % (voltagetoset, currents))
-
+            # now plotting it irl also
+        
+            self.plotter.plotCvData(setVoltages, measuredCurrents)
         voltagetoset = lowPotential
         self.set_voltage(voltagetoset)
 
         self.output_off()
 
-        time = str(datetime.now())  # get current time. start of the cv
-        f2w.write('end, %s\n' % (str(time)))
+
+        # ------------------------- saving CV to csv file ------------------------------
+        savefile = open(filePath+'.csv', 'w')  # open the file
+        f2w = savefile
+        f2w.write('start, %s\n' % (str(starttime)))
+        endtime = str(datetime.now())  # get current time. start of the cv
+        f2w.write('end, %s\n' % (str(endtime)))
+
+        f2w.write('low, %.3f, V\n' % float(lowPotential))
+        f2w.write('high, %.3f, V\n' % float(highPotential))
+        f2w.write('rate, %.3f, mV/s\n' % float(rate))
+
+        for i in range(len(measuredCurrents)):
+            f2w.write("%.8e, %.8e,\n" % (setVoltages[i], measuredCurrents[i]))
 
         f2w.close()
+        
+        
+    def ConfigureForTransient(self):
+        #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
+        self.write('TRAC:MAKE \"CYKA_BLYAT\", 65535')  # create buffer with n points
+        self.write('SENSe:CURRent:RANG %.4f'%CURRENTSENSITIVITYLIMIT)
+        self.write(':SENS:FUNC \"CURR\"') # measure current
+        self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA
+        self.write('SENSe:COUNt 1') # 1 point to record
+        self.write(':OUTP ON')
+        
+    def TakeChargingTransient(self, potentialToSet: float, durationInSeconds: float, filePath:str):
+        # taking the current transient.
+        # setting the potentialToSet for durationInSeconds
+        # saving the transient in filePath
+        
+         
+        interval = 0.001 # interval between the points in the transient
+        
+        self.print('configure transient trigger')
+        self.configure_transient_trigger(durationInSeconds, interval)
+        self.print('setting voltage %.2f'%potentialToSet)
+        self.set_voltage(potentialToSet)
+        self.trigger_current_transient()
+        sleep(durationInSeconds+1) # one sec
+        self.print('query %d pts from buffer'%durationInSeconds*220)
+        try:
+            transients = self.query_current_transient(durationInSeconds*220) # SOUR, READ, REL 13500 for 60 s -> 255 pts/s -> 1125 pts for 5 s
+        except:
+            self.print('reading transient failed. Launching ICBMs.')
+        self.print('OUTPUT is still on!')
+        
+        dt = str(datetime.now())  # get current time. start of the CT
+        
+        print(transients)
+        
+        # saving those guys to a file
+        current_transient_file = open('%s.chg' %filePath, 'w')  # open the file            
+        #  header
+        current_transient_file.write('Pot_set[V], Pot_meas[V], Current[A], rel_time[s], scan_state\n')
+        try:
+            # query the current transient
+            # saving current transient
+            vls = transients.split(',')
+            for i in range(0, len(vls), 3):
+                current_transient_file.write(
+                    '%.2f, %.6e, %.6e, %.6e,\n' % (potentialToSet, float(vls[i]), float(vls[i + 1]), float(vls[i + 2])))
+
+        except:
+            self.print('[   Failed reading current transient.\n   The warhead is ready for combat.\n  Launchpad 78\n  Calculating trajectory...]')
+      
+        # closing the current transient file
+        current_transient_file.write('\n'+dt+'\n')
+        current_transient_file.write('dt = %.3e s, t = %.3e s\n'%(interval,durationInSeconds))
+        current_transient_file.close()                                                      
+        
+        
+    def print(self,s:str):
+        print('- Keithley 2450-EC >> : %s'%s)

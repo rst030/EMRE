@@ -17,6 +17,23 @@ import matplotlib.pyplot as plt
 
 import cw_spectrum
 
+
+# ----------------------
+try:
+    import Tkinter as tk
+except ImportError:
+    import tkinter as tk
+
+try:
+    import ttk
+    py3 = False
+except ImportError:
+    import tkinter.ttk as ttk
+    py3 = True
+    
+# for window back-update
+
+
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from tkinter import Frame, BOTH, NW, TOP
 import numpy as np
@@ -27,8 +44,9 @@ class CvPlotter:
     xlabel = 'voltage [V, vs RE]'
     ylabel = 'current [A]'
     title = 'cv'
+    window = tk.Tk
 
-    def __init__(self, rootframe: Frame):
+    def __init__(self, rootframe: Frame,rootWindow:tk.Tk):
 
         plt.style.use('dark_background')
         self.figure = plt.Figure(figsize=(1,1), dpi=120)
@@ -42,14 +60,20 @@ class CvPlotter:
         self.subplot.set_ylabel(self.ylabel)
         self.subplot.set_title(self.title)
         self.frame = rootframe
+        self.window = rootWindow
         self.canvas = FigureCanvasTkAgg(self.figure, self.frame)
         toolbar = NavigationToolbar2Tk(self.canvas, self.frame)  # nav toolbar
         toolbar.update()
 
         self.canvas.get_tk_widget().pack(fill = BOTH, anchor = NW, expand = True)
         self.canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
-
-
+        
+        self.updateRootWindow() # updating the tkinter window where it sits
+        
+    def updateRootWindow(self):  # update the window where the plotter sits:
+        self.window.update()
+        self.window.update_idletasks()
+        
         # implement dataframes? df.plot(kind='Chart Type such as bar', legend=True, ax=ax)
 
     def add_live_plot(self,vstart,vstop): # adding axes for the live plot. plot live data on this axes
@@ -57,10 +81,18 @@ class CvPlotter:
         self.subplot.set_xlim(vstart, vstop)
         self.subplot.autoscale(True)
         self.subplot.set_ylim(-1e-2, 1e-2)
+        self.updateRootWindow() # force the tkinter window to update
 
     def plotCvData(self, voltages, currents):
         self.subplot.cla()
         self.subplot.plot(voltages, currents, 'm+:', linewidth=1)
+        self.subplot.autoscale(True)
+        self.subplot.set_xlabel(self.xlabel)
+        self.subplot.set_ylabel(self.ylabel)
+        self.subplot.set_title('CV')
+        self.figure.canvas.draw()
+        self.updateRootWindow() # force the tkinter window to update
+		
 
 
 class Plotter:

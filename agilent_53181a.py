@@ -20,19 +20,19 @@ class agilent_frequency_counter (object):
         if '53181' in model:
             try:
                 self.device = self.rm.get_instrument('GPIB0::3::INSTR') #todo: learn about the agilent's gpib address and hook it up
-                print('connecting to Agilent Frequency counter...')
+                self.print('connecting to Agilent Frequency counter...')
                 self.write('*RST') #connect and reset the counter
-                print('connection to the frequency counter OK:\n' + self.device.query('*IDN?')) # if ok return counter's id
+                self.print('connection to the frequency counter OK:\n' + self.device.query('*IDN?')) # if ok return counter's id
             except:
                 self.agilentstatus = 'dis'
                 self.fake = True
-                print('ERROR: failed to connect to the Agilent frequency counter! Uning fake device.')
+                self.print('ERROR: failed to connect to the Agilent frequency counter! Using a fake device. Something is wrong or EMRE is not on lyra.')
 
     def write(self,command):
         if not self.fake:
             self.device.write(command)
         else:
-            print('talking to a fake Agilent')
+            self.print('talking to a fake Agilent')
 
     def read(self):
         if not self.fake:
@@ -56,3 +56,8 @@ class agilent_frequency_counter (object):
         print('MWFREQ MEASURED %.3e'%frequency)
 
         return frequency #unless communication established, return this value. Temporary.
+        
+        
+    def print(self,s:str):
+        print('- Agilent 53181a >> : %s'%s)    
+    

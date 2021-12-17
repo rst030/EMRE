@@ -848,7 +848,7 @@ class Scan_setup:
 
         self.li_phase = float(self.LIA_phase_etry.get())
 
-        print('autophae function has been implemented')
+        print('autophase function has been implemented')
         state = str(self.auto_phase_btn['relief'])
         if state == tk.SUNKEN:  # if user pressed autophase button:
             if self.modfreq == 10000:
@@ -863,7 +863,7 @@ class Scan_setup:
             self.LIA_phase_etry.delete(0,END)
             self.LIA_phase_etry.insert(0, self.li_phase)
             self.LIA_phase_etry.configure(state = 'disabled')
-            print(self.li_phase)
+            print('phase %.2f deg'%self.li_phase)
 
 
         # also send other parameters to the main module. That has the file to write!
@@ -879,6 +879,7 @@ class Scan_setup:
         self.scan_set = True
         print('self.scan_set: %d'%self.scan_set)
         # ---- at this point all parameters are taken. from now we can start the scan ----
+        print('Good. now ''Par to HW'', like a Bruker.')
 
     def calculate_scan_duration(self):
         """calculates duration of the cw experiment with parameters given in fields.
