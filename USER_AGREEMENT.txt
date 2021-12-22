@@ -1,0 +1,72 @@
+======================================
+|   user conditions   (YAAAAAAAAWN!) |
+======================================
+in short:
+			It is that your spectra are crap, not the script.
+
+You opened this file, wow. Feel free to modify it.
+(*It is your responsibility then that the present version of the user conditions is in the present state.)
+Or is this code so crappy you actually opened this file, for real, 
+be like where to complain?
+
+Oh go ahead, complain now!
+visit loser.church, there has to be a form for people like you.
+
+This is an open-source software.
+
+It contains modifications of your computer that you mustn't think about.
+But you might have to install them yourself, like those pip3 things.
+Or the usb groups on debian if you want to talk to oscilloscopes.
+Or downloading python.
+Or melting sand for Silicon.
+Or being born.
+
+It is called EMRE not because I wanted to bully a new master student in our beautiful laboratory.
+Fuck the bullies.
+Bullies are not cool.
+
+The time machine mode is under development, use on your own risk.
+
+There has to be my paypal on the front page.
+(judgmental?)
+
+================
+| How to use it|
+================
+Are you silly or what?
+
+There is a file, somewhere here.
+Next to this file. A python file.
+
+main.py, most likely.
+but for you, pervert, it must be main_gui_degradation.py or main_gui_potential_sweep.py
+Python3 it from the command prompt.
+There are bugs.
+
+run that to study the tüpical phüsical süstems.
+
+--------------------------------------------------------------
+Тропарь, глас 8:
+
+Варвару святую почтим: 
+вражия бо сети сокруши, 
+и яко птица избавися от них, 
+помощию и оружием Креста, 
+всечестная.
+
+Кондак, глас 4:
+
+В Троице благочестно певаемому, 
+последовавши Богу, страстотерпице, 
+идольская притупила еси чтилища: 
+посреде же подвига страдальчествующи, 
+Варваро, мучителей прещения не устрашилася еси мужемудренная, 
+велегласно поющи присно: 
+Троицу чту, едино Божество.
+-------------------------------------------------------------
+
+The program contains no viruses.
+
+  Berlin, Earth,
+
+     2021 AC
