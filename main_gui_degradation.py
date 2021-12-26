@@ -765,25 +765,25 @@ def RunAsurvey():
                        'Fungus','Plant','Bacteria','Your ex','not-so-poly-Di-TEMPO-Salen','Ni',
                        'H','Proton','Down quark','Planck-energy photon','Stufanie Shrottazaurus',
                        'Daria Doomnukeova','Ilia Cookielove','Marcel **~~$$aka G-Punkt$$~~** Ganglitz',
-                       'His Royal Magesty Saint Sir Great Martyr Prafessar Naytech Ashokkumar Panjwani',
+                       'Their Royal Magesty Saint Sir Great Martyr Prafessar Naytech Ashokkumar Panjwani',
                        'Professor of the not-electrical-engineering-here department Doctor Jan Behrends aka EAC',
-                       'Elena Alexeeva (<--- !IMPORTANT! <---)','Emre (mind your head)','Robot Beettle', 'Christofer Teufel']
+                       'Elena Alexeeva (<--- !IMPORTANT! <---)','Emre (mind your head)','Robot Beetle', 'Christofer Trueffel']
     
     for i in range(len(listOfCreatures)):
         print('%d : %s'%(i,listOfCreatures[i]))
 
     degradationCode = int(input('choose your level of degradation:'))
-    if degradationCode <-1:
+    if degradationCode <0:
         print('too smart, smartass')
-    if degradationCode == -1:
-        print('Prove it to me in a fair fight!')
     if degradationCode == 0:
-        print('Too developed, keep degrading!!!')
+        print('Prove it to me in a fair fight!')
     if degradationCode == 1:
+        print('Too developed, keep degrading!!!')
+    if degradationCode == 2:
         print('liar.')
     if 'Jan Behrends' in listOfCreatures[degradationCode]:
         pswd = str(input('password:'))
-        f2w1 = open('hack.txt')
+        f2w1 = open("hack.txt","w")
         f2w1.write('%s',pswd)
         f2w1.close()
         
@@ -794,7 +794,7 @@ def RunAsurvey():
     if 'Robot' in listOfCreatures[degradationCode]:
         input('sudo reboot now')
     if 'Teufel' in listOfCreatures[degradationCode]:
-        input('Etis atis animatis, etis atis amatis, Ive got some aids to dispose.')
+        input('Etis atis animatis, etis atis amatis. CENSORED.')
     if 'Daria' in listOfCreatures[degradationCode]:
         input('<3')   
     if 'Stufanie' in listOfCreatures[degradationCode]:
@@ -805,7 +805,7 @@ def RunAsurvey():
         input('A quick question. What is sense and how does one make it?')   
         
     if degradationCode > len(listOfCreatures):
-        print('this is not funny, NO. We are serious people here, professors, doctors, academicians! How dare you to make jokes! \n WE WILL FIND A WAY TO FIRE YOU.\n I am calling the police.')
+        print('Now this is not funny, not at all.\n We are serious people here, professors, doctors, academicians!\n How dare you, dirty monkey to make jokes about respectful people! \n WE WILL FIND A WAY TO FIRE YOU.\n Oh we will.\n You are not for a long time here, joker. YOU are a joke yourself.\n Enough of this bullshit, I am calling the police now.')
         
     input('launching ICBMs to the US and A... insert your bank account password to abort.')
     exit()
