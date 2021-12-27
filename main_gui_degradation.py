@@ -765,8 +765,8 @@ def RunAsurvey():
                        'Fungus','Plant','Bacteria','Your ex','not-so-poly-Di-TEMPO-Salen','Ni',
                        'H','Proton','Down quark','Planck-energy photon','Stufanie Shrottazaurus',
                        'Daria Doomnukeova','Ilia Cookielove','Marcel **~~$$aka G-Punkt$$~~** Ganglitz',
-                       'Their Royal Magesty Saint Sir Great Martyr Prafessar Naytech Ashokkumar Panjwani',
-                       'Professor of the not-electrical-engineering-here department Doctor Jan Behrends aka EAC',
+                       'CENSORED Naitik',
+                       'CENSORED Jan',
                        'Elena Alexeeva (<--- !IMPORTANT! <---)','Emre (mind your head)','Robot Beetle', 'Christofer Trueffel']
     
     for i in range(len(listOfCreatures)):
@@ -793,7 +793,7 @@ def RunAsurvey():
         print('keep degrading, %s.'%listOfCreatures[degradationCode])
     if 'Robot' in listOfCreatures[degradationCode]:
         input('sudo reboot now')
-    if 'Teufel' in listOfCreatures[degradationCode]:
+    if 'Christofer' in listOfCreatures[degradationCode]:
         input('Etis atis animatis, etis atis amatis. CENSORED.')
     if 'Daria' in listOfCreatures[degradationCode]:
         input('<3')   
@@ -801,7 +801,7 @@ def RunAsurvey():
         input('General!')   
     if 'Ilia' in listOfCreatures[degradationCode]:
         input('LIAR! LIAR! L I A R ! You couldn''t have fallen that low. Guys I am having a really good time now. Pls try to debug it yourself. Otherwise text.')   
-    if 'Panjwani' in listOfCreatures[degradationCode]:
+    if 'Naitik' in listOfCreatures[degradationCode]:
         input('A quick question. What is sense and how does one make it?')   
         
     if degradationCode > len(listOfCreatures):
