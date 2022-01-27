@@ -1,5 +1,5 @@
 ======================================
-|   user conditions   (YAAAAAAAAWN!) |
+|   user agreement   (YAAAAAAAAWN!) |
 ======================================
 in short:
 			It is that your spectra are crap, not the script.
@@ -70,3 +70,5 @@ The program contains no viruses.
   Berlin, Earth,
 
      2021 AC
+
+      agree?
