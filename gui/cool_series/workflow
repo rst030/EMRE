@@ -1,0 +1,7 @@
+GUI for the temperature series.
+What do we need?
+A window with buttons and fields.
+A panel with a CV Plotter with a cyclic voltammogram.
+
+Knobs.
+Start potential, end potential, things like these.
