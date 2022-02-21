@@ -14,7 +14,10 @@ import sys
 try:
     import Tkinter as tk
 except ImportError:
-    import tkinter as tk
+    try:
+        import tkinter as tk
+    except ImportError:
+        import tk
 
 try:
     import ttk
