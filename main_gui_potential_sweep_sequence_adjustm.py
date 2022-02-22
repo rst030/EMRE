@@ -40,6 +40,7 @@ import glob # location of files in folders
 
 DURATIONOFTRANSIENTSEC = 10 # duration of the current transient for charging and discharging
 ACCUMULATEDSPECTRAFILENAMES = [] # list of paths to finished scans
+keepPotTime = 30 # Potential is applied for this time after finishing the RT measurements during freezing
 
 
 class main_gui:
@@ -820,7 +821,7 @@ def cw_scan_sequence_autohotkey(self,filepath, datapath, nscans,i): # nscans is 
             break
             
     # hopefully shut down the pstat output before the electrolyte freezes
-    sleep(30) # manually input waiting time to shut the pstat off
+    sleep(keepPotTime) # Waiting time to shut the pstat off
     print('keithley sets the potential to 0 V and shuts the output down for cooling')
     self.spectrometer_communicator.pstat.output_off()
     
@@ -857,7 +858,7 @@ def cw_scan_sequence_autohotkey(self,filepath, datapath, nscans,i): # nscans is 
 
             break
             
-    # files for cooled spectra are collected in the main function because of different timestamp
+    #
     
     
     
