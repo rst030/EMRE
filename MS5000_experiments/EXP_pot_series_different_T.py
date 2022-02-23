@@ -15,17 +15,17 @@
 # - Existing files of the form '*dummy.xls' in the 'Potential Series' are counted before the measurement and do not have to be deleted before
 #
 # 2. Hotkey:
-# - Make sure the script '...' from the Desktop is running before starting the measurement
+# - Make sure the script 'AUTOEMRESequence' from the Desktop is running before starting the measurement
 #
 # 3. Set up the cwEPR parameters:
-# - In ESR studio in the tab 'Recipe Editor' you will find the recipe 'pot_step_RT' and 'pot_step_cooled'. Change the cwEPR settings there to setup the experiment and save the recipies.
+# - In ESR studio in the tab 'Recipe Editor' you will find the recipe 'RT_pot_step' and 'Cooled_pot_step'. Change the cwEPR settings there to setup the experiment and save the recipies.
 #   The number of Scans for room temperature has to be at minimum 2. If you only care about the spectra after freezing, you do not have to change the 'pot_step_RT'.
-# - If the sample is sensitive fields of 337mT or powers of 0.01mW you have to adjust the recipe 'pot_RT_dummy'!
+# - If the sample is sensitive fields of 337mT or powers of 0.01mW you have to adjust the recipe 'RT_dummy_spec' and 'Dummy_spec'!
 #
 # 4. Set up the temperature parameters:
 # - In ESR studio in the tab 'Sequence Editor' you will find the sequences 'Unnamed' and 'Mundane', where the former one is used for spectrums at RT and frozen and the latter
 #   is used for only frozen spectra (it has the recipe 'pot_RT_dummy' already set up)
-# - By editing the sequence and clicking to the first step 'Automated_...' you can access the parent parameters of the cycle and adjust the 'ambientT', 'coolT' and 'waittime'.
+# - By editing the sequence and clicking to the first step 'Automated_...' you can access the parent parameters of the cycle and adjust the 'ambientT', 'frozenT', 'waittime' and 'pottime'.
 # - Save the sequence and check for errors. Leave the tab 'Sequence editor' open!
 #
 #
