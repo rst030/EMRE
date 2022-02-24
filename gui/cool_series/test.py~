@@ -1,0 +1,26 @@
+import pathlib
+import tkinter as tk
+import tkinter.ttk as ttk
+import pygubu
+
+
+class NewprojectApp:
+    def __init__(self, master=None):
+        self.builder = builder = pygubu.Builder()
+        builder.add_from_file('/PycharmProjects/electron-magnetic-resonance-environment/gui/cool_series/cool_series_g.ui')
+        self.mainwindow = builder.get_object('mainwindow', master)
+        builder.connect_callbacks(self)
+    
+    def run(self):
+        self.mainwindow.mainloop()
+
+    def callback(self, event=None):
+        pass
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = NewprojectApp(root)
+    app.run()
+
+
