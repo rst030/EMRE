@@ -496,6 +496,13 @@ class main_gui:
         self.spectrometer_communicator = communication.new_communicator('',self.cvPlotter)  # create a communicator with NI-VISA
         #MESS!
 
+        ## TEMP: Emre's right hand appears now.
+        import emres_right_hand
+        hand = emres_right_hand.emres_right_hand() # just initiatenit. When press on connect to spectrometer
+        for i in range(25):
+            hand.move(125+10*i,500)
+        hand.click(500,500)
+
     def send_initial_parameters_to_hardware(self):
 
         # ############################ sending initial parameters to spectrometer here #################################

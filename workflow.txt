@@ -385,3 +385,43 @@ potential current time
     plotting: add https://pypi.org/project/mpldatacursor/
     datacursor
 
+02/03/22
+    we go for scripts/
+    we want to use python scripts to run experiments.
+    for example, an experiment can be a class.
+    it has to be a class.
+    But one has to be able to change this class.
+    It is going to be "unstable"
+    but who ever cared about it?
+
+    what do we do:
+
+    it is magnettech. MS5000. It has ESRStudio.
+    it has to be controlled.
+    some things have to be set up by a human.
+    There can be an API. Fuck that. For now.
+
+    right_hand can be the module that presses certain buttons.
+    Again, autohotkey is doing the job for now so its okay.
+
+    what would exp look like:
+
+    импортировать спектрометр?
+
+    ок эмре сидит за компьютером и нажимает на кномки.
+    a file for experiment would be like this:
+
+    import emres_right_hand # the thing that clicks buttons
+    class my_experiment:
+    def __init__()
+        # scan an epr scan
+        potentiostat.set_potential()
+        emres_right_hand.cooldown()
+        emres_right_hand.scan_epr()
+
+
+
+
+    class experiment()
+        communicator: communicator
+
