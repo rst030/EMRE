@@ -6,7 +6,7 @@ import communication
 class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__() # Call the inherited classes __init__ method
-        uic.loadUi('EMRE_MS5000.ui', self) # Load the .ui file
+        uic.loadUi('EMRE.ui', self) # Load the .ui file
         self.show() # Show the GUI
 
         # initialization of buttons and labels:

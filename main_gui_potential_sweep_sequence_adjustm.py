@@ -38,6 +38,8 @@ import os
 import keyboard # AUTOEMRE
 import glob # location of files in folders
 
+
+# Global variables -> remove this all to the scripting files!
 DURATIONOFTRANSIENTSEC = 10 # duration of the current transient for charging and discharging
 ACCUMULATEDSPECTRAFILENAMES = [] # list of paths to finished scans
 keepPotTime = 30 # Potential is applied for this time after finishing the RT measurements during freezing

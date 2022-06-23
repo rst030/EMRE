@@ -7,6 +7,7 @@ import pyvisa as visa
 from time import sleep
 from datetime import datetime  # this thing gets current time
 import Plotter
+import random # for fake data
 
 CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
 
@@ -21,7 +22,7 @@ class pstat (object):
     plotter = Plotter.Plotter
 
 
-    def __init__(self, rm: visa.ResourceManager, model: str, plotter: Plotter.CvPlotter): # when create a lia you'd better have a resource manager already working
+    def __init__(self, rm: visa.ResourceManager, model: str, plotter: Plotter.Plotter): # when create a lia you'd better have a resource manager already working
         '''create an instance of the pstat object''' # создать объект потенциостата.
         self.rm = rm
         self.connect(model)
@@ -49,7 +50,7 @@ class pstat (object):
         self.print(response)
 
         self.plotter = plotter #
-        self.plotter.subplot.set_title('TEST')
+        self.plotter.axes.set_title('TEST')
         tstx = [-1, 0, 1, 2, 3]
         tsty = [1, 0, 3, 5, 3.14159265358979323846264338327950288419716939937510]
         self.plotter.plotCvData(tstx,tsty)
@@ -193,13 +194,15 @@ class pstat (object):
         
         self.write(':SOUR:VOLT %.3f' % voltage_in_volts)
         #self.write(':TRAC:CLEAR')
-        currentString = self.device.query('MEASure:CURRent:DC?') # 1 point it is supposed to be.
+        try:
+            currentString = self.device.query('MEASure:CURRent:DC?') # 1 point it is supposed to be.
+        except:
+            return random.randint(0,100)
         #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
         #currentString = self.read() instead of query if you want to wait for a few plc. 
         #print(currentString) # temp
         current = float(currentString)#np.mean(np.array(self.read().split(',')).astype(float))
         return current
-
 
 
 
@@ -327,7 +330,8 @@ class pstat (object):
         current_transient_file.write('\n'+dt+'\n')
         current_transient_file.write('dt = %.3e s, t = %.3e s\n'%(interval,durationInSeconds))
         current_transient_file.close()                                                      
-        
+
+    #todo: chg/dcg potentiometry with voltage limits
         
     def print(self,s:str):
         print('- Keithley 2450-EC >> : %s'%s)

@@ -18,17 +18,21 @@ import bh_15   # field controller class
 import keithley_pstat  # potentiostat keithley model 2450 source meter
 import agilent_53181a  # frequency counter class.
 import Plotter
+import emres_right_hand
 
-class new_communicator(object):
+class communicator(object):
     rm = 0 # no resource manager for beginning
     lockin = lock_in.lockin
     field_controller = bh_15.bh_15
     keithley_pstat = keithley_pstat.pstat
     frequency_counter = agilent_53181a.agilent_frequency_counter
+    right_hand = emres_right_hand.emres_right_hand
+
+    devices_list = [lockin,field_controller,keithley_pstat,frequency_counter] # to be expanded
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
-    def __init__(self, backend, cvPlotter: Plotter.CvPlotter):
+    def __init__(self, backend, cvPlotter: Plotter.Plotter):
         '''The constructor of the communicator class.'''
         # visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
@@ -36,57 +40,15 @@ class new_communicator(object):
         # populating devices:
         self.lockin = lock_in.lockin(rm = self.rm, model = '810') # creating lia, that easy.
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
-        self.pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy
+        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
+        self.right_hand = emres_right_hand.emres_right_hand()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def list_devices(self):
+        '''list all available devices'''
+        for device in self.devices_list:
+            device.print(device,'>')
 
 
 class old_communicator (object):

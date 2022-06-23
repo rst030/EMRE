@@ -1,4 +1,4 @@
-# emre's right hand. it is glued to a mouse with Fixogum. It can move the mouse and clicks buttons on screen.
+# Emre's right hand. it is glued to a mouse with Fixogum. It can move the mouse and clicks buttons on screen.
 
 import pyautogui # Emre's right hand
 import math # sin(a), cos(m_0)
@@ -21,7 +21,7 @@ class emres_right_hand(object):
         self.print('Mouse at [%d,%d]'%(self.currentMouseX, self.currentMouseY))
 
     def print(self,s: str):
-        reporter = 'EMRE: '
+        reporter = 'EMRE''s right hand: '
         print(reporter,s)
 
     def move(self,x,y): # move mouse to x,y
@@ -32,3 +32,7 @@ class emres_right_hand(object):
         pyautogui.moveTo(x,y) # first move
         pyautogui.leftClick() # and click there.
         self.print('clicked at %d %d'%(x,y))
+
+    def start_magnettech_sequence(self,x,y):
+        self.click(x=x,y=y)
+        self.print('\nhacking the ESR studio ........................................... [100%]\n')

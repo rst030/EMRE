@@ -173,3 +173,6 @@ class lockin (object):
     def get_freqdet(self):  # gives the detection frequency
         self.write('FREQDET?')
         return float(self.read())
+
+    def print(self,s:str):
+        print('- LIA >> : %s'%s)

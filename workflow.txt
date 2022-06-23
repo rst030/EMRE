@@ -425,3 +425,28 @@ potential current time
     class experiment()
         communicator: communicator
 
+09/03/22
+    so be it.
+    we have pyqt5 ui.
+    it is /gui/main/EMRE_MS5000.ui
+    lets import it instead of the header in the main file.
+    TODO: import EMRE_MS5000.ui with PyQt5 and run it.
+
+09/06/22
+https://stackoverflow.com/questions/48099359/embedding-matplotlib-figure-in-qtdesigner-gui
+- how to insert a matplotlib into a qtdesigner
+https://nitratine.net/blog/post/how-to-import-a-pyqt5-ui-file-in-a-python-gui/
+- how to import the ui file
+
+- how to import a python module dynamically
+x = reload(__import__(mod))eters
+    except ImportError:
+        print "bargh! import error!"
+        continue
+    try:
+        cls = getattr(x,'qux')
+    except AttributeError:
+        continue
+
+a = cls()
+print a.__class__.__name__
