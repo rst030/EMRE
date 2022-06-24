@@ -27,14 +27,14 @@ class experiment():
         pstat = comm.keithley_pstat
         right_hand = comm.right_hand 
         
-        # ------------------------------------------------ give parameters here ----------------------------------------
+        # ------------------------------------------------ give parameters here: ----------------------------------------
         
-        self.numCvCyclesToGo = 2 #how many degradtion cycles
-        lowPotential = 0.2
-        highPotential = 1.2
+        self.numCvCyclesToGo = 128 #how many degradtion cycles
+        lowPotential = -1.0
+        highPotential = 2.8
         rate = 100
-        filePathToSaveCVs = './DATA/CV/220623/' # without extension (.csv is added automatically)
-        filePathToSaveEPRs = './DATA/EPR/220623/' # where to search for the ESR studio files (specify it in ESRstudio!)
+        filePathToSaveCVs = './DATA/CV/220623_TEMPOL/' # without extension (.csv is added automatically)
+        filePathToSaveEPRs = './DATA/EPR/220623_TEMPOL/' # where to search for the ESR studio files (specify it in ESRstudio!)
         
         # --------------------------------------------------------------------------------------------------------------
         # ---------------------- the main exmeriment sequence is happening here ----------------------------------------
