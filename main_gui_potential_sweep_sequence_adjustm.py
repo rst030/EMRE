@@ -1,4 +1,4 @@
-"""this is the main gui for the epr script.
+"""this *was* the main gui for the epr script.
 it has plotter and buttons. buttons control the experiment."""
 
 #! /usr/bin/env python

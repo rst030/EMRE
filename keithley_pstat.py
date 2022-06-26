@@ -14,7 +14,7 @@ CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
 class pstat (object):
     model = '2450'                    # default model is 2450 that is the pstat at Lyra
     address = 'GPIB0::18::INSTR'      # and this is its GPIB address
-    usb_address = 'USB0::0x05E6::0x2450::04431893::INSTR' # this is its usb_address
+    usb_address = 'USB0::0x05E6::0x2450::04509830::INSTR' # this is its usb_address
     device = visa.Resource            # pyvisa device that is populated with the constructor
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
