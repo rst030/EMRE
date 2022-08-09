@@ -6,15 +6,43 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1055</width>
+    <width>1143</width>
     <height>600</height>
    </rect>
   </property>
+  <property name="cursor">
+   <cursorShape>ArrowCursor</cursorShape>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Electron Magnetic Resonance Environment v.2.1</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>icons/icon.png</normaloff>icons/icon.png</iconset>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>12</number>
+    </property>
+    <property name="topMargin">
+     <number>12</number>
+    </property>
+    <property name="rightMargin">
+     <number>12</number>
+    </property>
+    <property name="bottomMargin">
+     <number>12</number>
+    </property>
+    <property name="spacing">
+     <number>9</number>
+    </property>
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="sizeConstraint">
@@ -24,6 +52,15 @@
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QPushButton" name="connect_button">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
           <property name="text">
            <string>connect</string>
           </property>
@@ -31,6 +68,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="load_button">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Load Script</string>
           </property>
@@ -38,8 +81,40 @@
         </item>
         <item>
          <widget class="QLabel" name="infoLabel">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>EMRE</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="CV_button">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>CV</string>
           </property>
          </widget>
         </item>
@@ -58,8 +133,17 @@
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
           <item>
            <widget class="QPushButton" name="initialize_button">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="text">
              <string>Initialize</string>
             </property>
@@ -67,6 +151,12 @@
           </item>
           <item>
            <widget class="QPushButton" name="run_button">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="contextMenuPolicy">
              <enum>Qt::NoContextMenu</enum>
             </property>
@@ -84,21 +174,42 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_EPR_plotter">
           <item>
-           <widget class="QWidget" name="EPR_plotter_widget" native="true"/>
+           <widget class="QWidget" name="EPR_plotter_widget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_CV_plotter">
           <item>
-           <widget class="QWidget" name="CV_plotter_widget" native="true"/>
+           <widget class="QWidget" name="CV_plotter_widget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_CHG_plotter">
           <item>
-           <widget class="QWidget" name="CHG_plotter_widget" native="true"/>
+           <widget class="QWidget" name="CHG_plotter_widget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>300</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -113,7 +224,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1055</width>
+     <width>1143</width>
      <height>22</height>
     </rect>
    </property>
