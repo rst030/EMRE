@@ -29,12 +29,12 @@ class experiment():
         
         # ------------------------------------------------ give parameters here: ----------------------------------------
         
-        self.numCvCyclesToGo = 128 #how many degradtion cycles
-        lowPotential = -1.0
-        highPotential = 2.8
+        self.numCvCyclesToGo = 80 #how many degradtion cycles
+        lowPotential = 0.2
+        highPotential = 1.0
         rate = 100
-        filePathToSaveCVs = './DATA/CV/220623_TEMPOL/' # without extension (.csv is added automatically)
-        filePathToSaveEPRs = './DATA/EPR/220623_TEMPOL/' # where to search for the ESR studio files (specify it in ESRstudio!)
+        filePathToSaveCVs = './DATA/CV/220713_Joshi/' # without extension (.csv is added automatically)
+        filePathToSaveEPRs = './DATA/EPR/220713_Joshi/' # where to search for the ESR studio files (specify it in ESRstudio!)
         
         # --------------------------------------------------------------------------------------------------------------
         # ---------------------- the main exmeriment sequence is happening here ----------------------------------------
