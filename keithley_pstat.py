@@ -14,7 +14,8 @@ CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
 class pstat (object):
     model = '2450'                    # default model is 2450 that is the pstat at Lyra
     address = 'GPIB0::18::INSTR'      # and this is its GPIB address
-    usb_address = 'USB0::0x05E6::0x2450::04509830::INSTR' # this is its usb_address
+#    usb_address = 'USB0::0x05E6::0x2450::04509830::INSTR' # this is its usb_address of the new pstat
+    usb_address = 'USB0::0x05E6::0x2450::04431893::INSTR' # this is its usb_address of the new pstat
     device = visa.Resource            # pyvisa device that is populated with the constructor
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
@@ -284,7 +285,7 @@ class pstat (object):
         self.write(':SENS:FUNC \"CURR\"') # measure current
         self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA
         self.write('SENSe:COUNt 1') # 1 point to record
-        self.write(':OUTP ON')
+        self.write(':OUTP OFF')
         
     def TakeChargingTransient(self, potentialToSet: float, durationInSeconds: float, filePath:str):
         # taking the current transient.
