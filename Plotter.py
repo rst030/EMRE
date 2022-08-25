@@ -9,7 +9,10 @@ mpl window is imbedded into the parent that has to be passed to the constructor.
 
 import matplotlib
 import numpy
+
+import chg
 import cw_spectrum
+import cv
 
 matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
@@ -17,6 +20,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from PyQt5.QtWidgets import QSizePolicy
+
+import tkinter as tk # window to be able to save plots
 import math
 
 class Plotter(FigureCanvas):
@@ -28,6 +33,7 @@ class Plotter(FigureCanvas):
 
     def __init__(self, parent=None):
         #plt.style.use('dark_background')
+        #matplotlib.interactive(True)
         fig = Figure(figsize=(16,16),dpi=100)
         self.axes = fig.add_subplot(111)
         fig.subplots_adjust(left = 0.18, right=0.99, top=0.94, bottom=0.1)
@@ -72,11 +78,11 @@ class Plotter(FigureCanvas):
         self.xlabel = 'Volttage [V]'
         self.ylabel = 'Current [A]'
         self.title = 'CV'
-        # plot sample cv
-        voltages_for_dummy_cv = [numpy.linspace(0,1,100),numpy.linspace(1,0,100)]
-        currents_for_dummy_cv = numpy.sin(numpy.array(voltages_for_dummy_cv)*2*numpy.pi)
-        self.plotCvData(voltages=voltages_for_dummy_cv,currents=currents_for_dummy_cv)
         self.axes.grid()
+
+        # plot sample cv
+        cvDummy = cv.cv('./dummies/DEPOSITION_DEMO.csv')
+        self.plotCv(cvDummy)
 
 
 
@@ -85,7 +91,10 @@ class Plotter(FigureCanvas):
         self.xlabel = 'Time [s]'
         self.ylabel = 'Voltage [V]'
         self.title = 'CHG'
-        self.compute_initial_figure()
+        self.axes.grid()
+        chgDummy = chg.chg('./dummies/220425chg1x3.csv')
+        self.plotChgData(chgDummy)
+
 
     def plotCvData(self, voltages, currents):
         self.axes.cla()
@@ -94,6 +103,32 @@ class Plotter(FigureCanvas):
         self.axes.set_title(self.title)
 
         self.axes.plot(voltages, currents, 'm+:', linewidth=1)
+        self.axes.autoscale(True)
+        self.update_plotter()
+
+    def plotChgData(self, chgInput: chg.chg):
+        xValues = chgInput.time
+        yValues = chgInput.voltage
+        self.clear()
+        self.axes.plot(xValues,yValues)
+        self.axes.autoscale(True)
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_ylabel(self.ylabel)
+        self.axes.set_title(self.title)
+        self.axes.grid()
+        self.update_plotter()
+
+
+    def plotCv(self,cvToPlot:cv):
+        voltages = cvToPlot.voltage
+        currents = cvToPlot.current
+        self.title = cvToPlot.filename
+
+        self.axes.cla()
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_ylabel(self.ylabel)
+        self.axes.set_title(self.title)
+        self.axes.plot(voltages, currents, 'k-', linewidth=1)
         self.axes.autoscale(True)
         self.update_plotter()
 

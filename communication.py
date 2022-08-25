@@ -1,5 +1,5 @@
 '''
-    This is the communicator class that will unify the communication between all our devices.
+    This is the communicator class that unifies the communication between all our devices.
     Devices are fields of the communicator. Once device is connected, its methods can be applied.
     Looks like we need to inherit devices from the visa.resource_pyclass and use proper constructors.
     For that we will need a real programmer who knows what they are doing.
@@ -32,7 +32,7 @@ class communicator(object):
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
-    def __init__(self, backend, cvPlotter: Plotter.Plotter):
+    def __init__(self, backend, cvPlotter: Plotter.Plotter): #  BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
         '''The constructor of the communicator class.'''
         # visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
@@ -40,7 +40,7 @@ class communicator(object):
         # populating devices:
         self.lockin = lock_in.lockin(rm = self.rm, model = '810') # creating lia, that easy.
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
-        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy
+        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
         self.right_hand = emres_right_hand.emres_right_hand()
 

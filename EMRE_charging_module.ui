@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>CV Utility</string>
+   <string>CHG Utility</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout" rowstretch="0">
@@ -79,7 +79,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Low [mV] :</string>
+             <string>Charge [uA]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -87,7 +87,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="low_edit">
+           <widget class="QLineEdit" name="chg_edit">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -98,7 +98,7 @@
              <string/>
             </property>
             <property name="text">
-             <string>-50</string>
+             <string>10</string>
             </property>
            </widget>
           </item>
@@ -115,7 +115,7 @@
              </size>
             </property>
             <property name="text">
-             <string>High [mV] :</string>
+             <string>Discharge [uA]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -123,7 +123,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="high_edit">
+           <widget class="QLineEdit" name="dcg_edit">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -131,7 +131,7 @@
              </size>
             </property>
             <property name="text">
-             <string>900</string>
+             <string>-10</string>
             </property>
            </widget>
           </item>
@@ -151,7 +151,7 @@
              <enum>QFrame::NoFrame</enum>
             </property>
             <property name="text">
-             <string>№ scans :</string>
+             <string>high [mV]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -159,7 +159,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="n_edit">
+           <widget class="QLineEdit" name="high_edit">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -167,7 +167,7 @@
              </size>
             </property>
             <property name="text">
-             <string>10</string>
+             <string>760</string>
             </property>
            </widget>
           </item>
@@ -184,7 +184,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Rate* [mV/s] :</string>
+             <string>low [mV]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -192,7 +192,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="rate_edit">
+           <widget class="QLineEdit" name="low_edit">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -200,7 +200,43 @@
              </size>
             </property>
             <property name="text">
-             <string>50</string>
+             <string>80</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>№ cycles</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="ncycles_edit">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="inputMask">
+             <string/>
+            </property>
+            <property name="text">
+             <string>2</string>
             </property>
            </widget>
           </item>

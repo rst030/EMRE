@@ -8,6 +8,8 @@ from time import sleep
 from datetime import datetime  # this thing gets current time
 import Plotter
 import random # for fake data
+import cv # a CV object, for saving and running a cv
+import chg # a CHG object, for saving and running a chg
 
 CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
 
@@ -22,6 +24,8 @@ class pstat (object):
 
     plotter = Plotter.Plotter
 
+    # emergency stop break handle
+    GlobalInterruptFlag = False
 
     def __init__(self, rm: visa.ResourceManager, model: str, plotter: Plotter.Plotter): # when create a lia you'd better have a resource manager already working
         '''create an instance of the pstat object''' # создать объект потенциостата.
@@ -101,13 +105,13 @@ class pstat (object):
         self.beep_tone(1413,0.1)
 
     def play_tune(self):
-        for offtune in range(66):
+        for offtune in range(5):
             for _ in range(1):
                 # happy C goes wild:
                 self.beep_tone(523.251+ 35*offtune, 0.005)
                 self.beep_tone(783.991+ 35*offtune, 0.005)
                 self.beep_tone(659.255+ 35*offtune, 0.005)
-        for offtune in range(66,0,-1):
+        for offtune in range(5,0,-1):
             for _ in range(1):
                 # happy C goes wild:
                 self.beep_tone(523.251+ 35*offtune, 0.005)
@@ -121,8 +125,6 @@ class pstat (object):
         # nope, we just set the measurement and trigger it maually.
 
         self.write('SOUR:VOLT %.3f'%voltage_in_volts)
-
-
 
         # Set the transient meas. duration loop for duration_in_seconds s, no delay (167 ns), saving to buf100
         # :TRIGger:LOAD "DurationLoop"
@@ -184,16 +186,38 @@ class pstat (object):
     def configureCv(self):
         #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
         self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
-        self.print('goddamnit i am quick')
+        self.print('goddamnit I am quick')
         self.write(':SENS:FUNC \"CURR\"') # measure current
         self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA typically
         self.write('SENSe:COUNt 1') # 1 point to record
         self.print('CV measurement configured. Turning output ON. Jesus Christ saves your battery.')
         self.write(':OUTP ON')
 
-    def getCvPoint(self, voltage_in_volts):
+    def configureCHG(self,absoluteValueOfVoltageLimit: float):
+        self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
+        self.write(':SENS:FUNC \"VOLT\"') # measure volts
+        self.write(':SOUR:CURR:VLIM %.4f' % absoluteValueOfVoltageLimit)  # 100 mA typically
+
+        #todo: set it up on a working machine. the voltage limit of the current source!!!
+
+    def getCHGpoint(self, current_in_amps):
+        # setting the current
+        self.write(':SOUR:CURR %.3f' % current_in_amps)
+        try:
+            voltageString = self.device.query('MEASure:VOLTage:DC?') # 1 point it is supposed to be.
+        except:
+            return random.randint(50,790)/1000
+        #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
+        #currentString = self.read() instead of query if you want to wait for a few plc.
+        #print(currentString) # temp
+        voltage = float(voltageString)#np.mean(np.array(self.read().split(',')).astype(float))
+        return voltage
+
+
+    def getCvPoint(self, voltage_in_volts: float, sleeptime: float):
         
         self.write(':SOUR:VOLT %.3f' % voltage_in_volts)
+        sleep(sleeptime) # if CV intensity behaves weirdly vs your scan rate, the problem may be in this line.
         #self.write(':TRAC:CLEAR')
         try:
             currentString = self.device.query('MEASure:CURRent:DC?') # 1 point it is supposed to be.
@@ -206,10 +230,68 @@ class pstat (object):
         return current
 
 
+    def TakeCV(self, cv_input:cv.cv, plotter: Plotter.Plotter):
+        '''take a cv curve with parameters specified in the given cv.cv. plot in the given  plotter'''
+        cvTaken = cv_input
+
+        self.plotter = plotter # plot cv in the plotter that is given as argument
+
+        # do the electrochemical business here
+        nStepsUp = 128 # n steps in voltages when going up in potentials
+
+        # delay time arithmetics. It took 184.440660 - 0.000225 s to complete 10 scans of 2 volts each.
+        # that makes it 20 volts per 184.440435 s that is 0.10843609211830367 V/S = 108 mV/s,
+        # the MAX rate limited by the matplotlib at my x220. Stupid but I dont have another machine now.
+        # so what is the default delay that it is adding? 0.06 ... 0.11 s per point.
+        # i guess id not plot it at all then, but I have to see the stuff.
+        # using a thread would be a great option
+        # but anyways, if plotted every 5 points the delay is OKAY.
+        # how much to wait every time I get a CV?
+
+        scanWidthInMv = cvTaken.high_voltage_point - cvTaken.low_voltage_point # in mV
+        rateInMvPerSecond = cvTaken.scan_rate # in millivolts per second
+        numberOfPointsInScan = nStepsUp
+        delayBetweenPointsInSeconds = scanWidthInMv / rateInMvPerSecond / numberOfPointsInScan
+
+        # considering that fucking matplotlib delay
+        if delayBetweenPointsInSeconds < 0.1: #second
+            delayBetweenPointsInSeconds = 0
+        else:
+            delayBetweenPointsInSeconds = delayBetweenPointsInSeconds - 0.1
+
+        # make vector with potentials
+        pot_up_vector = np.linspace(cvTaken.low_voltage_point, cvTaken.high_voltage_point, nStepsUp)
+        pot_down_vector = np.linspace(cvTaken.high_voltage_point, cvTaken.low_voltage_point, nStepsUp)
+        pot_vector = np.concatenate((pot_up_vector,pot_down_vector),axis = 0)
+
+        starttime = datetime.now()  # get current time. start of the cv
+        cvTaken.datetime = str(starttime)
+
+        # ELECTRICITY ON!
+        self.configureCv()
+        for _ in range(cvTaken.n_cycles):
+
+            for i in range(len(pot_vector)):
+                potential = pot_vector[i]
+                cvTaken.voltage.append(potential)
+                current = self.getCvPoint(voltage_in_volts=potential,sleeptime = delayBetweenPointsInSeconds)
+                cvTaken.current.append(current)
+                reltime = (datetime.now() - starttime).total_seconds()
+                cvTaken.time.append(reltime) # relative time in microseconds
+                if i%1 == 0: # how often to plot. Each point is ok for now but that would be a constant delay!!!
+                    self.plotter.plotCvData(cvTaken.voltage, cvTaken.current)
+
+                self.plotter.title = 'cycle %d/%d' % (_+1, cvTaken.n_cycles)
+                # emergency stop break:
+                if self.GlobalInterruptFlag:
+                    self.GlobalInterruptFlag = False
+                    return cvTaken
+
+        return cvTaken
+
+    def TakeCV_the_old_way(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
 
 
-    def TakeCV(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
-        
         nstepsup = 100
         dv = (highPotential-lowPotential)/nstepsup # step in voltages assuming nstepsup steps up and 100 down
         R = rate / 1000 # in volts per second.
@@ -277,7 +359,68 @@ class pstat (object):
 
         f2w.close()
         
-        
+
+
+
+    def TakeCHG(self, chg_input:chg.chg, plotter: Plotter.Plotter):
+        '''take a chg cycle with parameters specified in the given chg.chg. plot in the given  plotter'''
+        chgTaken = chg_input
+
+        self.plotter = plotter # plot cv in the plotter that is given as argument, switchable SNOUT!
+
+        highVoltageLimit = chg_input.high_voltage_level
+        lowVoltageLimit = chg_input.low_voltage_level
+
+        starttime = datetime.now()  # get current time. start of the cv
+        chgTaken.datetime = str(starttime)
+
+        # ELECTRICITY ON!
+        for _ in range(chgTaken.n_cycles):
+            # do chg until the high limit ---- CHG CHG CHG CHG CHG CHG CHG CHG CHG ----
+            self.configureCHG(absoluteValueOfVoltageLimit=highVoltageLimit)  # go set the knobs there
+            measuredVoltage = -65535  # for sure less than the high limit
+
+            while measuredVoltage < highVoltageLimit:
+                currentToApply = chg_input.chg_current # charging with the chg current of the passed chg object
+                reltime = (datetime.now() - starttime).total_seconds()
+                chgTaken.time.append(reltime)
+                chgTaken.current.append(currentToApply)
+                measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
+                chgTaken.voltage.append(measuredVoltage)
+
+                # keep plotting
+                self.plotter.plotChgData(chgTaken)
+                self.plotter.title = 'CHG %d/%d | %.1f / %.1f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
+
+                # emergency stop break:
+                if self.GlobalInterruptFlag:
+                    self.GlobalInterruptFlag = False
+                    return chgTaken
+
+
+            # then do dcg until the low limit ---- DCG DCG DCG DCG DCG DCG DCG DCG ----
+            self.configureCHG(absoluteValueOfVoltageLimit=lowVoltageLimit)  # go set the knobs there
+            measuredVoltage = 65535  # for sure less than the high limit
+
+            while measuredVoltage > lowVoltageLimit:
+                currentToApply = chg_input.dcg_current  # discharging with the dcg current of the passed chg object
+                reltime = (datetime.now() - starttime).total_seconds()
+                chgTaken.time.append(reltime)
+                chgTaken.current.append(currentToApply)
+                measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
+                chgTaken.voltage.append(measuredVoltage)
+
+                # keep plotting
+                self.plotter.plotChgData(chgTaken)
+                self.plotter.title = 'DCG %d/%d | %.1f / %.1f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
+
+                # emergency stop break:
+                if self.GlobalInterruptFlag:
+                    self.GlobalInterruptFlag = False
+                    return chgTaken
+
+        return chgTaken
+
     def ConfigureForTransient(self):
         #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
         self.write('TRAC:MAKE \"CYKA_BLYAT\", 65535')  # create buffer with n points
@@ -335,4 +478,4 @@ class pstat (object):
     #todo: chg/dcg potentiometry with voltage limits
         
     def print(self,s:str):
-        print('- Keithley 2450-EC >> : %s'%s)
+        print('Keithley 2450-EC >> : %s'%s)

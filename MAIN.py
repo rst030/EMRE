@@ -8,6 +8,7 @@ import os.path
 import importlib.util
 import tkinter as tk
 import cvUtility
+import chgUtility
 
 class Ui(QtWidgets.QMainWindow):
     '''the main User Interface window.'''
@@ -28,7 +29,11 @@ class Ui(QtWidgets.QMainWindow):
         # binding methods to buttons:
         self.connect_button.clicked.connect(self.connect_to_spectrometer)  # Remember to pass the definition/method, not the return value!
         self.load_button.clicked.connect(self.load_script)  # Remember to pass the definition/method, not the return value!
-        self.CV_button.clicked.connect(self.open_CV_utility)  # Remember to pass the definition/method, not the return value!
+
+        self.CV_button.clicked.connect(self.open_CV_utility)  # cycling utility, use it for deposition and cleaning of your DIRTY FILMS
+        self.CHG_button.clicked.connect(self.open_CHG_utility)  # charging utility, use it for testing your batteries (charge-discharge cycling)
+
+
         self.initialize_button.clicked.connect(self.initialize_experiment)  # Remember to pass the definition/method, not the return value!
         self.run_button.clicked.connect(self.run_experiment)
 
@@ -84,11 +89,15 @@ class Ui(QtWidgets.QMainWindow):
 
         self.script = importlib.util.module_from_spec(spec) # script is a field of EMRE. Just in case.
         spec.loader.exec_module(self.script)
-        self.infoLabel.setText('user module loaded')
+        self.infoLabel.setText('user module loaded:\n%s' % os.path.basename(self.scriptPath))
 
     def open_CV_utility(self):
         ''' opens the CV GUI with CV the plotter in it.'''
-        self.CVgui = cvUtility.CyclingUi()
+        self.CVgui = cvUtility.CyclingUi(self.communicator.keithley_pstat)
+
+    def open_CHG_utility(self):
+        ''' opens the CHG GUI with the CHG plotter in it.'''
+        self.CHGgui = chgUtility.ChargingUi(self.communicator.keithley_pstat)
 
     def initialize_experiment(self):
         '''sends the initial parameters to the spectrometer.
