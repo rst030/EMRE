@@ -11,21 +11,25 @@ import random # for fake data
 import cv # a CV object, for saving and running a cv
 import chg # a CHG object, for saving and running a chg
 
-CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
+#CURRENTSENSITIVITYLIMIT = 5e-3 # change it for different samples
 
 class pstat (object):
+    type = 'potentiostat'
     model = '2450'                    # default model is 2450 that is the pstat at Lyra
-    address = 'GPIB0::18::INSTR'      # and this is its GPIB address
-#    usb_address = 'USB0::0x05E6::0x2450::04509830::INSTR' # this is its usb_address of the new pstat
-    usb_address = 'USB0::0x05E6::0x2450::04431893::INSTR' # this is its usb_address of the new pstat
+
+    address = []
+    address.append('USB0::0x05E6::0x2450::04509830::INSTR') # this is its usb_address of the new pstat
+    address.append('USB0::0x05E6::0x2450::04431893::INSTR') # this is its usb_address of the old pstat
+    address.append('USB0::1510::9296::04509830::0::INSTR')  # this is its usb_address of the old pstat
+    address.append('GPIB0::18::INSTR')  # and this is its GPIB address when connected to lyra
+
     device = visa.Resource            # pyvisa device that is populated with the constructor
-    rm = 0                            # visa resource manager
+    rm = visa.ResourceManager         # visa resource manager, the communicator makes it
     fake = False                      # use simulated outputs. Used for testing outside the lab.
 
-    plotter = Plotter.Plotter
+    plotter = Plotter.Plotter         # a potentiostat has a plotter object that has to be assigned when connected.
 
-    # emergency stop break handle
-    GlobalInterruptFlag = False
+    GlobalInterruptFlag = False       # emergency break handle
 
     def __init__(self, rm: visa.ResourceManager, model: str, plotter: Plotter.Plotter): # when create a lia you'd better have a resource manager already working
         '''create an instance of the pstat object''' # создать объект потенциостата.
@@ -38,13 +42,13 @@ class pstat (object):
         self.write('DISP:SCR SWIPE_GRAP')
         self.write('SENS:CURR:RSEN ON') # 4 WIRE SENSING MODE.
         self.write('SENS:FUNC \'CURR\'')
-        self.write('SENS:CURR:RANG:AUTO OFF')
-        self.write('SENS:CURR:RANG %.4f'%CURRENTSENSITIVITYLIMIT)
+        self.write('SENS:CURR:RANG:AUTO ON')
+        #self.write('SENS:CURR:RANG %.4f' % (1e-3))
         self.write('SENS:CURR:UNIT AMP') # double check it
         self.write('SENS:CURR:OCOM ON')
         self.write('SOUR:FUNC VOLT')
         self.write('SOUR:VOLT 0')
-        self.write('SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT)
+        self.write('SOUR:VOLT:ILIM %.4f'%(100e-6))
         
         self.write('COUNT 1') # 1 points of current to measuer
 
@@ -60,8 +64,28 @@ class pstat (object):
         tsty = [1, 0, 3, 5, 3.14159265358979323846264338327950288419716939937510]
         self.plotter.plotCvData(tstx,tsty)
 
+    def connect(self, model):
+        try:
+            self.device.close()
+        except:
+            print('no potentiostat open. connecting.')
+        print('connecting to Keithley',model)
+        for addr in self.address:
+            print(self.fake)
+            try:
+                self.device = self.rm.open_resource(addr)
+                print('got a VISA instrument for Potentiostat: %s'%self.device)
+                self.address = addr
+                return self.device
+            except:
+                    print('failed to get Pstat at ', addr)
+                    self.fake = True
+                    self.device = 0
+        if self.fake:
+            self.print('Using fake Pstat')
+
     def write(self, command):
-        '''write data to BH-15, many lines can be accepted as an argument. Useful for pre-setting'''
+        '''write data to the Pstat, many lines can be accepted as an argument. Useful for pre-setting'''
         if not self.fake:
             try:
                 self.device.write(command)
@@ -76,24 +100,9 @@ class pstat (object):
         else:
             return 42
 
-
-    def connect(self, model):
-        if '2450' in model:
-            self.address = 'GPIB0::18::INSTR'  # pad 18
-            try:
-                self.device = self.rm.open_resource(self.address)
-                print('got GPIB instrument for Potentiostat: %s'%self.device)
-            except:
-                try:
-                    self.device = self.rm.open_resource(self.usb_address)
-                    print('got USB instrument for Potentiostat: %s' % self.device)
-                except:
-                    print('failed to get Pstat device. Using fake device')
-                    self.fake = True
-                    self.device = 0
-        else:
-            print('no support for %s'% model)
-
+    def set_current_limit(self,current_limit_in_microamperes):
+        '''set the limit of the current when in the voltage source regime'''
+        self.write('SOUR:VOLT:ILIM %.4f' % (current_limit_in_microamperes*1e-6))
 
     def beep_tone(self,frequency_in_hz, duration_in_seconds): # fun stuff
         self.write(':SYSTem:BEEPer %.5f, %.5f'%(frequency_in_hz,duration_in_seconds))
@@ -105,19 +114,23 @@ class pstat (object):
         self.beep_tone(1413,0.1)
 
     def play_tune(self):
-        for offtune in range(5):
-            for _ in range(1):
-                # happy C goes wild:
-                self.beep_tone(523.251+ 35*offtune, 0.005)
-                self.beep_tone(783.991+ 35*offtune, 0.005)
-                self.beep_tone(659.255+ 35*offtune, 0.005)
-        for offtune in range(5,0,-1):
-            for _ in range(1):
-                # happy C goes wild:
-                self.beep_tone(523.251+ 35*offtune, 0.005)
-                self.beep_tone(783.991+ 35*offtune, 0.005)
-                self.beep_tone(659.255+ 35*offtune, 0.005)
-        self.print('call the police.')
+        self.beep_tone(523.251, 0.02)
+        self.beep_tone(659.255, 0.02)
+        self.beep_tone(783.991, 0.02)
+
+        # for offtune in range(5):
+        #     for _ in range(3):
+        #         # happy C goes wild:
+        #         self.beep_tone(523.251+ 35*offtune, 0.005)
+        #         self.beep_tone(783.991+ 35*offtune, 0.005)
+        #         self.beep_tone(659.255+ 35*offtune, 0.005)
+        # for offtune in range(5,0,-1):
+        #     for _ in range(3):
+        #         # happy C goes wild:
+        #         self.beep_tone(523.251+ 35*offtune, 0.005)
+        #         self.beep_tone(783.991+ 35*offtune, 0.005)
+        #         self.beep_tone(659.255+ 35*offtune, 0.005)
+        # self.print('call the police.')
 
 
     def set_voltage(self,voltage_in_volts):  # sets voltage and presets the trigger (1 second transient for now)
@@ -132,8 +145,6 @@ class pstat (object):
         # specified amount of time.
         # :TRIGger:LOAD "DurationLoop", <duration>, <delay>, "<readingBuffer>"
         # 167 ns minimal delay between measurement points
-
-
 
         # after this we just need to turn on the output and to fire the trigger right after that
 
@@ -170,7 +181,7 @@ class pstat (object):
     def output_on(self): # self explanatory
         self.play_short_beep()  # short beep when pot on
         self.write('OUTP ON')  # here we turn output on
-    #    self.trigger_current_transient()  # and immediately after, start measuring it. For 1 second as for now
+        # self.trigger_current_transient()  # and immediately after, start measuring it. For 1 second as for now
 
 
 
@@ -188,28 +199,35 @@ class pstat (object):
         self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
         self.print('goddamnit I am quick')
         self.write(':SENS:FUNC \"CURR\"') # measure current
-        self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA typically
         self.write('SENSe:COUNt 1') # 1 point to record
-        self.print('CV measurement configured. Turning output ON. Jesus Christ saves your battery.')
+        self.print('CV measurement configured.\n Turning output ON.\n Jesus Christ saves your battery.')
         self.write(':OUTP ON')
 
     def configureCHG(self,absoluteValueOfVoltageLimit: float):
-        self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
+        self.write(':OUTP:SMOD HIMP') # high impedance output mode, the relay! otherwise no negative curent
+        self.write(':SENS:VOLT:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
+        self.write('SOUR:FUNC CURR') # source current!
         self.write(':SENS:FUNC \"VOLT\"') # measure volts
-        self.write(':SOUR:CURR:VLIM %.4f' % absoluteValueOfVoltageLimit)  # 100 mA typically
+        self.write(':SOUR:CURR:VLIM %.4f' % (abs(absoluteValueOfVoltageLimit)*1.05))  # add 5% in case the pstat lies
+        self.write(':SOUR:CURR %.8f' %(-0.000)) # dont interfere in the beginning
+
 
         #todo: set it up on a working machine. the voltage limit of the current source!!!
 
     def getCHGpoint(self, current_in_amps):
         # setting the current
-        self.write(':SOUR:CURR %.3f' % current_in_amps)
+        if current_in_amps > 0:
+            cmd = str(':SOUR:CURR %.8f' % current_in_amps)
+        else:
+            cmd = str(':SOUR:CURR -%.8f' % abs(current_in_amps))
+        print(cmd)
+        self.write(cmd)
+        #self.write(':SOUR:CURR -0.0001') #!!! TEMP!!!
+
         try:
             voltageString = self.device.query('MEASure:VOLTage:DC?') # 1 point it is supposed to be.
         except:
-            return random.randint(50,790)/1000
-        #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
-        #currentString = self.read() instead of query if you want to wait for a few plc.
-        #print(currentString) # temp
+            return 777
         voltage = float(voltageString)#np.mean(np.array(self.read().split(',')).astype(float))
         return voltage
 
@@ -222,7 +240,7 @@ class pstat (object):
         try:
             currentString = self.device.query('MEASure:CURRent:DC?') # 1 point it is supposed to be.
         except:
-            return random.randint(0,100)
+            return 666
         #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
         #currentString = self.read() instead of query if you want to wait for a few plc. 
         #print(currentString) # temp
@@ -233,6 +251,10 @@ class pstat (object):
     def TakeCV(self, cv_input:cv.cv, plotter: Plotter.Plotter):
         '''take a cv curve with parameters specified in the given cv.cv. plot in the given  plotter'''
         cvTaken = cv_input
+        # before taking the cv - limit the current!
+        currentLimitInMicroamps = cv_input.currentLimitInMicroamps;
+        print(currentLimitInMicroamps)
+        self.set_current_limit(current_limit_in_microamperes=currentLimitInMicroamps)
 
         self.plotter = plotter # plot cv in the plotter that is given as argument
 
@@ -287,6 +309,8 @@ class pstat (object):
                     self.GlobalInterruptFlag = False
                     return cvTaken
 
+
+        self.output_off()
         return cvTaken
 
     def TakeCV_the_old_way(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
@@ -375,14 +399,17 @@ class pstat (object):
         chgTaken.datetime = str(starttime)
 
         # ELECTRICITY ON!
+        self.configureCHG(absoluteValueOfVoltageLimit=highVoltageLimit)  # go set the knobs there
+        self.output_on()
+
         for _ in range(chgTaken.n_cycles):
             # do chg until the high limit ---- CHG CHG CHG CHG CHG CHG CHG CHG CHG ----
-            self.configureCHG(absoluteValueOfVoltageLimit=highVoltageLimit)  # go set the knobs there
             measuredVoltage = -65535  # for sure less than the high limit
 
+            print('CHARGING.')
             while measuredVoltage < highVoltageLimit:
                 currentToApply = chg_input.chg_current # charging with the chg current of the passed chg object
-                reltime = (datetime.now() - starttime).total_seconds()
+                reltime = (datetime.now() - starttime).total_seconds() # time since the beginning of the experiment
                 chgTaken.time.append(reltime)
                 chgTaken.current.append(currentToApply)
                 measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
@@ -390,7 +417,7 @@ class pstat (object):
 
                 # keep plotting
                 self.plotter.plotChgData(chgTaken)
-                self.plotter.title = 'CHG %d/%d | %.1f / %.1f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
+                self.plotter.title = 'CHG %d/%d | %.3f / %.3f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
@@ -398,8 +425,10 @@ class pstat (object):
                     return chgTaken
 
 
+            print('FULLY CHARGED. DISCHARGING:')
+
             # then do dcg until the low limit ---- DCG DCG DCG DCG DCG DCG DCG DCG ----
-            self.configureCHG(absoluteValueOfVoltageLimit=lowVoltageLimit)  # go set the knobs there
+            self.configureCHG(absoluteValueOfVoltageLimit=highVoltageLimit)  # highVoltageLimit INDEED! otherwise this crap doesnt discharge
             measuredVoltage = 65535  # for sure less than the high limit
 
             while measuredVoltage > lowVoltageLimit:
@@ -412,21 +441,24 @@ class pstat (object):
 
                 # keep plotting
                 self.plotter.plotChgData(chgTaken)
-                self.plotter.title = 'DCG %d/%d | %.1f / %.1f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
+                self.plotter.title = 'DCG %d/%d | %.3f / %.3f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
                     self.GlobalInterruptFlag = False
                     return chgTaken
 
+            print('FULLY DISCHARGED.')
+
+        self.output_off()
         return chgTaken
 
     def ConfigureForTransient(self):
         #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
         self.write('TRAC:MAKE \"CYKA_BLYAT\", 65535')  # create buffer with n points
-        self.write('SENSe:CURRent:RANG %.4f'%CURRENTSENSITIVITYLIMIT)
+        #self.write('SENSe:CURRent:RANG %.4f'%CURRENTSENSITIVITYLIMIT)
         self.write(':SENS:FUNC \"CURR\"') # measure current
-        self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA
+        #self.write(':SOUR:VOLT:ILIM %.4f'%CURRENTSENSITIVITYLIMIT) # 100 mA
         self.write('SENSe:COUNt 1') # 1 point to record
         self.write(':OUTP OFF')
         

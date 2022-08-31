@@ -5,6 +5,7 @@ ilia.kulikov@fu-berlin.de'''
 import pyvisa as visa
 
 class lockin (object):
+    type = 'lock-in'
     model = 810                   # default model is 810 that is the lock-in at Lyra
     address = 'GPIB0::9::INSTR'   # and this is its GPIB address
     device = 0                    # pyvisa device that is populated with the constructor

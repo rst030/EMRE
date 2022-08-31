@@ -53,6 +53,7 @@ class CyclingUi(QtWidgets.QMainWindow):
         self.cv.high_voltage_point  = float(self.high_edit.text())/1000 # in Volts!
         self.cv.scan_rate = float(self.rate_edit.text())/1000 # in Volts per second!
         self.cv.n_cycles = int(self.n_edit.text())
+        self.cv.currentLimitInMicroamps = float(self.current_limit_edit.text())
 
         # get the cv with the potentiostat
         self.pstat.GlobalInterruptFlag = False

@@ -316,6 +316,8 @@ record X and Y, dont record R.
     wowowowo lets first make a print of how much is left
 
 
+
+
     damn pstat sets wrong voltage.
     it is just a 4 wire measurement of current.
     lets do it. properly.
@@ -430,7 +432,7 @@ potential current time
     we have pyqt5 ui.
     it is /gui/main/EMRE_MS5000.ui
     lets import it instead of the header in the main file.
-    TODO: import EMRE_MS5000.ui with PyQt5 and run it.
+    import EMRE_MS5000.ui with PyQt5 and run it.
 
 09/06/22
 https://stackoverflow.com/questions/48099359/embedding-matplotlib-figure-in-qtdesigner-gui
@@ -450,3 +452,10 @@ x = reload(__import__(mod))eters
 
 a = cls()
 print a.__class__.__name__
+
+31/08/22
+usb subuser has to be installed if you want to speak to usb devices on linux.
+python3-usb package for your linux has to be installed for pyvisa to see the USB devices.
+
+doing device management in a device manageer window.
+testing CV module with real pstat.

@@ -35,7 +35,7 @@ class communicator(object):
     def __init__(self, backend, cvPlotter: Plotter.Plotter): #  BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
         '''The constructor of the communicator class.'''
         # visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
-        # backend = '@py' for PyVISA-py backend, '' for NIVISA backend
+        backend = '@py'# for PyVISA-py backend, '' for NIVISA backend
         self.rm = visa.ResourceManager('%s'%backend) # forget about Windows for a while.
         # populating devices:
         self.lockin = lock_in.lockin(rm = self.rm, model = '810') # creating lia, that easy.
@@ -46,11 +46,13 @@ class communicator(object):
 
 
     def list_devices(self):
-        '''list all available devices'''
-        for device in self.devices_list:
-            device.print(device,'>')
-
-
+        '''list all devices, no matter available or not'''
+        list_of_resources = (self.rm.list_resources())
+        print(self.devices_list)
+        # for device in self.devices_list:
+        #     list_of_connected_devices.append(device)
+        #     device.print(device.address,'>')
+        return self.devices_list
 
 
 

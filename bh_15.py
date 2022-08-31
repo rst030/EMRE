@@ -17,6 +17,7 @@ import pyvisa as visa
 from time import sleep
 
 class bh_15 (object):
+    type = 'field controller'
     model = 'BH-15'                   # default model is BH-15 that is the field controller at Lyra
     address = 'GPIB0::8::INSTR'       # and this is its GPIB address
     device = visa.Resource                        # pyvisa device that is populated with the constructor

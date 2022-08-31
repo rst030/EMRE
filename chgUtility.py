@@ -59,7 +59,7 @@ class ChargingUi(QtWidgets.QMainWindow):
         # get the CHG with the potentiostat
         self.pstat.GlobalInterruptFlag = False
         self.pstat.TakeCHG(self.chg, self.CHGplotter)
-        print('taking a cv')
+        print('taking a CHG')
 
     def abort_chg_scan(self):
         print('stop that crazy pstat, and turn the output off!')

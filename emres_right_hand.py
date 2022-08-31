@@ -4,6 +4,8 @@ import pyautogui # Emre's right hand
 import math # sin(a), cos(m_0)
 
 class emres_right_hand(object):
+    type = 'right hand'
+    address = 'local'
     # fields: mouse X, mouse Y
     x : int
     y : int

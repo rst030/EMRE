@@ -7,8 +7,11 @@ from tkinter import filedialog
 import os.path
 import importlib.util
 import tkinter as tk
+
+# utility windows:
 import cvUtility
 import chgUtility
+import deviceManagerUtility
 
 class Ui(QtWidgets.QMainWindow):
     '''the main User Interface window.'''
@@ -28,7 +31,10 @@ class Ui(QtWidgets.QMainWindow):
 
         # binding methods to buttons:
         self.connect_button.clicked.connect(self.connect_to_spectrometer)  # Remember to pass the definition/method, not the return value!
+
         self.load_button.clicked.connect(self.load_script)  # Remember to pass the definition/method, not the return value!
+
+        self.devman_button.clicked.connect(self.open_device_manager)  # Button to open the device manager
 
         self.CV_button.clicked.connect(self.open_CV_utility)  # cycling utility, use it for deposition and cleaning of your DIRTY FILMS
         self.CHG_button.clicked.connect(self.open_CHG_utility)  # charging utility, use it for testing your batteries (charge-discharge cycling)
@@ -90,6 +96,11 @@ class Ui(QtWidgets.QMainWindow):
         self.script = importlib.util.module_from_spec(spec) # script is a field of EMRE. Just in case.
         spec.loader.exec_module(self.script)
         self.infoLabel.setText('user module loaded:\n%s' % os.path.basename(self.scriptPath))
+
+    def open_device_manager(self):
+        self.DevManGui = deviceManagerUtility.deviceManagerUI(self.communicator)
+
+
 
     def open_CV_utility(self):
         ''' opens the CV GUI with CV the plotter in it.'''

@@ -5,6 +5,7 @@ ilia.kulikov@fu-berlin.de'''
 import pyvisa as visa
 
 class agilent_frequency_counter (object):
+    type = 'frequency counter'
     model = '53181a'                   # default model is agilent that is the freq cntr at Lyra
     address = 'GPIB0::3::INSTR'      # and this is its GPIB address
     device = visa.Resource                        # pyvisa device that is populated with the constructor
