@@ -20,10 +20,21 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QWidget
+
 
 import tkinter as tk # window to be able to save plots
 import math
 
+# the proper way:
+# class WidgetPlot(QWidget):
+#     def __init__(self, *args, **kwargs):
+#         QWidget.__init__(self, *args, **kwargs)
+#         self.setLayout(QVBoxLayout())
+#         self.canvas = PlotCanvas(self, width=10, height=8)
+#         self.toolbar = NavigationToolbar(self.canvas, self)
+#         self.layout().addWidget(self.toolbar)
+#         self.layout().addWidget(self.canvas)
 class Plotter(FigureCanvas):
     '''Plotter based on FigureCanvasQTAgg'''
     xlabel = 'pirates'
@@ -101,8 +112,8 @@ class Plotter(FigureCanvas):
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
-
         self.axes.plot(voltages, currents, 'm+:', linewidth=1)
+        self.axes.plot(voltages[-1], currents[-1], 'kx:', linewidth=5)
         self.axes.autoscale(True)
         self.update_plotter()
 

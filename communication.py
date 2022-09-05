@@ -28,7 +28,7 @@ class communicator(object):
     frequency_counter = agilent_53181a.agilent_frequency_counter
     right_hand = emres_right_hand.emres_right_hand
 
-    devices_list = [lockin,field_controller,keithley_pstat,frequency_counter] # to be expanded
+    devices_list = [] # to be popuylated in the constructor
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
@@ -39,11 +39,15 @@ class communicator(object):
         self.rm = visa.ResourceManager('%s'%backend) # forget about Windows for a while.
         # populating devices:
         self.lockin = lock_in.lockin(rm = self.rm, model = '810') # creating lia, that easy.
+        self.devices_list.append(self.lockin)
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
+        self.devices_list.append(self.field_controller)
         self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
+        self.devices_list.append(self.keithley_pstat)
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
+        self.devices_list.append(self.frequency_counter)
         self.right_hand = emres_right_hand.emres_right_hand()
-
+        self.devices_list.append(self.right_hand)
 
     def list_devices(self):
         '''list all devices, no matter available or not'''
