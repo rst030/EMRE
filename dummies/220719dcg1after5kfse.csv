@@ -1,0 +1,28 @@
+Keithley Instruments: Chronopotentiometry
+
+System Parameters
+Date/Time,Thu Aug 11 10:39:59 2022
+Model,2450
+Serial Number,04509830
+Firmware,1.6.7c
+Program Version,122148
+EC Framework Version,1.0
+
+
+Measurement Interval:,0.071,s/pt
+VRange:,2
+
+Step #1 Settings
+Current,-1e-05,A
+Duration,360,s
+
+Step #1 Quick Stats
+5065,points recorded,,0.36312272259,V average
+0.018951416016,V minimum,,0.074887477181,V standard deviation
+0.39549732208,V median,,360.01875836,s to run experiment
+0.42311954498,V maximum
+
+Raw Data
+
+Step #1
+Data Pt, Times (s), Current (A), Potential (V)

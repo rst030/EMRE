@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1143</width>
+    <width>1268</width>
     <height>600</height>
    </rect>
   </property>
@@ -68,6 +68,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="devman_button">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>Device Manager</string>
           </property>
@@ -127,6 +133,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="CHG_button">
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
            <string>CHG</string>
           </property>
@@ -152,14 +164,20 @@
           </property>
           <item>
            <widget class="QPushButton" name="initialize_button">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="maximumSize">
              <size>
-              <width>100</width>
+              <width>60</width>
               <height>16777215</height>
              </size>
             </property>
             <property name="text">
-             <string>Initialize</string>
+             <string>Init</string>
             </property>
            </widget>
           </item>
@@ -167,7 +185,7 @@
            <widget class="QPushButton" name="run_button">
             <property name="maximumSize">
              <size>
-              <width>100</width>
+              <width>60</width>
               <height>16777215</height>
              </size>
             </property>
@@ -176,6 +194,19 @@
             </property>
             <property name="text">
              <string>Run</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="abort_button">
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Abort</string>
             </property>
            </widget>
           </item>
@@ -191,7 +222,7 @@
            <widget class="QWidget" name="EPR_plotter_widget" native="true">
             <property name="minimumSize">
              <size>
-              <width>300</width>
+              <width>420</width>
               <height>0</height>
              </size>
             </property>
@@ -238,7 +269,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1143</width>
+     <width>1268</width>
      <height>22</height>
     </rect>
    </property>

@@ -18,10 +18,10 @@ class pstat (object):
     model = '2450'                    # default model is 2450 that is the pstat at Lyra
 
     address = []
-    address.append('USB0::0x05E6::0x2450::04509830::INSTR') # this is its usb_address of the new pstat
-    address.append('USB0::0x05E6::0x2450::04431893::INSTR') # this is its usb_address of the old pstat
-    address.append('USB0::1510::9296::04509830::0::INSTR')  # this is its usb_address of the old pstat
-    address.append('GPIB0::18::INSTR')  # and this is its GPIB address when connected to lyra
+    address.append('USB0::0x05E6::0x2450::04509830::INSTR') # new pstat
+    address.append('USB0::0x05E6::0x2450::04431893::INSTR') # old pstat
+    address.append('USB0::1510::9296::04509830::0::INSTR')  # old pstat at e1
+    address.append('GPIB0::18::INSTR')  # any pstat at lyra. Mind the GPIB settings of the thing!
 
     device = visa.Resource            # pyvisa device that is populated with the constructor
     rm = visa.ResourceManager         # visa resource manager, the communicator makes it
@@ -42,7 +42,7 @@ class pstat (object):
         self.write('DISP:SCR SWIPE_GRAP')
         self.write('SENS:CURR:RSEN ON') # 4 WIRE SENSING MODE.
         self.write('SENS:FUNC \'CURR\'')
-        self.write('SENS:CURR:RANG:AUTO ON')
+        self.write('SENS:CURR:RANG:AUTO OFF')
         #self.write('SENS:CURR:RANG %.4f' % (1e-3))
         self.write('SENS:CURR:UNIT AMP') # double check it
         self.write('SENS:CURR:OCOM ON')
@@ -81,6 +81,7 @@ class pstat (object):
                     print('failed to get Pstat at ', addr)
                     self.fake = True
                     self.device = 0
+                    #self.address = 'N/C'
         if self.fake:
             self.print('Using fake Pstat')
 
@@ -100,9 +101,12 @@ class pstat (object):
         else:
             return 42
 
+    def set_measure_range (self,current_limit_in_microamperes):
+        self.write('SENS:CURR:RANG %.6f' % (current_limit_in_microamperes*2e-6))
+
     def set_current_limit(self,current_limit_in_microamperes):
         '''set the limit of the current when in the voltage source regime'''
-        self.write('SOUR:VOLT:ILIM %.4f' % (current_limit_in_microamperes*1e-6))
+        self.write('SOUR:VOLT:ILIM %.6f' % (current_limit_in_microamperes*1e-6))
 
     def beep_tone(self,frequency_in_hz, duration_in_seconds): # fun stuff
         self.write(':SYSTem:BEEPer %.5f, %.5f'%(frequency_in_hz,duration_in_seconds))
@@ -196,10 +200,14 @@ class pstat (object):
 
     def configureCv(self):
         #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')
+        self.write(':OUTP:SMOD HIMP')  # high impedance output mode, we are dealing with batteries!
         self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
-        self.print('goddamnit I am quick')
+        self.write('SOUR:FUNC VOLT')  # source voltage!
         self.write(':SENS:FUNC \"CURR\"') # measure current
+        self.write('SENS:CURR:RSEN ON')  # 4 WIRE SENSING MODE.
         self.write('SENSe:COUNt 1') # 1 point to record
+        self.write('SENS:CURR:RANG:AUTO OFF')
+        self.write('SENS:CURR:RANG %.6f'%10e-3)
         self.print('CV measurement configured.\n Turning output ON.\n Jesus Christ saves your battery.')
         self.write(':OUTP ON')
 
@@ -208,8 +216,12 @@ class pstat (object):
         self.write(':SENS:VOLT:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
         self.write('SOUR:FUNC CURR') # source current!
         self.write(':SENS:FUNC \"VOLT\"') # measure volts
+        self.write('SENS:VOLT:RSEN ON')  # 4 WIRE SENSING MODE. short RE and CE when in 2 electrode configuration.
+        self.write('SENS:VOLT:RANG:AUTO OFF')
+        self.write('SENS:VOLT:RANG %.6f'%(abs(absoluteValueOfVoltageLimit)*1.05))
         self.write(':SOUR:CURR:VLIM %.4f' % (abs(absoluteValueOfVoltageLimit)*1.05))  # add 5% in case the pstat lies
         self.write(':SOUR:CURR %.8f' %(-0.000)) # dont interfere in the beginning
+
 
 
         #todo: set it up on a working machine. the voltage limit of the current source!!!
@@ -220,9 +232,7 @@ class pstat (object):
             cmd = str(':SOUR:CURR %.8f' % current_in_amps)
         else:
             cmd = str(':SOUR:CURR -%.8f' % abs(current_in_amps))
-        print(cmd)
         self.write(cmd)
-        #self.write(':SOUR:CURR -0.0001') #!!! TEMP!!!
 
         try:
             voltageString = self.device.query('MEASure:VOLTage:DC?') # 1 point it is supposed to be.
@@ -252,8 +262,10 @@ class pstat (object):
         '''take a cv curve with parameters specified in the given cv.cv. plot in the given  plotter'''
         cvTaken = cv_input
         # before taking the cv - limit the current!
-        currentLimitInMicroamps = cv_input.currentLimitInMicroamps;
+        currentLimitInMicroamps = cv_input.currentLimitInMicroamps
+        print(currentLimitInMicroamps,'uA is the limit')
         print(currentLimitInMicroamps)
+        self.set_measure_range(current_limit_in_microamperes=currentLimitInMicroamps)
         self.set_current_limit(current_limit_in_microamperes=currentLimitInMicroamps)
 
         self.plotter = plotter # plot cv in the plotter that is given as argument
@@ -417,7 +429,7 @@ class pstat (object):
 
                 # keep plotting
                 self.plotter.plotChgData(chgTaken)
-                self.plotter.title = 'CHG %d/%d | %.3f / %.3f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
+                self.plotter.title = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6,_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
@@ -441,7 +453,7 @@ class pstat (object):
 
                 # keep plotting
                 self.plotter.plotChgData(chgTaken)
-                self.plotter.title = 'DCG %d/%d | %.3f / %.3f [V]' % (_ + 1, chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
+                self.plotter.title = 'DCG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6, _ + 1, chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:

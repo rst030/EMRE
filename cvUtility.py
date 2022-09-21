@@ -2,8 +2,7 @@
     09 Aug 2022
     rst '''
 from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QRegExpValidator
+import os
 
 from tkinter import filedialog
 import Plotter # an EMRE module for plotting
@@ -13,6 +12,7 @@ import cv # class of cv, makes an object of a cv. Can import from file. Attribut
 class CyclingUi(QtWidgets.QMainWindow):
     '''the cycling utility window.'''
     pstat = keithley_pstat.pstat # the keithley with which the CV or CHG is recorded.
+    workingFolder = r"./dummies/"  # where the openfiledialog opens
 
     def __init__(self, pstat: keithley_pstat.pstat):
         super(CyclingUi, self).__init__()  # Call the inherited classes __init__ method
@@ -67,8 +67,14 @@ class CyclingUi(QtWidgets.QMainWindow):
     def save_cv(self):
         print('save as file dialog etc, think of the format, Be compatible with the Keithley stuff!!!')
         # open open file dialog
-        self.CVPath = filedialog.asksaveasfilename(parent=None, initialdir=r"./dummies/", title="Selekt foolder, insert name",
+        try:
+            self.CVPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
                                                  filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
+            self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
+        except:
+            print('no filename given, do it again.')
+            return 0
+
         if self.cv != 0:
             print('')
             self.cv.saveAs(self.CVPath)
@@ -77,7 +83,13 @@ class CyclingUi(QtWidgets.QMainWindow):
     def load_cv(self):
         print('load the cv file, plot the curve in the plotter and populate the fields.')
         # open open file dialog
-        self.CVPath = filedialog.askopenfilename(parent=None, initialdir=r"./dummies/", title="Select shkript", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
+        try:
+            self.CVPath = filedialog.askopenfilename(parent=None, initialdir=self.workingFolder, title="Select shkript", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
+            self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
+        except:
+            print('no filename given, do it again.')
+            return 0
+
         # import the cv curve as an object
         self.cv = cv.cv(filename = self.CVPath)
         # and print it on the plotter.

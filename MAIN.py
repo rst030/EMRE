@@ -41,7 +41,11 @@ class Ui(QtWidgets.QMainWindow):
 
 
         self.initialize_button.clicked.connect(self.initialize_experiment)  # Remember to pass the definition/method, not the return value!
+        self.initialize_button.setEnabled(False) # you cant initialiize before you upload an experiment script
         self.run_button.clicked.connect(self.run_experiment)
+        self.run_button.setEnabled(False)
+        self.abort_button.clicked.connect(self.abort_experiment)
+        self.abort_button.setEnabled(False)
 
         # --- adding the plotters: ---
         # EPR plotter:
@@ -96,6 +100,7 @@ class Ui(QtWidgets.QMainWindow):
         self.script = importlib.util.module_from_spec(spec) # script is a field of EMRE. Just in case.
         spec.loader.exec_module(self.script)
         self.infoLabel.setText('user module loaded:\n%s' % os.path.basename(self.scriptPath))
+        self.initialize_button.setEnabled(True)
 
     def open_device_manager(self):
         self.DevManGui = deviceManagerUtility.deviceManagerUI(self.communicator)
@@ -116,6 +121,7 @@ class Ui(QtWidgets.QMainWindow):
         print('sending init param to the spectrometer.')
         self.experiment = self.script.experiment(communicator = self.communicator)  # ecxperiment is a field of EMRE. It is globally visible.
         self.infoLabel.setText('experiment initialized')
+        self.run_button.setEnabled(True)
 
     def run_experiment(self):
         '''executes the run() method from the experiment class.
@@ -124,6 +130,9 @@ class Ui(QtWidgets.QMainWindow):
         self.infoLabel.setText('running')
         self.experiment.run()
         self.infoLabel.setText('finished')
+
+    def abort_experiment(self):
+        print('stop machine!: todo')
 
 
 #todo: add abort button!

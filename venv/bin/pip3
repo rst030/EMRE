@@ -1,4 +1,4 @@
-#!/Users/a1/PycharmProjects/electron-magnetic-resonance-environment/venv/bin/python
+#!/home/rst/PycharmProjects/electron-magnetic-resonance-environment/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
