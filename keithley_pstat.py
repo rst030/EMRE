@@ -101,9 +101,12 @@ class pstat (object):
         else:
             return 42
 
+    def set_measure_range (self,current_limit_in_microamperes):
+        self.write('SENS:CURR:RANG %.6f' % (current_limit_in_microamperes*2e-6))
+
     def set_current_limit(self,current_limit_in_microamperes):
         '''set the limit of the current when in the voltage source regime'''
-        self.write('SOUR:VOLT:ILIM %.4f' % (current_limit_in_microamperes*1e-6))
+        self.write('SOUR:VOLT:ILIM %.6f' % (current_limit_in_microamperes*1e-6))
 
     def beep_tone(self,frequency_in_hz, duration_in_seconds): # fun stuff
         self.write(':SYSTem:BEEPer %.5f, %.5f'%(frequency_in_hz,duration_in_seconds))
@@ -201,8 +204,10 @@ class pstat (object):
         self.write(':SENSe:CURRent:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
         self.write('SOUR:FUNC VOLT')  # source voltage!
         self.write(':SENS:FUNC \"CURR\"') # measure current
+        self.write('SENS:CURR:RSEN ON')  # 4 WIRE SENSING MODE.
         self.write('SENSe:COUNt 1') # 1 point to record
-        self.write('SENS:CURR:RANG %.8f' % (3e-3))
+        self.write('SENS:CURR:RANG:AUTO OFF')
+        self.write('SENS:CURR:RANG %.6f'%10e-3)
         self.print('CV measurement configured.\n Turning output ON.\n Jesus Christ saves your battery.')
         self.write(':OUTP ON')
 
@@ -211,8 +216,12 @@ class pstat (object):
         self.write(':SENS:VOLT:NPLCycles 0.01') # change to 0.5 to measure faster. Youll get oscillations! Affects measurement speed.
         self.write('SOUR:FUNC CURR') # source current!
         self.write(':SENS:FUNC \"VOLT\"') # measure volts
+        self.write('SENS:VOLT:RSEN ON')  # 4 WIRE SENSING MODE. short RE and CE when in 2 electrode configuration.
+        self.write('SENS:VOLT:RANG:AUTO OFF')
+        self.write('SENS:VOLT:RANG %.6f'%(abs(absoluteValueOfVoltageLimit)*1.05))
         self.write(':SOUR:CURR:VLIM %.4f' % (abs(absoluteValueOfVoltageLimit)*1.05))  # add 5% in case the pstat lies
         self.write(':SOUR:CURR %.8f' %(-0.000)) # dont interfere in the beginning
+
 
 
         #todo: set it up on a working machine. the voltage limit of the current source!!!
@@ -253,8 +262,10 @@ class pstat (object):
         '''take a cv curve with parameters specified in the given cv.cv. plot in the given  plotter'''
         cvTaken = cv_input
         # before taking the cv - limit the current!
-        currentLimitInMicroamps = cv_input.currentLimitInMicroamps;
+        currentLimitInMicroamps = cv_input.currentLimitInMicroamps
+        print(currentLimitInMicroamps,'uA is the limit')
         print(currentLimitInMicroamps)
+        self.set_measure_range(current_limit_in_microamperes=currentLimitInMicroamps)
         self.set_current_limit(current_limit_in_microamperes=currentLimitInMicroamps)
 
         self.plotter = plotter # plot cv in the plotter that is given as argument
