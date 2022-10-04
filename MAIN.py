@@ -119,7 +119,7 @@ class Ui(QtWidgets.QMainWindow):
         '''sends the initial parameters to the spectrometer.
         parameters have to be defined in the loaded script.'''
         print('sending init param to the spectrometer.')
-        self.experiment = self.script.experiment(communicator = self.communicator)  # ecxperiment is a field of EMRE. It is globally visible.
+        self.experiment = self.script.experiment(communicator = self.communicator, plotter = self.EPRplotter)  # ecxperiment is a field of EMRE. It is globally visible.
         self.infoLabel.setText('experiment initialized')
         self.run_button.setEnabled(True)
 

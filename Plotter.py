@@ -63,6 +63,7 @@ class Plotter(FigureCanvas):
         self.axes.cla()
 
     def set_title(self,title:str):
+        self.title = title
         self.axes.set_title(title)
         self.update_plotter()
 
@@ -150,6 +151,7 @@ class Plotter(FigureCanvas):
         self.axes.set_title(self.title)
 
         self.axes.plot(spectrum.bvalues, spectrum.x_channel, 'k-', linewidth=1)
+        self.axes.plot(spectrum.bvalues, spectrum.y_channel, 'r-', linewidth=1)
         self.axes.autoscale(True)
         self.update_plotter()
 

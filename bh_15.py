@@ -57,7 +57,6 @@ class bh_15 (object):
                 #sleep(5) # the FC seems to need this...
 
 
-
             except:
                 self.print('failed to get a BH-15 device. Using fake device')
                 self.fake = True
@@ -74,11 +73,18 @@ class bh_15 (object):
         #ledstatus = self.talk_to_BH15('LE')             # '''get the led status''' use it later
         B0_measured_str = self.talk_to_BH15('FC')       # measure field
         B0_measured = float(B0_measured_str[3:13])      # convert response to float
-        #todo: if ledstatus shows overload, wait here until it is ok.
+
+        # making sure the field is set
+        _attemptsToSetFieldCtr = 0
+        while ('1' in self.get_led_status()):
+            print('BH 15 field controller: NOT ON FIELD!')
+            _attemptsToSetFieldCtr += 1
+            sleep(0.2)
+
+        print('BH 15 field controller: field ok')
         return B0_measured
 
     '''God save the magnet.'''
-
 
     def write(self, command):
         '''write data to BH-15, many lines can be accepted as an argument. Useful for pre-setting'''
@@ -99,7 +105,6 @@ class bh_15 (object):
 
     def print(self, s:str): # adds a header to string and prints it to prompt
         print(self.header+s)
-
 
     def device_clear(self):
         mnemonic = "SDC"
@@ -125,6 +130,8 @@ class bh_15 (object):
         except:
             self.print('LE query failed')
 
+        return str(response)
+
     def go_remote(self):
         mnemonic = "CO"
         command = mnemonic
@@ -136,7 +143,33 @@ class bh_15 (object):
         field = '%.4f'%field_
         mnemonic = "CF"
         command = mnemonic + field
-        self.print(command) # comment out for performance!
+        #self.print(command) # comment out for performance!
+        self.write(command)
+
+    # for a 'smooth* field sweep, set up CF, SW and TM
+    # for that go to 2 MODE, set CF, SW and SWA
+    # -50G <= CF <= 23000 G
+    # 0G <= SW <= 16 kG
+    # 0 <= SWA <= 4095
+
+    def set_sweep_width(self,sweepWidthInGauss_):
+        if (sweepWidthInGauss_ > BH15_FC_MAX_SWEEP_WIDTH):
+            print('BH 15 field controller: too high sweep width!')
+            return
+
+        SW = '%.4f' % sweepWidthInGauss_
+        mnemonic = "SW"
+        command = mnemonic + SW
+        self.write(command)
+
+    def set_sweep_address(self,swa_: int):
+        if not (swa_ in range(MIN_SWA,MAX_SWA)):
+            print('BH15 field controller: sweep address not in range!')
+            return
+
+        SWA = '%.4f' % swa_
+        mnemonic = "SWA"
+        command = mnemonic + SWA
         self.write(command)
 
     def reset(self):
