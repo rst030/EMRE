@@ -36,9 +36,10 @@ class CyclingUi(QtWidgets.QMainWindow):
         # --- adding the plotter: ---
         # CV plotter:
         CVplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CV_plotter_widget')
-        self.CVplotter = Plotter.Plotter(parent=CVplotterWidgetFound)
-        self.verticalLayout_CV_plotter.addWidget(self.CVplotter)
-        self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
+        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound)
+        self.verticalLayout_CV_plotter.addWidget(self.CVplotterWGT)
+        #self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
+        self.CVplotter = self.CVplotterWGT.PlotterCanvas
         self.CVplotter.preset_CV()  # just add some labels
 
         # --- connect the pstat ---

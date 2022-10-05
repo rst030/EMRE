@@ -50,23 +50,27 @@ class Ui(QtWidgets.QMainWindow):
         # --- adding the plotters: ---
         # EPR plotter:
         EPRplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'EPR_plotter_widget')
-        self.EPRplotter = Plotter.Plotter(parent = EPRplotterWidgetFound)
-        self.verticalLayout_EPR_plotter.addWidget(self.EPRplotter)
-        self.verticalLayout_EPR_plotter.addWidget(self.EPRplotter.toolbar)
+        #self.EPRplotter = Plotter.Plotter(parent = EPRplotterWidgetFound)
+        self.EPRplotterWGT = Plotter.Plotter(parent=EPRplotterWidgetFound)
+        self.verticalLayout_EPR_plotter.addWidget(self.EPRplotterWGT)
+        #self.verticalLayout_EPR_plotter.addWidget(self.EPRplotterWGT.Plotter.toolbar)
+        self.EPRplotter = self.EPRplotterWGT.PlotterCanvas
         self.EPRplotter.preset_EPR() # just add some labels
 
         # CV plotter:
         CVplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CV_plotter_widget')
-        self.CVplotter = Plotter.Plotter(parent=CVplotterWidgetFound)
-        self.verticalLayout_CV_plotter.addWidget(self.CVplotter)
-        self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
+        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound)
+        self.verticalLayout_CV_plotter.addWidget(self.CVplotterWGT)
+       # self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
+        self.CVplotter = self.CVplotterWGT.PlotterCanvas
         self.CVplotter.preset_CV() # just add some labels
 
         # CHG plotter:
         CHGplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CHG_plotter_widget') # locate the widget
-        self.CHGplotter = Plotter.Plotter(parent=CHGplotterWidgetFound) # create the plotter with that widget
-        self.verticalLayout_CHG_plotter.addWidget(self.CHGplotter)
-        self.verticalLayout_CHG_plotter.addWidget(self.CHGplotter.toolbar)
+        self.CHGplotterWGT = Plotter.Plotter(parent=CHGplotterWidgetFound) # create the plotter with that widget
+        self.verticalLayout_CHG_plotter.addWidget(self.CHGplotterWGT)
+        #self.verticalLayout_CHG_plotter.addWidget(self.CHGplotter.toolbar)
+        self.CHGplotter = self.CHGplotterWGT.PlotterCanvas
         self.CHGplotter.preset_CHG() # just add some labels
 
 

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 
 
@@ -35,14 +35,14 @@ import math
 #         self.toolbar = NavigationToolbar(self.canvas, self)
 #         self.layout().addWidget(self.toolbar)
 #         self.layout().addWidget(self.canvas)
-class Plotter(FigureCanvas):
+class PlotterCanvas(FigureCanvas):
     '''Plotter based on FigureCanvasQTAgg'''
     xlabel = 'pirates'
     ylabel = 'crocodiles'
     title = 'ultimate grapfh'
     parent = None # parent widget, needs to be class var for live updates
 
-    def __init__(self, parent=None):
+    def __init__(self):
         #plt.style.use('dark_background')
         #matplotlib.interactive(True)
         fig = Figure(figsize=(16,16),dpi=100)
@@ -52,12 +52,12 @@ class Plotter(FigureCanvas):
         self.axes.grid()
 
         FigureCanvas.__init__(self, fig)
-        self.setParent(parent)
-        self.parent = parent
 
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        self.toolbar = NavigationToolbar(self, self.parent)  # nav toolbar
+        #self.toolbar = NavigationToolbar(self, self.parent())  # nav toolbar
+    def parent(self):
+        return QWidget()
 
     def clear(self):
         self.axes.cla()
@@ -66,7 +66,6 @@ class Plotter(FigureCanvas):
         self.title = title
         self.axes.set_title(title)
         self.update_plotter()
-
     def compute_initial_figure(self):
         self.clear()
         self.axes.plot([1,2,3],[2,3,5])
@@ -80,7 +79,6 @@ class Plotter(FigureCanvas):
         self.ylabel = 'EPR signal [V]'
         self.title = 'EPR [dummy]'
         # plot sample EPR
-        dummy_b = [numpy.linspace(320,1,520)]
         dummy_spc = cw_spectrum.cw_spectrum(filepath='./dummies/dry_film_after_sonic_22dB_2G.akku2')
         self.plotEprData(dummy_spc)
         self.axes.grid()
@@ -97,7 +95,6 @@ class Plotter(FigureCanvas):
         self.plotCv(cvDummy)
 
 
-
     def preset_CHG(self):
         self.clear()
         self.xlabel = 'Time [s]'
@@ -106,7 +103,6 @@ class Plotter(FigureCanvas):
         self.axes.grid()
         chgDummy = chg.chg('./dummies/220425chg1x3.csv')
         self.plotChgData(chgDummy)
-
 
     def plotCvData(self, voltages, currents):
         self.axes.cla()
@@ -129,7 +125,6 @@ class Plotter(FigureCanvas):
         self.axes.set_title(self.title)
         self.axes.grid()
         self.update_plotter()
-
 
     def plotCv(self,cvToPlot:cv):
         voltages = cvToPlot.voltage
@@ -155,7 +150,43 @@ class Plotter(FigureCanvas):
         self.axes.autoscale(True)
         self.update_plotter()
 
-
     def update_plotter(self): # very useful and important method for live plotting.
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
+
+
+
+    # a widget class to implement the toolbar
+class Plotter(QWidget):
+    type = 'general' # can be EPR, CV and CHG type
+    def __init__(self, parent, *args, **kwargs): # you have to pass the main window here, else crashes on click save
+        QWidget.__init__(self, *args, **kwargs)
+        self.setLayout(QVBoxLayout())
+        self.PlotterCanvas = PlotterCanvas() # Plotter is a class defined above
+
+        # navigation toolbar
+        self.toolbar = NavigationToolbar(self.PlotterCanvas, parent = self)
+
+        '''custom buttons on navigation toolbar'''
+        # self.toolbar.clear()
+        #
+        # a = self.toolbar.addAction(self.toolbar._icon("home.png"), "Home", self.toolbar.home)
+        # # a.setToolTip('returns axes to original position')
+        # a = self.toolbar.addAction(self.toolbar._icon("move.png"), "Pan", self.toolbar.pan)
+        # a.setToolTip("Pan axes with left mouse, zoom with right")
+        # a = self.toolbar.addAction(self.toolbar._icon("zoom_to_rect.png"), "Zoom", self.toolbar.zoom)
+        # a.setToolTip("Zoom to Rectangle")
+        # a = self.toolbar.addAction(self.toolbar._icon("filesave.png"), "Save", self.toolbar.save_figure)
+        # a.setToolTip("Save the figure")
+
+        def save_figure():
+            print('SAVE THE DATA! - write that method in your free time')
+
+        a = self.toolbar.addAction(self.toolbar._icon("filesave.png"), "Save data", save_figure)
+        a.setToolTip("Save data in file")
+
+
+        'insert plotter'
+        self.layout().addWidget(self.PlotterCanvas)
+        'insert toolbar'
+        self.layout().addWidget(self.toolbar)

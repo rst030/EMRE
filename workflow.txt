@@ -437,6 +437,8 @@ potential current time
 09/06/22
 https://stackoverflow.com/questions/48099359/embedding-matplotlib-figure-in-qtdesigner-gui
 - how to insert a matplotlib into a qtdesigner
+https://www.pythonguis.com/tutorials/plotting-matplotlib/
+- how to insert the bloody toolbar
 https://nitratine.net/blog/post/how-to-import-a-pyqt5-ui-file-in-a-python-gui/
 - how to import the ui file
 

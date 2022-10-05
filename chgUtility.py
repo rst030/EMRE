@@ -35,9 +35,10 @@ class ChargingUi(QtWidgets.QMainWindow):
         # --- adding the plotter: ---
         # CV plotter:
         CVplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CV_plotter_widget')
-        self.CHGplotter = Plotter.Plotter(parent=CVplotterWidgetFound)
-        self.verticalLayout_CV_plotter.addWidget(self.CHGplotter)
-        self.verticalLayout_CV_plotter.addWidget(self.CHGplotter.toolbar)
+        self.CHGplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound)
+        self.verticalLayout_CV_plotter.addWidget(self.CHGplotterWGT)
+        #self.verticalLayout_CV_plotter.addWidget(self.CHGplotter.toolbar)
+        self.CHGplotter = self.CHGplotterWGT.PlotterCanvas
         self.CHGplotter.preset_CHG()  # just add some labels
 
         # --- connect the pstat ---
