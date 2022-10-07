@@ -15,6 +15,7 @@ MAX_SWA        =    4095
 
 import pyvisa as visa
 from time import sleep
+import numpy as np
 
 class bh_15 (object):
     type = 'field controller'
@@ -24,6 +25,13 @@ class bh_15 (object):
     rm = 0                            # visa resource manager
     fake = False                      # use simulated outputs. Used for testing outside the lab.
     header = 'BH-15 Field Controller: ' # header, used for the prompt output.
+
+    '''magnetic parameters'''
+    CF = 464 # center field
+    SW = 100 # sweep width
+    SWA = CENTER_SWA # sweep address - in the center of the field
+    bvalues = np.linspace(CF-SW/2,CF+SW/2,SWA)
+    '''___________________'''
 
     def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
         '''create an instance of the BH-15 field controller object'''
@@ -39,52 +47,72 @@ class bh_15 (object):
 
                 # Switch off service requests. */
                 self.curse_BH15('SR0')
-                # Switch to mode 0, i.e. field-controller mode via internal sweep-address-generator. */
-                self.curse_BH15('MO0')
+                self.curse_BH15('MO0') # itnl gen, set CF [center field], SW [sweep width] and SWA [sweep adress < 2048]
                 # Set IM0 sweep mode (we don't use it, just to make sure we don't trigger a sweep start inadvertently). */
                 self.curse_BH15('IM0')
                 # The device seems to need a bit of time after being switched to remote mode */
                 sleep(1)
 
-                #TODO: set central field at 3400 G, sweep width to 100 G and sweep address to 0.
-                # sweep through the sweep addresses, get the magnetic field changing.
-
-                #self.curse_BH15('MO5')  # ''' move to mode 5# OR basic field control mode that is mode 0'''
-                #self.curse_BH15('RU')  # and run
-                #self.write('MO5')  # fsdc2 does that on hookup, we may need it, too. This is to go to run mode
-                #self.write('RU')    # run
-                #self.print('run mode')
-                #sleep(5) # the FC seems to need this...
-
+                self.print('BH-15: CF SW configured, SWA set to 0')
 
             except:
                 self.print('failed to get a BH-15 device. Using fake device')
                 self.fake = True
                 self.device = 0
 
+            self.preset_field_scan(self.bvalues)
 
+    def preset_field_scan(self,bvalues:np.linspace): # sets the width and the center field. 2048 points!
+        self.bvalues = np.linspace(bvalues[0],bvalues[-1],MAX_SWA) # this is in its rusty head now
+        self.SW = max(bvalues) - min(bvalues)  # setting sweep width of BH15
+        self.CF = (max(bvalues) + min(bvalues)) / 2  # do it in a convenient way, man noone likes to code here
+        self.SWA = 0
+        # set CF as center field
+        # set SW as sweep width
+        self.set_sw(sweepWidthInGauss_ = 0) # set the width to 0 for the next line
 
-    def set_field(self, magnetic_field_in_gauss: float):
-        'sets magnetic field, returns field measured by the field controller'
+        self.set_swa(swa_=CENTER_SWA)  # go to the center of that 0 G - field range
+        self.set_cf(field_in_gauss_ = self.CF) # set the center field, here the machine starts to move.
+        self.set_sw(sweepWidthInGauss_ = self.SW) # set the width of the scan
+        self.set_swa(swa_=self.SWA) # go to the left most field
 
-        self.curse_BH15('MO0')                          # move to basic field control mode that is mode 0'''
-        self.set_center_field(magnetic_field_in_gauss)  # set the field
-        #self.curse_BH15('MO5')                          # move to field measure mode that is mode 5
-        #ledstatus = self.talk_to_BH15('LE')             # '''get the led status''' use it later
+        self.check_set_field(SetField=self.bvalues[self.SWA]) # check if field is really there
+
+        return self.get_field()
+
+    def check_set_field(self,SetField):
+        # if the set field is not
+
+        attemptsCtr = 1000 # how much time can we wait until the rusty box sets the field. Huge magnet! Huge!
+
+        while (self.get_field() - SetField) >  self.SW/MAX_SWA: # while not on field:
+            print('BH-15: crawling on the field (doing its best)')
+            sleep(0.2)
+            attemptsCtr -=1
+            if attemptsCtr == 0:
+                print('BH-15 crawling on the field for too long! Only at %.3f G by now'%self.get_field())
+                return -1
+        return(self.get_field() - SetField)
+
+    def get_field(self):
         B0_measured_str = self.talk_to_BH15('FC')       # measure field
         B0_measured = float(B0_measured_str[3:13])      # convert response to float
-
-        # making sure the field is set
-        _attemptsToSetFieldCtr = 0
-        while ('1' in self.get_led_status()):
-            print('BH 15 field controller: NOT ON FIELD!')
-            _attemptsToSetFieldCtr += 1
-            sleep(0.2)
-
-        print('BH 15 field controller: field ok')
         return B0_measured
 
-    '''God save the magnet.'''
+    def set_field(self, magnetic_field_in_gauss: float):
+        # take magnetic_field_in_gauss, get closest SWA
+        step_in_B = self.SW/MAX_SWA # step that BH15 has chosen
+
+        closest_swa = 0 # to be safe
+
+        for swa in range(MAX_SWA):
+            if abs(self.bvalues[swa]-magnetic_field_in_gauss) < step_in_B: # if close to desired field
+                closest_swa = swa
+                break
+
+        self.set_swa(closest_swa) # here the magnet jumps on the field
+
+        return self.get_field()
 
     def write(self, command):
         '''write data to BH-15, many lines can be accepted as an argument. Useful for pre-setting'''
@@ -101,7 +129,7 @@ class bh_15 (object):
             return self.device.read()
         else:
             self.print('Fake device! Reading dummy values!')
-            return 4000
+            return 666
 
     def print(self, s:str): # adds a header to string and prints it to prompt
         print(self.header+s)
@@ -138,21 +166,21 @@ class bh_15 (object):
         self.print('going remote')
         self.write(command)
 
-    def set_center_field(self,field_):
+    def set_cf(self,field_in_gauss_):
         '''set central field, same as pressing CF and typing a number for center field in G'''
-        field = '%.4f'%field_
+        field = '%.4f'%field_in_gauss_
         mnemonic = "CF"
         command = mnemonic + field
-        #self.print(command) # comment out for performance!
         self.write(command)
 
-    # for a 'smooth* field sweep, set up CF, SW and TM
+    # for a field sweep, set up CF, SW and SWA
     # for that go to 2 MODE, set CF, SW and SWA
     # -50G <= CF <= 23000 G
     # 0G <= SW <= 16 kG
     # 0 <= SWA <= 4095
 
-    def set_sweep_width(self,sweepWidthInGauss_):
+    def set_sw(self,sweepWidthInGauss_):
+        # check if width is within controller's capabilities
         if (sweepWidthInGauss_ > BH15_FC_MAX_SWEEP_WIDTH):
             print('BH 15 field controller: too high sweep width!')
             return
@@ -162,13 +190,13 @@ class bh_15 (object):
         command = mnemonic + SW
         self.write(command)
 
-    def set_sweep_address(self,swa_: int):
+    def set_swa(self,swa_: int):
         if not (swa_ in range(MIN_SWA,MAX_SWA)):
             print('BH15 field controller: sweep address not in range!')
             return
 
         SWA = '%.4f' % swa_
-        mnemonic = "SWA"
+        mnemonic = "SS"
         command = mnemonic + SWA
         self.write(command)
 

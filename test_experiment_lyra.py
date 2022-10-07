@@ -7,7 +7,7 @@ import os # for checking if the magnettech files have appeared
 import glob # location of files in folders
 
 import cw_spectrum
-
+import numpy as np
 
 class experiment():
     name = 'test_experiment'
@@ -34,32 +34,33 @@ class experiment():
         right_hand = comm.right_hand 
         fc = comm.field_controller
         lia = comm.lockin
-        fc.go_remote()
 
         tmpSpectrum = cw_spectrum.cw_spectrum('')
 
-        tmpSpectrum.bstart = 3350
-        tmpSpectrum.bstop = 3400
-        tmpSpectrum.npoints = 1024
+        tmpSpectrum.bstart = 3200
+        tmpSpectrum.bstop = 3500
+        tmpSpectrum.npoints = 512
         tmpSpectrum.bstep = float(tmpSpectrum.bstop - tmpSpectrum.bstart ) / tmpSpectrum.npoints
 
         self.EPRplotter.clear()
         self.EPRplotter.set_title('CWEPR')
 
-        fc.set_center_field(tmpSpectrum.bstart)
+        # ------------- set field sweep here ----------------------
+        bvalues = np.linspace(tmpSpectrum.bstart, tmpSpectrum.bstop, tmpSpectrum.npoints) # these B values will be set
+        fc.preset_field_scan(bvalues)
+        fc.set_field(tmpSpectrum.bstart)
         sleep(3)
 
-        for sweepIndex in range(tmpSpectrum.npoints):
-            sleep(0.1)
-            fieldToSet = tmpSpectrum.bstart + sweepIndex*tmpSpectrum.bstep
-            fc.set_center_field(fieldToSet)
-            tmpSpectrum.x_channel.append(lia.getX())
-            tmpSpectrum.y_channel.append(lia.getY())
-            tmpSpectrum.bvalues.append(fieldToSet)
+        for field_to_set in bvalues:
+            sleep(0.01) #todo LIA's TC!
+            measured_bfield = fc.set_field(field_to_set) # set the magnetic field, get the set magnetic field. #todo ER35M!!!
+            tmpSpectrum.x_channel.append(lia.getX()) # get x channel of the LIA
+            tmpSpectrum.y_channel.append(lia.getY()) # get y channel of the LIA
+            tmpSpectrum.bvalues.append(measured_bfield) # pop
             self.EPRplotter.clear()
             self.EPRplotter.plotEprData(tmpSpectrum)
 
-        fc.set_center_field(tmpSpectrum.bstart)
+        fc.set_field(tmpSpectrum.bstart)
         sleep(3)
 
         tmpSpectrum.save('test_lyra_NC60_221004')
