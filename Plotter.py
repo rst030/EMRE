@@ -101,7 +101,7 @@ class PlotterCanvas(FigureCanvas):
         self.ylabel = 'Voltage [V]'
         self.title = 'CHG'
         self.axes.grid()
-        chgDummy = chg.chg('./dummies/220425chg1x3.csv')
+        chgDummy = chg.chg('./dummies/lipton_4_CHG_DCG.csv')
         self.plotChgData(chgDummy)
 
     def plotCvData(self, voltages, currents):

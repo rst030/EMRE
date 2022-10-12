@@ -36,7 +36,7 @@ class communicator(object):
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
-    def __init__(self, backend, cvPlotter: Plotter.Plotter): #  BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
+    def __init__(self, backend): #  BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
         '''The constructor of the communicator class.'''
         # visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         backend = '@py'# for PyVISA-py backend, '' for NIVISA backend
@@ -46,7 +46,7 @@ class communicator(object):
         self.devices_list.append(self.lockin)
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
         self.devices_list.append(self.field_controller)
-        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=cvPlotter) # creating pstat. That easy BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
+        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=None) # creating pstat. That easy BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
         self.devices_list.append(self.keithley_pstat)
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
         self.devices_list.append(self.frequency_counter)

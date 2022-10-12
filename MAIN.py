@@ -11,6 +11,7 @@ import tkinter as tk
 # utility windows:
 import cvUtility
 import chgUtility
+import cweprUtility
 import deviceManagerUtility
 
 class Ui(QtWidgets.QMainWindow):
@@ -38,7 +39,7 @@ class Ui(QtWidgets.QMainWindow):
 
         self.CV_button.clicked.connect(self.open_CV_utility)  # cycling utility, use it for deposition and cleaning of your DIRTY FILMS
         self.CHG_button.clicked.connect(self.open_CHG_utility)  # charging utility, use it for testing your batteries (charge-discharge cycling)
-
+        self.CWEPR_button.clicked.connect(self.open_CWEPR_utility)  # charging utility, use it for testing your batteries (charge-discharge cycling)
 
         self.initialize_button.clicked.connect(self.initialize_experiment)  # Remember to pass the definition/method, not the return value!
         self.run_button.clicked.connect(self.run_experiment)
@@ -77,7 +78,8 @@ class Ui(QtWidgets.QMainWindow):
         Initializes the available devices'''
 
         print('connecting to spectrometer.')
-        self.communicator = communication.communicator(backend = '', cvPlotter = self.CVplotter)
+        self.communicator = communication.communicator(backend = '')
+        self.communicator.keithley_pstat.plotter = self.CVplotter
         self.infoLabel.setText('connected')
         self.devman_button.setEnabled(True)
         self.CV_button.setEnabled(True)
@@ -119,6 +121,11 @@ class Ui(QtWidgets.QMainWindow):
     def open_CHG_utility(self):
         ''' opens the CHG GUI with the CHG plotter in it.'''
         self.CHGgui = chgUtility.ChargingUi(self.communicator.keithley_pstat)
+
+
+    def open_CWEPR_utility(self):
+        ''' opens the CWEPR GUI with the CWEPR plotter in it.'''
+        self.CWEPRgui = cweprUtility.CweprUi(comm=self.communicator)
 
     def initialize_experiment(self):
         '''sends the initial parameters to the spectrometer.

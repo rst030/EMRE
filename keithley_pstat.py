@@ -59,10 +59,6 @@ class pstat (object):
         self.print(response)
 
         self.plotter = plotter #
-        self.plotter.axes.set_title('TEST')
-        tstx = [-1, 0, 1, 2, 3]
-        tsty = [1, 0, 3, 5, 3.14159265358979323846264338327950288419716939937510]
-        self.plotter.plotCvData(tstx,tsty)
 
     def connect(self, model):
         try:
