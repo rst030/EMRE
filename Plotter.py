@@ -40,7 +40,7 @@ class PlotterCanvas(FigureCanvas):
     xlabel = 'pirates'
     ylabel = 'crocodiles'
     title = 'ultimate grapfh'
-    parent = None # parent widget, needs to be class var for live updates
+    parent = None # parent widget, [have to] pass it on construction for live updates
 
     def __init__(self):
         #plt.style.use('dark_background')
@@ -55,7 +55,7 @@ class PlotterCanvas(FigureCanvas):
 
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        #self.toolbar = NavigationToolbar(self, self.parent())  # nav toolbar
+
     def parent(self):
         return QWidget()
 

@@ -10,6 +10,9 @@
 import pyvisa as visa
 
 from time import sleep #time-dependent business for IV curves and time-constants
+
+import windfreak_synth
+
 interval = 0.01 # an interval in seconds that is waited whenever a command is sent to the Osilla's X200 SMU.
 # Can be made a little shorter, but Osilla is unpredictable often.
 
@@ -22,11 +25,12 @@ import emres_right_hand
 
 class communicator(object):
     rm = 0 # no resource manager for beginning
-    lockin = lock_in.lockin
-    field_controller = bh_15.bh_15
-    keithley_pstat = keithley_pstat.pstat
-    frequency_counter = agilent_53181a.agilent_frequency_counter
-    right_hand = emres_right_hand.emres_right_hand
+    lockin = lock_in.lockin # lock in detector
+    field_controller = bh_15.bh_15 # Bruker BH15 field controller
+    keithley_pstat = keithley_pstat.pstat #
+    frequency_counter = agilent_53181a.agilent_frequency_counter # Agilent/HP microwave frequency counter
+    right_hand = emres_right_hand.emres_right_hand # software tool for moving and clicking the mouse
+    windfreak = windfreak_synth.windfreak_synth # windfreak microwave synthesizer board
 
     devices_list = [] # to be popuylated in the constructor
 
@@ -48,6 +52,8 @@ class communicator(object):
         self.devices_list.append(self.frequency_counter)
         self.right_hand = emres_right_hand.emres_right_hand()
         self.devices_list.append(self.right_hand)
+        self.windfreak = windfreak_synth.windfreak_synth()
+        self.devices_list.append(self.windfreak)
 
     def list_devices(self):
         '''list all devices, no matter available or not'''

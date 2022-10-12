@@ -37,4 +37,10 @@ class emres_right_hand(object):
 
     def start_magnettech_sequence(self,x,y):
         self.click(x=x,y=y)
-        self.print('\nhacking the ESR studio ........................................... [100%]\n')
+        self.print('\nhacking the ESR studio: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX [100%]\n')
+
+    def write(self,cmd):
+        print('dont write on your hand, you mosquito. %s, really?'%cmd)
+
+    def read(self):
+        return('todo: get your ship together')

@@ -45,14 +45,15 @@ class bh_15 (object):
                 self.device = self.rm.open_resource(self.address, write_termination='\r')
                 self.print('got instrument: %s'%self.device)
 
-                # Switch off service requests. */
+                # Switch off service requests.
                 self.curse_BH15('SR0')
                 self.curse_BH15('MO0') # itnl gen, set CF [center field], SW [sweep width] and SWA [sweep adress < 2048]
-                # Set IM0 sweep mode (we don't use it, just to make sure we don't trigger a sweep start inadvertently). */
+                # Set IM0 sweep mode (we don't use it, just to make sure we don't trigger a sweep start inadvertently).
                 self.curse_BH15('IM0')
-                # The device seems to need a bit of time after being switched to remote mode */
+                # The device seems to need a bit of time after being switched to remote mode
                 sleep(1)
 
+                self.preset_field_scan(self.bvalues)
                 self.print('BH-15: CF SW configured, SWA set to 0')
 
             except:
@@ -60,7 +61,7 @@ class bh_15 (object):
                 self.fake = True
                 self.device = 0
 
-            self.preset_field_scan(self.bvalues)
+
 
     def preset_field_scan(self,bvalues:np.linspace): # sets the width and the center field. 2048 points!
         self.bvalues = np.linspace(bvalues[0],bvalues[-1],MAX_SWA) # this is in its rusty head now

@@ -20,7 +20,7 @@ class agilent_frequency_counter (object):
     def connect(self, model):
         if '53181' in model:
             try:
-                self.device = self.rm.get_instrument('GPIB0::3::INSTR') #todo: learn about the agilent's gpib address and hook it up
+                self.device = self.rm.open_resource('GPIB0::3::INSTR') #todo: see agilent's gpib address and hook it up
                 self.print('connecting to Agilent Frequency counter...')
                 self.write('*RST') #connect and reset the counter
                 self.print('connection to the frequency counter OK:\n' + self.device.query('*IDN?')) # if ok return counter's id

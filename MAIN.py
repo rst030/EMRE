@@ -41,11 +41,8 @@ class Ui(QtWidgets.QMainWindow):
 
 
         self.initialize_button.clicked.connect(self.initialize_experiment)  # Remember to pass the definition/method, not the return value!
-        self.initialize_button.setEnabled(False) # you cant initialiize before you upload an experiment script
         self.run_button.clicked.connect(self.run_experiment)
-        self.run_button.setEnabled(False)
         self.abort_button.clicked.connect(self.abort_experiment)
-        self.abort_button.setEnabled(False)
 
         # --- adding the plotters: ---
         # EPR plotter:
@@ -82,6 +79,10 @@ class Ui(QtWidgets.QMainWindow):
         print('connecting to spectrometer.')
         self.communicator = communication.communicator(backend = '', cvPlotter = self.CVplotter)
         self.infoLabel.setText('connected')
+        self.devman_button.setEnabled(True)
+        self.CV_button.setEnabled(True)
+        self.CHG_button.setEnabled(True)
+        self.CWEPR_button.setEnabled(True)
 
     def load_script(self):
         '''opens a file dialog to choose the file,

@@ -37,15 +37,16 @@ class deviceManagerUI(QtWidgets.QMainWindow):
 
         devItems = []  # list of QTreeWidgetItem to add
 
-        for dev in self.devList:
-            itm = QTreeWidgetItem()
-            itm.setText(0, dev.type)
-            itm.setText(1, str(dev.address))
-            itm.setText(2, str(not dev.fake))
-
-            devItems.append(itm)  # create QTreeWidgetItem's and append them
-
-        tree.addTopLevelItems(devItems)  # add everything to the tree
+        self.refresh_list()
+        # for dev in self.devList:
+        #     itm = QTreeWidgetItem()
+        #     itm.setText(0, dev.type)
+        #     itm.setText(1, str(dev.address))
+        #     itm.setText(2, str(not dev.fake))
+        #
+        #     devItems.append(itm)  # create QTreeWidgetItem's and append them
+        #
+        # tree.addTopLevelItems(devItems)  # add everything to the tree
 
 
 
@@ -66,6 +67,7 @@ class deviceManagerUI(QtWidgets.QMainWindow):
             itm.setText(0,dev.type)
             itm.setText(1, str(dev.address))
             itm.setText(2, str(not dev.fake))
+            itm.device = dev
             ListOfDeviceItems.append(itm)
 
         self.treeWidget.clear()
@@ -75,7 +77,33 @@ class deviceManagerUI(QtWidgets.QMainWindow):
 
 
     def send_commend(self):
-        print('get the data from the line edit and send it to the selected device')
+        try:
+            slectedTreeWidgetItem = self.treeWidget.selectedItems()[0]
+            device = slectedTreeWidgetItem.device
+        except:
+            print('no dev selected, click on an item!')
+            return 0
+
+        cmd = self.lineEdit.text()
+        print('writing ',cmd,' to ',device)
+        try:
+            device.write(cmd)
+        except:
+            print('cant write to', device)
+
+
 
     def read_device(self):
-        print('read from the selected device, display in the line edit')
+        try:
+            slectedTreeWidgetItem = self.treeWidget.selectedItems()[0]
+            device = slectedTreeWidgetItem.device
+        except:
+            print('no dev selected, click on an item!')
+            return 0
+        try:
+            response = device.read()
+            print('read from',device,' : ',str(response))
+            self.lineEdit.setText(str(response))
+        except:
+            print('cant read from', device)
+            self.lineEdit.setText("CANT SPEAK")
