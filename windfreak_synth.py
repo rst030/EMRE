@@ -34,5 +34,5 @@ class windfreak_synth(object):
     def read(self):
         if self.fake:
             print('reading from fake windfreak.')
-            return(420)
+            return(1620)
         return self.synth.read('')

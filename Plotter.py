@@ -55,6 +55,7 @@ class PlotterCanvas(FigureCanvas):
 
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
+        fig.tight_layout(rect = (0.16,0.1,0.99,0.9))
 
     def parent(self):
         return QWidget()

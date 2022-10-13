@@ -54,6 +54,7 @@ class cw_spectrum:
     potential = 0  # to be populated in the electrochemistry scan.
 
     def __init__(self,filepath):
+        print(filepath)
         ''''create instance of cwepr spectrum with parameters and data.
         Magnetic field axis is created.
         Call normalize to normalize.
@@ -64,9 +65,8 @@ class cw_spectrum:
         # replace it by self.fsc2load to get cwe_spectrum from akku2 file (look at file format)
         # or use self.eprload to get cw_spectrum from xEpr files.
 
-        if filepath == '':  # if no file path given, just create a container. Used for creating spectra,
+        if filepath == '':  # if no file path given, just create a container. Used for getting spectra irl.
             return
-
 
         self.file_path = filepath # we will work with the file from here
         print("filepath: %s" %self.file_path)

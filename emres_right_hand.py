@@ -43,4 +43,4 @@ class emres_right_hand(object):
         print('dont write on your hand, you mosquito. %s, really?'%cmd)
 
     def read(self):
-        return('todo: get your ship together')
+        return('X')

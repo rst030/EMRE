@@ -3,11 +3,11 @@
     rst '''
 
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtWidgets import QFileDialog
+
 import os
-from tkinter import filedialog
+#from tkinter import filedialog
 import Plotter # an EMRE module for plotting
-import bh_15
-import keithley_pstat # an EMRE module for communicating to a keithley potentiostat
 import communication
 import cw_spectrum # class of cw_spectrum, makes an object of a cw_spectrum. Can import from file
 
@@ -30,6 +30,7 @@ class CweprUi(QtWidgets.QMainWindow):
         self.info_label.setText('')
 
         # binding methods to buttons:
+        self.importButton.clicked.connect(self.Import_parameters_from_file)
         self.go_button.clicked.connect(self.do_cwepr_scan)  # code that method
 
 
@@ -41,6 +42,24 @@ class CweprUi(QtWidgets.QMainWindow):
         #self.verticalLayout_CV_plotter.addWidget(self.CHGplotter.toolbar)
         self.EPRplotter = self.EPRplotterWGT.PlotterCanvas
         self.EPRplotter.preset_EPR()  # just add some labels
+
+    def Import_parameters_from_file(self):
+        # get a spectrum from the filename, populate fields in the gui
+
+        filename = QFileDialog.getOpenFileName(self, 'Open file','/home/', "CWEPR files (*.akku2 *.ch1 *.ch2)")[0]
+
+        tmpSpectrum = cw_spectrum.cw_spectrum(filename)
+        self.PopulateFieldsFromSpectrum(tmpSpectrum)
+        print(tmpSpectrum.time)
+        print(tmpSpectrum.mwfreq)
+        print(tmpSpectrum.modfreq)
+        print(tmpSpectrum.attn)
+
+
+    def PopulateFieldsFromSpectrum(self,spc:cw_spectrum.cw_spectrum):
+        # get parameters from spectrum and populate fields in gui
+        self.info_label.setText('%s'%spc.file_name)
+
 
 
     def do_cwepr_scan(self):
