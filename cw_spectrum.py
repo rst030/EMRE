@@ -1,25 +1,45 @@
 
-import datetime
-import numpy as np
+from datetime import datetime
 
+import numpy
+import numpy as np
+import os
 # copy it from the plotting module, disgraceful!
 
 class cw_spectrum:
     '''cw EPR spectrum recorded on lyra
     and some methods for processing it'''
+    # variableDict = {
+    #     "twochannels": False, # recorded two channels?
+    #     "mwfreqFlag": False, # mwfreq recorded?
+    #     "gaussmeterFlag": False, # gaussmeter used?
+    #     "datetime": datetime.datetime, # date/time of experiment
+    #     "bstart": 0,  # start value of magnetic field
+    #     "bstop": 0, # upper limit of magnetic field
+    #     "bstep": 0, # step of magnetic field
+    #     "modamp": 0, # modulation amplitude
+    #     "modamp_dim": 'V', # mod amp dimension, volts or gauss
+    #     "": '',
+    #     "": '',
+    #     "": '',
+    #     "": '',
+    # }
 
     file_path = ""     # file path with data
+    file_name = ""  # file name, not the full path
     spectrum_file = 0  # spectrum file
     index = 0          # index in the tree view
 
+# to be in file
     twochannels = False # recorded two channels?
-    gaussmeter = False  # gaussmeter used?
-    date = 0          # date of experiment
-    time = 0          # time of experiment
+    mwfreqFlag = False # mwfreq recorded?
+    gaussmeterFlag = False  # gaussmeter used?
+    datetime = datetime.now() # date/time of experiment
+
     bstart = 0        # start value of magnetic field
     bstop = 0         # upper limit of magnetic field
-    bstep = 0         # step of magnetic field
     modamp = 0        # modulation amplitude
+    modamp_dim = 'V'  # V or G
     modfreq = 0       # modulation frequency
     li_tc = 0         # LIA TC
     li_level = 0      # LIA level
@@ -31,16 +51,13 @@ class cw_spectrum:
     temp = 0          # Temperature, K
     sample = ""
     comment = ""
-    file_name = ""     # file name, not the full path
-
-    modamp_dim = ''   # for the time being. Heritage of fsc2
 
     bstart_meas = 0
     bstop_meas = 0     # magnetic fields measured with gaussmeter
     nruns = 0          # number of scans
     npoints = 0        # number of magnetic field points
 
-    # === these are for plotting ===
+# === these are for plotting ===
     bvalues = []    # magnetic field axis
     x_channel = []  # spectral x channel component
     y_channel = []  # spectral y channel component
@@ -51,10 +68,10 @@ class cw_spectrum:
     savefile = 0 # file to save data
 
     # === these are for electrochemistry ===
-    potential = 0  # to be populated in the electrochemistry scan.
+    potential = 0  # to be populated in the amperometry scan.
+    current = 0 # to be populated in the potentiometry scan
 
     def __init__(self,filepath):
-        print(filepath)
         ''''create instance of cwepr spectrum with parameters and data.
         Magnetic field axis is created.
         Call normalize to normalize.
@@ -62,191 +79,129 @@ class cw_spectrum:
         Write autophase method to put signal to X channel'''
 
         # by now this works by loading a fsc2 akku2 spectrum from file.
-        # replace it by self.fsc2load to get cwe_spectrum from akku2 file (look at file format)
+        # replace it by self.fsc2load to get cw_spectrum from akku2 file (look at file format)
         # or use self.eprload to get cw_spectrum from xEpr files.
 
         if filepath == '':  # if no file path given, just create a container. Used for getting spectra irl.
+            print('empty cwEPR spectrum created')
             return
 
         self.file_path = filepath # we will work with the file from here
-        print("filepath: %s" %self.file_path)
+        print("importing cwEPR spectrum from: %s" %self.file_path)
 
-        self.spectrum_file = open(self.file_path) # open the file
-        sf = self.spectrum_file # for short
-        #------- just quickly getting the name of the file: -------
-        import os
-        self.file_name = os.path.basename(self.file_path)
+        self.spectrum_file = open(self.file_path,'r') # open the file
+        self.file_name = os.path.basename(self.file_path)  # name of the file
+        self.fsc2load(self.spectrum_file)
 
-        #------- now we work with the file. Reading it line by line: ------
 
-        channel_config = sf.readline().split(" ")  # here are channel parameters
-        if channel_config[2] == "2ch":
-            self.twochannels = True
-            print("data in both channels")
+    def fsc2load(self,cwf):
+        # read all lines of the spectrum
+        # get tokens, populate fields in the cw_spectrum object
+        dataLines = cwf.readlines()
 
-        #------ reading date and time of experiment: ------#
+        for line in dataLines:
 
-        date_time_list = sf.readline()#.split(" ")
-        self.time = date_time_list # just a string
-        #date_list = date_time_list[1].split("-")
-        #time_list = date_time_list[2].split(":")
-        #self.date = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2]))  # set date
-        #self.time = datetime.time(int(time_list[0]), int(time_list[1]), int(time_list[2]))  # set time
+            if '%' in line: # % = if not data
+                if '?' in line: # %? = if info lines
+                    if '2ch' in line: # both channels?
+                        self.twochannels = True
+                    if ':' in line:   # time?
+                        dt_string = line[3:-2]
+                        _format = "%Y-%m-%d %H:%M:%S"
+                        try:
+                            #self.datetime = datetime.strptime("2019-07-02 16:20:00", _format)
+                            self.datetime = datetime.strptime(str(dt_string), _format)
+                        except:
+                            self.datetime = datetime(year=1970,month=1,day=1,hour=0,minute=0,second=0)
 
-        # ------ reading magnetic field: ------#
+                    if 'addcols' in line:
+                        if 'mwfreq' in line: # mwfreq recorded?
+                            self.mwfreqFlag = True
+                        if '_meas' in line:  # gaussmeter field recorded?
+                            self.gaussmeterFlag = True
+                if '%.' in line:  # %. = comment line
+                    self.comment = str(line[3:-1])
+                if '%!' in line:  # %! = data fields, populate from here by tokens!
+                    splitvals = line.split(' ')
+                    token = splitvals[1]
+                    if token == 'nruns':
+                        self.nruns = int(splitvals[2])
+                    if token == 'npoints':
+                        self.npoints = int(splitvals[2])
+                    if token == 'bstart':
+                        self.bstart = float(splitvals[2])
+                    if token == 'bstop':
+                        self.bstop = float(splitvals[2])
+                    if token == 'modamp':
+                        self.modamp = float(splitvals[2])
+                        self.modamp_dim = str(splitvals[3])
+                    if token == 'modfreq':
+                        self.modfreq = float(splitvals[2])
+                    if token == 'li_tc':
+                        self.li_tc = float(splitvals[2])*self._suffix_to_factor(str(splitvals[-1]))
+                    if token == 'li_level':
+                        self.li_level = float(splitvals[2])
+                    if token == 'li_phase':
+                        self.li_phase = float(splitvals[2])
+                    if token == 'li_sens':
+                        self.li_sens = float(splitvals[2])*self._suffix_to_factor(str(splitvals[-1]))
+                        print('SUFFIX: ',str(splitvals[-1]))
+                    if token == 'conv_time':
+                        self.conv_time = int(splitvals[2])
+                    if token == 'mwfreq':
+                        self.mwfreq = float(splitvals[2])
+                    if token == 'attn':
+                        self.attn = float(splitvals[2])
+                    if token == 'temp':
+                        self.temp = float(splitvals[2])
+            else: # if data
+                string_x_channel = dataLines[-2].split(" ") # 2nd last line is always the x channel
 
-        gaussmeter_config = sf.readline().split(" ")
-        if "bstart_meas" in gaussmeter_config:
-            self.gaussmeter = True
-            print("gaussmeter was used")
+                if self.mwfreqFlag: # if mw frequency was recorded
+                    self.mwfreq = float(string_x_channel[-3])
+
+                if self.gaussmeterFlag: # if gaussmeter was used
+                    self.bstart_meas = float(string_x_channel[-2])
+                    self.bstop_meas = float(string_x_channel[-1])
+
+                self.x_channel = np.asarray(string_x_channel[1:-3],float)
+
+                if self.twochannels: # if two channels were recorded
+                    string_y_channel = dataLines[-1].split(" ")
+                    self.y_channel = np.asarray(string_y_channel[1:-3],float)
+                break
+        self.bvalues = np.linspace(start = self.bstart, stop = self.bstop,num = len(self.x_channel))
+
+
+
+
+
+    def _suffix_to_factor(self,suffix):
+        '''# stupid but necessary: switches uV to 1e-6 and so on'''
+        print(suffix)
+        if 'n' in suffix:
+            return 1e-9
+        if 'u' in suffix:
+            return 1e-6
+        if 'm' in suffix:
+            return 1e-3
+        if 'V' in suffix:
+            return 1e-0
+        if 's' in suffix:
+            return 1e-0
+        if 'k' in suffix:
+            return 1e3
         else:
-            print("no gaussmeter used")
-
-        print(sf.readline()) # I have no idea what should be in this line. Looks like the comment, I can check it later.
-        print("------------------ parameters --------------------")
-
-        # ------ reading other parameters: ------#
-
-        def suffix_to_factor(suffix):
-            '''# stupid but necessary: switches uV to 1e-6 and so on'''
-            print(suffix)
-            return {
-                'nV'  : 1e-9,  # 1 nV
-                'nV\n': 1e-9,  # 1 nV
-                'uV'  : 1e-6,  # 1 uV
-                'uV\n': 1e-6,
-                'mV'  : 1e-3,  # 1 mV
-                'mV\n': 1e-3,
-                'us\n': 1e-6,  # 1 us
-                'us'  : 1e-6,
-                'ms\n': 1e-3,
-                'ms'  : 1e-3,
-                'ns\n': 1e-9,
-                'ns'  : 1e-9,
-
-            }.get(suffix, -1)  # default value to return is -1 that means smth went wrong and threw an error
+            return 0
 
 
-        lst = sf.readline().split(" ")
-        self.nruns = int(lst[2]) # number of scans
-        print("nruns: %.3f" % (self.nruns))
-
-        lst = sf.readline().split(" ")
-        self.npoints = int(lst[2]) # number of points for magnetic field
-        print("npoints: %d" % (self.npoints))
-
-        lst = sf.readline().split(" ")
-        self.bstart = float(lst[2])  # start magnetic field, reading line 7
-        print("B start: %.3f %s" % (self.bstart,lst[3]))
-
-
-        lst = sf.readline().split(" ")
-        self.bstop = float(lst[2])  # stop magnetic field, reading line 8
-        print("B stop : %.3f %s" % (self.bstop, lst[3]))
-
-        lst = sf.readline().split(" ")
-        self.bstep = float(lst[2])  # step of magnetic field, reading line 9
-        print("B step: %.3f %s" % (self.bstep, lst[3]))
-
-        lst = sf.readline().split(" ")
-        self.modamp = float(lst[2])  # modulation in G, reading line 10
-        print("modamp: %.3f %s" % (self.modamp,lst[3]))
-        self.modamp_dim = (lst[3]) # dimensionality matters
-        # that will be saved for a while as a field of the class
-
-        lst = sf.readline().split(" ")
-        self.modfreq = float(lst[2])  # modulation frequency
-        print("modfreq: %.3f %s" % (self.modfreq,lst[3]))
-
-        lst = sf.readline().split(" ")
-        li_tc_raw = float(lst[2])  # LIA Time Constant
-        li_tc_dim = (lst[3]) # ms, us, etc
-        # taking care of dimensions
-        self.li_tc = li_tc_raw*suffix_to_factor(li_tc_dim)
-        print("LIA TC : %.3f %s -> %.3f s" % (li_tc_raw, lst[3], self.li_tc))
-
-
-        lst = sf.readline().split(" ")
-        self.li_level = float(lst[2])  # LIA level
-        print("LIA level : %.3f %s" % (self.li_level,lst[3]))
-
-        lst = sf.readline().split(" ")
-        self.li_phase = float(lst[2])  # LIA phase
-        print("LIA phase : %.3f %s" % (self.li_phase,lst[3]))
-        lst = sf.readline().split(" ")
-        li_sens_raw = float(lst[2])  # LIA sensitivity
-        # here dimension matters. uV gets factor of 1e-6
-        li_sens_suffix = str((lst[3]))
-        self.li_sens = li_sens_raw*suffix_to_factor(li_sens_suffix)
-
-        print("LIA sens : %.3f %s -> %.3f V" % (li_sens_raw, li_sens_suffix, self.li_sens))
-
-
-
-        lst = sf.readline().split(" ")
-        self.conv_time = float(lst[2])  # LIA conversion time, in TCs
-        print("LIA conv time : %.3f" % (self.conv_time))
-
-        lst = sf.readline().split(" ")
-        self.mwfreq = float(lst[2])  # MW freq, GHz
-        print("MW freq : %.6f GHz %s" % (self.mwfreq/1e9,lst[3]))
-
-        lst = sf.readline().split(" ")
-        self.attn = float(lst[2])  # Attenuation, dB
-        print("Attenuation : %d %s" % (self.attn,lst[3]))
-
-        lst = sf.readline().split(" ")
-        self.temp = float(lst[2])  # Temperature, K
-        print("Temperature : %d %s" % (self.temp,lst[3]))
-
-        lst = sf.readline().split(" ")
-        strange_parameter = float(lst[2])  # something in V but I dont beleive that
-        print("strange parameter: %d %s" % (strange_parameter,lst[3]))
-
-        print("--------------------------------------------------")
-
-        print("reading data")
-        # now reading data. Depending on whether gaussmeter was used and both channels recorded, choose the way.
-        # c гаусметром аккуратнее тут, последние три числа в этом списке будут частота и два магнитных поля.
-        # если два канала записали, надо два канала считать.
-
-        string_x_channel = sf.readline().split(" ")
-        if self.gaussmeter:  # if gaussmeter was used:
-            x_channel = string_x_channel[0:-4]  # spectrum in the x channel
-            self.mwfreq = float(string_x_channel[-3])       # mw frequency measured with the MW counter
-            self.bstart_meas = float(string_x_channel[-2])  # start field measured with gaussmeter
-            self.bstop_meas = float(string_x_channel[-1])   # stop field measured with gaussmeter
-        else:
-            x_channel = string_x_channel[0:-2]
-
-        if self.twochannels:  # if both channels were recorded, read second channel
-            string_y_channel = sf.readline().split(" ")
-            if self.gaussmeter:
-                y_channel = string_y_channel[0:-4]
-            else:
-                y_channel = string_y_channel[0:-2]
-
-        # making the spectral components arrays:
-        self.x_channel = np.asarray(x_channel, dtype=float)  # the x channel signal array
-        if self.twochannels:
-            self.y_channel = np.asarray(y_channel, dtype=float)  # the y channel signal array
-        else:
-            self.y_channel = self.bvalues*0  # there is nothing in the y channel, let us put permanently zero there
-
-        # now that we have the spectral components, let us make the magnetic field axis:
-        self.make_magnetic_field()  # calling the method of the cw_spectrum class that creates magnetic field
-        self.sample = "not specified"
-        self.comment = "no comments"
-
-        # end of reading, close the spectrum file:
-        self.spectrum_file.close()
 
     def __str__(self):
         return("cw_epr spectrum at %s"%self.file_path)
 
     def make_magnetic_field(self):
         '''making magnetic field axis from parameters of the class. Parameters should be loaded before.'''
-        if self.gaussmeter:
+        if self.gaussmeterFlag:
             self.bvalues = np.linspace(self.bstart_meas, self.bstop_meas, self.npoints-1)
             # create the magnetic field array from the measured B values (start and end)
             print("making B axis from measured magnetic fields")
@@ -264,13 +219,13 @@ class cw_spectrum:
         '''subtracts baseline from both channels'''
         # X channel:
         baseline_parameters_x_channel = np.polyfit(self.bvalues, self.x_channel, 0)  # linear baseline for the X channel
-        print("X channel baseline at %.7f " %baseline_parameters_x_channel) #just to be sure we fit the baseline correctly
+        print("X channel baseline at %.7f " %baseline_parameters_x_channel[0]) #just to be sure we fit the baseline correctly
         baseline_x_channel = baseline_parameters_x_channel[0] + (self.bvalues * 0)  #linear function
         self.x_channel = (self.x_channel - baseline_x_channel) # BG corrected X channel
 
         if self.twochannels:
             baseline_parameters_y_channel = np.polyfit(self.bvalues, self.y_channel, 0)  # linear baseline for the Y channel
-            print("Y channel baseline at %.7f " %baseline_parameters_y_channel)  # just to be sure we fit the baseline correctly
+            print("Y channel baseline at %.7f " %baseline_parameters_y_channel[0])  # just to be sure we fit the baseline correctly
             baseline_y_channel = baseline_parameters_y_channel[0] + (self.bvalues * 0)  # linear function
             self.y_channel = (self.y_channel - baseline_y_channel)  # BG corrected X channel
         else:
@@ -304,7 +259,7 @@ class cw_spectrum:
 
         # time was created when experiment started
 
-        f2w.write('%%? %s\n' % (str(self.time)))
+        f2w.write('%%? %s\n' % (str(self.datetime)))
         f2w.write('%%? addcols EMRE\n')
         f2w.write('%%. %.2f mV %s' % (self.potential, self.comment))
         f2w.write('%%! nruns %d\n' % self.nruns)
@@ -334,22 +289,19 @@ class cw_spectrum:
             f2w.write("%.8e "%value)
 
         # writing mw frequency
-        # f2w.write(str(self.mwfreq)) # not now
+        if self.mwfreqFlag:
+            f2w.write(str(self.mwfreq))
 
         # writing measured B0 values if gaussmeter was used
-        if self.gaussmeter:
+        if self.gaussmeterFlag:
             f2w.write(str(self.bstart_meas))
             f2w.write(str(self.bstop_meas))
 
         f2w.close()
 
 
-    #TODO: make this happen and you dont need Matlab anymore ;-)
-    def fsc2load(self,fsc2_spectrum_file_path):
-        print("loading fsc2 spectrum from file. To be continued")
-        print("read fsc2 file, determine all fields")
-        print("initialize the cw_spectrum instance with the fields from this file")
 
+    #TODO: make this happen and you dont need Matlab anymore ;-)
     def eprload(self, bruler_spectrum_file_path):
         print("loading bruker xEpr spectrum from file. To be continued")
         print("read bruker xEpr file, lookup Stoll's code!")

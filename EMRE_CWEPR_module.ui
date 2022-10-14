@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>978</width>
-    <height>767</height>
+    <width>996</width>
+    <height>894</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -181,7 +181,7 @@
              </size>
             </property>
             <property name="text">
-             <string>step B [mT]</string>
+             <string>n points</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -189,7 +189,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="step_B_edit">
+           <widget class="QLineEdit" name="npoints_edit">
             <property name="maximumSize">
              <size>
               <width>100</width>
@@ -197,7 +197,7 @@
              </size>
             </property>
             <property name="text">
-             <string>0.1</string>
+             <string>1024</string>
             </property>
            </widget>
           </item>
@@ -873,6 +873,78 @@
          </layout>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_17">
+          <item>
+           <widget class="QLabel" name="label_10">
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>MW attn [dB]</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="attn_edit">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>22</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_20">
+          <item>
+           <widget class="QLabel" name="label_11">
+            <property name="minimumSize">
+             <size>
+              <width>120</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>120</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>T [K]</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="T_edit">
+            <property name="text">
+             <string>293</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_14">
           <item>
            <widget class="QTextEdit" name="comment_textEdit">
@@ -972,6 +1044,13 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="Line" name="line_5">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
       </item>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1168,6 +1247,13 @@ p, li { white-space: pre-wrap; }
        </layout>
       </item>
       <item>
+       <widget class="Line" name="line_6">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_EPR_plotter">
@@ -1194,7 +1280,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>978</width>
+     <width>996</width>
      <height>22</height>
     </rect>
    </property>

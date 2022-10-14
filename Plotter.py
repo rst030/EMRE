@@ -80,7 +80,7 @@ class PlotterCanvas(FigureCanvas):
         self.ylabel = 'EPR signal [V]'
         self.title = 'EPR [dummy]'
         # plot sample EPR
-        dummy_spc = cw_spectrum.cw_spectrum(filepath='./dummies/dry_film_after_sonic_22dB_2G.akku2')
+        dummy_spc = cw_spectrum.cw_spectrum(filepath='./dummies/a01_cwEPR_50CV_cleaned_in_PC_AN_15CV_solid_state_modified_tube_RT_22dB.akku2')
         self.plotEprData(dummy_spc)
         self.axes.grid()
 
