@@ -11,6 +11,15 @@ class lockin (object):
     device = 0                    # pyvisa device that is populated with the constructor
     rm = 0                        # visa resource manager
     fake = False                  # use simulated outputs. Used for testing outside the lab.
+    list_of_lia_TC = \
+        [1e-5, 3e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1e0, 3e0,
+         1e1, 3e1, 1e2, 3e2, 1e3,3e3, 1e4, 3e4]  # index = SCPI code
+
+    list_of_lia_sensitivities = \
+        [2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 2e-7, 5e-7, 1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5,1e-4, 2e-4, 5e-4, 1e-3,
+         2e-3, 5e-3, 1e-2, 2e-2, 5e-2, 1e-1, 2e-1, 5e-1,1]  # index = SCPI code
+
+    list_of_lia_conversion_times = [1,2,3,4,5,6,7,8,9,10]
 
     def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
         '''create an instance of the lock-in amplifier object'''

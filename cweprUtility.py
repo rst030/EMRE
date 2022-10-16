@@ -10,6 +10,10 @@ import os
 import Plotter # an EMRE module for plotting
 import communication
 import cw_spectrum # class of cw_spectrum, makes an object of a cw_spectrum. Can import from file
+import numpy as np
+import lock_in
+import EPRtools
+
 
 class CweprUi(QtWidgets.QMainWindow):
     '''the cwEPR utility window.'''
@@ -26,13 +30,37 @@ class CweprUi(QtWidgets.QMainWindow):
 
         # initialization of buttons and labels:
         self.go_button.setText('Go!')
-
         self.info_label.setText('')
+
+        # populating the sensitivity and tc combo boxes
+        # --- sensitivity combo box ---
+        self.lia_sensitivity_comboBox.clear()  # clear what you put there in QtDesigner
+        list_of_lia_sensitivities = lock_in.lockin.list_of_lia_sensitivities
+        for sens in list_of_lia_sensitivities:
+            self.lia_sensitivity_comboBox.addItem('%.0e'%sens) # SCPI code = index in combobox
+        self.lia_sensitivity_comboBox.setCurrentIndex(np.where(np.array(list_of_lia_sensitivities)==100e-3)[0][0])
+        # --- TC combo box ---
+        self.lia_TC_comboBox.clear()  # clear what you put there in QtDesigner
+        list_of_lia_TC = lock_in.lockin.list_of_lia_TC # constants are given in the lia class
+        for TC in list_of_lia_TC:
+            self.lia_TC_comboBox.addItem('%.0e' % TC)  # SCPI code = index in combobox
+        self.lia_TC_comboBox.setCurrentIndex(np.where(np.array(list_of_lia_TC)==10e-3)[0][0])
+
+        # --- TC combo box ---
+        self.lia_conversion_time_comboBox.clear()  # clear what you put there in QtDesigner
+        list_of_CT = [1,2,3,4,5,6,7,8,9,10]  # order of value is its SCPI code
+        for TC in list_of_CT:
+            self.lia_conversion_time_comboBox.addItem('%d' % TC)  # SCPI code = index in combobox
+        self.lia_conversion_time_comboBox.setCurrentIndex(np.where(np.array(list_of_CT)==3)[0][0])
 
         # binding methods to buttons:
         self.importButton.clicked.connect(self.Import_parameters_from_file)
         self.go_button.clicked.connect(self.do_cwepr_scan)  # code that method
-
+        self.abort_button.clicked.connect(self.abort_scan)  # code that method
+        self.save_button.clicked.connect(self.save_spectrum) # code that method
+        # --- EPR TOOLS ---
+        self.g_calculator =  EPRtools.g_calculator()
+        self.geButton.clicked.connect(self.set_ge)
 
         # --- adding the plotter: ---
         # EPR plotter:
@@ -48,6 +76,8 @@ class CweprUi(QtWidgets.QMainWindow):
         self.PopulateFieldsFromSpectrum(spc=dummySpectrum)
         self.EPRplotter.plotEprData(spectrum=dummySpectrum)
 
+
+
     def Import_parameters_from_file(self):
         # get a spectrum from the filename, populate fields in the gui
 
@@ -55,6 +85,9 @@ class CweprUi(QtWidgets.QMainWindow):
 
         tmpSpectrum = cw_spectrum.cw_spectrum(filename)
         self.PopulateFieldsFromSpectrum(tmpSpectrum)
+        # and plot that spectrum
+        self.EPRplotter.clear()
+        self.EPRplotter.plotEprData(tmpSpectrum)
 
 
     def PopulateFieldsFromSpectrum(self,spc:cw_spectrum.cw_spectrum):
@@ -70,20 +103,39 @@ class CweprUi(QtWidgets.QMainWindow):
         self.modAmpDimensionCombobox.setCurrentIndex(int("V" in spc.modamp_dim))
         setup_sens_value = spc.li_sens # read value that is to be set, and acroll the combobox
         print('%.10f'%setup_sens_value)
+        self.lia_sensitivity_comboBox.setCurrentIndex(np.where(np.array(lock_in.lockin.list_of_lia_sensitivities)
+                                                               == spc.li_sens)[0][0])
+        self.lia_TC_comboBox.setCurrentIndex(np.where(np.array(lock_in.lockin.list_of_lia_TC)
+                                                               == spc.li_tc)[0][0])
+        self.lia_conversion_time_comboBox.setCurrentIndex(np.where(np.array(lock_in.lockin.list_of_lia_conversion_times)
+                                                               == spc.conv_time)[0][0])
 
-        sens_values = [2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 2e-7, 5e-7, 1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4,
-                       5e-4, 1e-3, 2e-3, 5e-3, 1e-2, 2e-2, 5e-2, 1e-1, 2e-1, 5e-1, 1] # order of value is its SCPI code
+        self.n_scans_edit.setText('%d'%spc.nruns)
+        self.attn_edit.setText('%d'%spc.attn)
+        self.T_edit.setText('%d'%spc.temp)
+        self.comment_textEdit.setText('%s'%spc.comment)
 
-        formatted_sens_values = ["%.1e V" % elem for elem in sens_values] # for better representability
-        indx = sens_values.index(setup_sens_value)
-        self.lia_sensitivity_comboBox.clear() #todo: continue here populating fields
-        self.lia_sensitivity_comboBox.configure(values = formatted_sens_values)
-        self.lia_sensitivity_comboBox.setCurrentIndex(indx)
+        # to EPR Tools:
+        self.mw_freq_edit.setText('%.3f'%(spc.mwfreq/1e9))
 
     def do_cwepr_scan(self):
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
         # apply positive current, go upto high point, then apply negative current and go downto low point
         self.spectrum = cw_spectrum.cw_spectrum('')
+        self.EPRplotter.clear()
         self.EPRplotter.plotEprData(self.spectrum)
 
         print('take a CWEPR here!')
+
+    def abort_scan(self): # stops all
+        print('mayday! MAYDAY!')
+
+    def save_spectrum(self):
+        print('save the spectrum.')
+
+# --- EPR TOOLS ---
+    def set_ge(self):
+        self.g_edit.setText('%.12f'%EPRtools.ge)
+        self.g_edit.setStyleSheet("QLineEdit{background: #00ff9f}")
+
+        #todo: finish g calculator

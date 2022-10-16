@@ -49,7 +49,7 @@ class PlotterCanvas(FigureCanvas):
         self.axes = fig.add_subplot(111)
         fig.subplots_adjust(left = 0.18, right=0.99, top=0.94, bottom=0.1)
         self.compute_initial_figure()
-        self.axes.grid()
+        #self.axes.grid()
 
         FigureCanvas.__init__(self, fig)
 
@@ -82,7 +82,6 @@ class PlotterCanvas(FigureCanvas):
         # plot sample EPR
         dummy_spc = cw_spectrum.cw_spectrum(filepath='./dummies/a01_cwEPR_50CV_cleaned_in_PC_AN_15CV_solid_state_modified_tube_RT_22dB.akku2')
         self.plotEprData(dummy_spc)
-        self.axes.grid()
 
     def preset_CV(self):
         self.clear()
@@ -142,6 +141,7 @@ class PlotterCanvas(FigureCanvas):
 
     def plotEprData(self, spectrum:cw_spectrum.cw_spectrum):
         #self.axes.cla()
+        self.title = spectrum.file_name
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
