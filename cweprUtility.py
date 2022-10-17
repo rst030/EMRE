@@ -11,19 +11,29 @@ import Plotter # an EMRE module for plotting
 import communication
 import cw_spectrum # class of cw_spectrum, makes an object of a cw_spectrum. Can import from file
 import numpy as np
+from time import sleep
 import lock_in
 import EPRtools
 
 
 class CweprUi(QtWidgets.QMainWindow):
     '''the cwEPR utility window.'''
-    lock_in = communication.communicator.lockin
-    field_controller = communication.communicator.field_controller
-    frequency_counter = communication.communicator.frequency_counter
+    comm = communication.communicator
+    lock_in = comm.lockin
+
+    field_controller = comm.field_controller
+    frequency_counter = comm.frequency_counter
     workingFolder = r"./dummies/" # where the openfiledialog opens
     spectrum = cw_spectrum.cw_spectrum
 
     def __init__(self, comm: communication.communicator):
+        # hardware to pass!
+        self.comm = comm
+        self.lock_in = comm.lockin
+        self.field_controller = comm.field_controller
+        self.frequency_counter = comm.frequency_counter
+
+
         super(CweprUi, self).__init__()  # Call the inherited classes __init__ method
         uic.loadUi('EMRE_CWEPR_module.ui', self)  # Load the .ui file
         self.show()  # Show the GUI
@@ -61,27 +71,35 @@ class CweprUi(QtWidgets.QMainWindow):
         # --- EPR TOOLS ---
         self.g_calculator =  EPRtools.g_calculator()
         self.geButton.clicked.connect(self.set_ge)
+        self.calcGButton.clicked.connect(self.calculate_g)
+        self.calcFieldButton.clicked.connect(self.calculate_B)
+        self.calcMWfreqButton.clicked.connect(self.calculate_mwfq)
+
 
         # --- adding the plotter: ---
         # EPR plotter:
-        EPRplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'EPR_plotter_widget')
-        self.EPRplotterWGT = Plotter.Plotter(parent=EPRplotterWidgetFound)
+        #EPRplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'EPR_plotter_widget')
+        self.EPRplotterWGT = Plotter.Plotter(parent=None,type = 'EPR')
         self.verticalLayout_EPR_plotter.addWidget(self.EPRplotterWGT)
         #self.verticalLayout_CV_plotter.addWidget(self.CHGplotter.toolbar)
         self.EPRplotter = self.EPRplotterWGT.PlotterCanvas
-        self.EPRplotter.preset_EPR()
+        self.Import_parameters_from_file(filename = './dummies/a01_cwEPR_50CV_cleaned_in_PC_AN_15CV_solid_state_modified_tube_RT_22dB.akku2')
 
-        # get a sample spectrum, populate fields in form
-        dummySpectrum = cw_spectrum.cw_spectrum('./dummies/a01_cwEPR_50CV_cleaned_in_PC_AN_15CV_solid_state_modified_tube_RT_22dB.akku2')
-        self.PopulateFieldsFromSpectrum(spc=dummySpectrum)
-        self.EPRplotter.plotEprData(spectrum=dummySpectrum)
+        # tune picture poltter
+        #TPplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'TunePictureWidget')
+        self.TPplotterWGT = Plotter.Plotter(parent=None,type='TP')
+        self.verticalLayout_TP_plotter.addWidget(self.TPplotterWGT)
+        self.TPplotter = self.TPplotterWGT.PlotterCanvas
+        self.TPplotterWGT.setMinimumWidth(230)
+        self.TPplotterWGT.setMaximumWidth(230)
 
 
 
-    def Import_parameters_from_file(self):
+
+    def Import_parameters_from_file(self,filename=None):
         # get a spectrum from the filename, populate fields in the gui
-
-        filename = QFileDialog.getOpenFileName(self, 'Open file','/home/', "CWEPR files (*.akku2 *.ch1 *.ch2)")[0]
+        if filename==None:
+            filename = QFileDialog.getOpenFileName(self, 'Open file','/home/', "CWEPR files (*.akku2)")[0]
 
         tmpSpectrum = cw_spectrum.cw_spectrum(filename)
         self.PopulateFieldsFromSpectrum(tmpSpectrum)
@@ -118,14 +136,76 @@ class CweprUi(QtWidgets.QMainWindow):
         # to EPR Tools:
         self.mw_freq_edit.setText('%.3f'%(spc.mwfreq/1e9))
 
+
+
+    def PopulateSpectrumFromFields(self,spc:cw_spectrum.cw_spectrum):
+        # get parameters from spectrum and populate fields in gui
+        spc.file_name = str(self.info_label.text())
+        spc.bstart = float(self.low_B_edit.text())
+        spc.bstop = float(self.high_B_edit.text())
+        spc.npoints = int(self.npoints_edit.text())
+        spc.gaussmeterFlag = self.use_GM_checkbox.checkState()
+        spc.li_phase = float(self.lia_phase_edit.text())
+        spc.modamp = float(self.mod_amp_edit.text())
+        spc.modamp_dim = self.modAmpDimensionCombobox.currentText()
+        # LIA sensitivity
+        spc.li_sens = float(self.lia_sensitivity_comboBox.currentText())
+        spc.li_sens_SCPI_code = int(self.lia_sensitivity_comboBox.currentIndex())
+        # LIA TC
+        spc.li_tc = float(self.lia_TC_comboBox.currentText())
+        spc.li_tc_SCPI_code_SCPI_code = int(self.lia_TC_comboBox.currentIndex())
+        # conversion time
+        spc.conv_time = int(self.lia_conversion_time_comboBox.currentText())
+        # n scans
+        spc.nruns = int(self.n_scans_edit.text())
+        # attn
+        spc.attn = int(self.attn_edit.text())
+        # temperature
+        spc.temp = float(self.T_edit.text())
+        # comment
+        spc.comment = self.comment_textEdit.toPlainText()
+
     def do_cwepr_scan(self):
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
-        # apply positive current, go upto high point, then apply negative current and go downto low point
+        # ????? apply positive current, go upto high point, then apply negative current and go downto low point
         self.spectrum = cw_spectrum.cw_spectrum('')
+        spc = self.spectrum  # for short
         self.EPRplotter.clear()
-        self.EPRplotter.plotEprData(self.spectrum)
+        self.EPRplotter.plotEprData(spc)
 
-        print('take a CWEPR here!')
+        # capture fields and constants from the gui:
+        self.PopulateSpectrumFromFields(spc)
+        # preset LIA
+        lia = self.lock_in
+        lia.set_frequency(frequency_in_hz=spc.modfreq)
+        lia.set_phase(spc.li_phase)
+
+        if 'G' in spc.modamp_dim:
+            lia.set_modamp(modamp_in_gauss = spc.modamp, frequency_in_hz = spc.modfreq) #todo
+        if 'V' in spc.modamp_dim:
+            lia.set_voltage(spc.modamp)
+
+        lia.set_sensitivity(code=spc.li_sens_SCPI_code)
+        lia.set_time_constant(code=spc.li_tc_SCPI_code)
+        # dont forget about the conversion time!
+
+        # Preset field vector in the field controller
+        fc = self.field_controller
+        bvaluesToScan = np.linspace(start = spc.bstart, stop = spc.bstop, num = spc.npoints)
+        fc.preset_field_scan(bvaluesToScan)
+        fc.set_field(spc.bstart) # push the fc to the left most field
+        fc.check_set_field(spc.bstart) # make sure the controller is on field
+        for field_to_set in bvaluesToScan:
+            measured_bfield = fc.set_field(field_to_set)  # set the magnetic field, get the set magnetic field. #todo ER35M!!!
+            spc.x_channel.append(lia.getX())  # get x channel of the LIA
+            spc.y_channel.append(lia.getY())  # get y channel of the LIA
+            spc.bvalues.append(measured_bfield)  # pop
+            self.EPRplotter.clear()
+            self.EPRplotter.plotEprData(spc)
+            sleep(spc.li_tc*spc.conv_time)
+        fc.set_field(spc.bstart)
+        print('one CWEPR scan recorded.')
+
 
     def abort_scan(self): # stops all
         print('mayday! MAYDAY!')
@@ -133,9 +213,58 @@ class CweprUi(QtWidgets.QMainWindow):
     def save_spectrum(self):
         print('save the spectrum.')
 
+
+
+
+
+
+
+
+
+
+
 # --- EPR TOOLS ---
     def set_ge(self):
         self.g_edit.setText('%.12f'%EPRtools.ge)
-        self.g_edit.setStyleSheet("QLineEdit{background: #00ff9f}")
+        self.g_edit.setStyleSheet("QLineEdit{background: #00ff9f}") # what calculated goes green
+        self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+
+    def calculate_g(self):
+        # get g from mwfq and B
+        mwfq = float(self.mw_freq_edit.text())*1e9 # Hz
+        b0 = float(self.B_edit.text())/1e4 # T
+        gcalc = self.g_calculator.calculate_g(_mwfq=mwfq,_b0=b0) # calculate g from given fields
+
+        self.g_edit.clear()
+        self.g_edit.setText('%.12f' % gcalc)
+        self.g_edit.setStyleSheet("QLineEdit{background: #00ff9f}")  # what calculated goes green
+        self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+
+    def calculate_B(self):
+        # get B from mwfq and g
+        mwfq = float(self.mw_freq_edit.text()) * 1e9  # Hz
+        g = float(self.g_edit.text())
+        b0calc = self.g_calculator.calculate_b0(_mwfq=mwfq, _g = g)  # calculate B from given fields
+
+        self.B_edit.clear()
+        self.B_edit.setText('%.2f' % float(b0calc*1e4))
+        self.B_edit.setStyleSheet("QLineEdit{background: #00ff9f}")  # what calculated goes green
+        self.g_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+
+    def calculate_mwfq(self):
+        # get B from mwfq and g
+        b0 = float(self.B_edit.text())/1e4 # T
+        g = float(self.g_edit.text())
+        mwfqcalc = self.g_calculator.calculate_mwfq(_b0=b0,_g=g)  # calculate mwfq from given fields
+
+        self.mw_freq_edit.clear()
+        self.mw_freq_edit.setText('%.4f' % float(mwfqcalc / 1e9)) # GHz
+        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #00ff9f}")  # what calculated goes green
+        self.g_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+        self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
+
 
         #todo: finish g calculator

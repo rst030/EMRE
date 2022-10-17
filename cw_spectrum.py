@@ -9,21 +9,6 @@ import os
 class cw_spectrum:
     '''cw EPR spectrum recorded on lyra
     and some methods for processing it'''
-    # variableDict = {
-    #     "twochannels": False, # recorded two channels?
-    #     "mwfreqFlag": False, # mwfreq recorded?
-    #     "gaussmeterFlag": False, # gaussmeter used?
-    #     "datetime": datetime.datetime, # date/time of experiment
-    #     "bstart": 0,  # start value of magnetic field
-    #     "bstop": 0, # upper limit of magnetic field
-    #     "bstep": 0, # step of magnetic field
-    #     "modamp": 0, # modulation amplitude
-    #     "modamp_dim": 'V', # mod amp dimension, volts or gauss
-    #     "": '',
-    #     "": '',
-    #     "": '',
-    #     "": '',
-    # }
 
     file_path = ""     # file path with data
     file_name = ""  # file name, not the full path
@@ -56,6 +41,10 @@ class cw_spectrum:
     bstop_meas = 0     # magnetic fields measured with gaussmeter
     nruns = 0          # number of scans
     npoints = 0        # number of magnetic field points
+
+    # for lia
+    li_sens_SCPI_code = 0
+    li_tc_SCPI_code = 0
 
 # === these are for plotting ===
     bvalues = []    # magnetic field axis

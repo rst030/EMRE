@@ -36,7 +36,7 @@ class CyclingUi(QtWidgets.QMainWindow):
         # --- adding the plotter: ---
         # CV plotter:
         CVplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CV_plotter_widget')
-        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound)
+        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound, type = 'CV')
         self.verticalLayout_CV_plotter.addWidget(self.CVplotterWGT)
         #self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
         self.CVplotter = self.CVplotterWGT.PlotterCanvas

@@ -33,7 +33,7 @@ class chg():
         # --- from here on - import from file ---
         # if filename was given, user wants to import that cv
         if filename != '':
-        # populate the fields of the cv object from that csv file
+        # populate the fields of the chg object from that csv file
 
             self.chgFile = open(filename)  # open the file
             self.filename = str(filename.split('/')[-1])

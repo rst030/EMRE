@@ -13,6 +13,7 @@ import numpy
 import chg
 import cw_spectrum
 import cv
+import tp
 
 matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
@@ -35,27 +36,35 @@ import math
 #         self.toolbar = NavigationToolbar(self.canvas, self)
 #         self.layout().addWidget(self.toolbar)
 #         self.layout().addWidget(self.canvas)
+
+
 class PlotterCanvas(FigureCanvas):
     '''Plotter based on FigureCanvasQTAgg'''
     xlabel = 'pirates'
     ylabel = 'crocodiles'
     title = 'ultimate grapfh'
     parent = None # parent widget, [have to] pass it on construction for live updates
+    type = 'GEN' # available: 'GEN,CV,CHG,EPR,TP'
 
-    def __init__(self):
-        #plt.style.use('dark_background')
-        #matplotlib.interactive(True)
-        fig = Figure(figsize=(16,16),dpi=100)
+    def __init__(self,type:str):
+        self.type = type # assign and dont worry anymore!
+        fig = Figure(figsize=(16, 16), dpi=100)
         self.axes = fig.add_subplot(111)
-        fig.subplots_adjust(left = 0.18, right=0.99, top=0.94, bottom=0.1)
-        self.compute_initial_figure()
-        #self.axes.grid()
+        plt.style.use('seaborn-colorblind')
+#        fig.subplots_adjust(left = 0.18, right=0.99, top=0.94, bottom=0.1)
 
         FigureCanvas.__init__(self, fig)
-
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        fig.tight_layout(rect = (0.16,0.1,0.99,0.9))
+
+        if type == 'TP': # if a tunepicture plotter:
+            tightrect = (0.01,0.06,0.99,1)
+            self.axes.set_yticks([])
+        else:
+            tightrect = (0.16, 0.1, 0.99, 0.9)
+
+        fig.tight_layout(rect = tightrect)
+        self.compute_initial_figure()
 
     def parent(self):
         return QWidget()
@@ -69,7 +78,17 @@ class PlotterCanvas(FigureCanvas):
         self.update_plotter()
     def compute_initial_figure(self):
         self.clear()
-        self.axes.plot([1,2,3],[2,3,5])
+        if self.type == 'GEN':
+            pass
+        if self.type == 'CV':
+            self.preset_CV()
+        if self.type == 'CHG':
+            self.preset_CHG()
+        if self.type == 'EPR':
+            self.preset_EPR()
+        if self.type == 'TP':
+            self.preset_TP()
+
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
@@ -104,6 +123,15 @@ class PlotterCanvas(FigureCanvas):
         chgDummy = chg.chg('./dummies/lipton_4_CHG_DCG.csv')
         self.plotChgData(chgDummy)
 
+    def preset_TP(self):
+        self.clear()
+        self.xlabel = '$\Delta$ f [MHz]'
+        self.ylabel = ''
+        self.title = ''
+        self.axes.set_yticks([])
+        tpDummy = tp.tp('./dummies/TP.csv') #TP!
+        self.plotTpData(tpDummy)
+
     def plotCvData(self, voltages, currents):
         self.axes.cla()
         self.axes.set_xlabel(self.xlabel)
@@ -124,6 +152,19 @@ class PlotterCanvas(FigureCanvas):
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
         self.axes.grid()
+        self.update_plotter()
+
+    def plotTpData(self,tpToPlot:tp):
+        times = tpToPlot.time
+        frequencies = tpToPlot.frequency
+        tunepic = tpToPlot.tunepicture
+        self.title = ''
+        self.axes.cla()
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_ylabel(self.ylabel)
+        self.axes.set_title(self.title)
+        self.axes.plot(frequencies, tunepic, 'k-', linewidth=1)
+        self.axes.autoscale(True)
         self.update_plotter()
 
     def plotCv(self,cvToPlot:cv):
@@ -159,11 +200,11 @@ class PlotterCanvas(FigureCanvas):
 
     # a widget class to implement the toolbar
 class Plotter(QWidget):
-    type = 'general' # can be EPR, CV and CHG type
-    def __init__(self, parent, *args, **kwargs): # you have to pass the main window here, else crashes on click save
+    type = 'general' # can be EPR, TP, CV and CHG type
+    def __init__(self, parent, type, *args, **kwargs): # you have to pass the main window here, else crashes on click save
         QWidget.__init__(self, *args, **kwargs)
         self.setLayout(QVBoxLayout())
-        self.PlotterCanvas = PlotterCanvas() # Plotter is a class defined above
+        self.PlotterCanvas = PlotterCanvas(type = type) # Plotter is a class defined above. Type defines which plotter to be created ('CV,CHG,EPR,TP')
 
         # navigation toolbar
         self.toolbar = NavigationToolbar(self.PlotterCanvas, parent = self)

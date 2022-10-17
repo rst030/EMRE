@@ -72,6 +72,24 @@ class lockin (object):
 #        amplitudeForLockin = voltage_in_volts * 1000  # volts to millivolts conversion
         self.write('SLVL ' + str(voltage_in_volts) + 'V')
 
+    def set_modamp(self, modamp_in_gauss:float, frequency_in_hz:float):
+        '''sets up li_level for given modamp and li_freq'''
+        # calculate self.li_level from modamp_in_g and mod_freq_in_Hz
+        # for different frequencies scaling factors differ. So far we know only two: 10 kHz and 100 kHz
+        if frequency_in_hz == 100000:  # if modulation frequency is 100 kHz, use 0.27539 * self.scan_setting.modamp + 0.015642
+           li_level = 0.27539 * modamp_in_gauss + 0.015642  # V. Calibration by Felix Kraffert 2014-02-04
+        else:
+            if frequency_in_hz == 10000:  # if modulation frequency is 10 kHz, use li_level = (141.54 * modamp + 11.45) * 0.001;
+                li_level = (141.54 * modamp_in_gauss + 11.45) * 0.001  # V. By Felix Kraffert 2014-02-04
+            else:
+                print(
+                    'cant set modulation amplitude for %.2e Hz. Choose 10 kHz or 100 kHz.'%frequency_in_hz)
+                return -1
+
+        print("Lock-in sin out amplitude for %.3f G: %.3f V" % (modamp_in_gauss, li_level))
+        self.set_voltage(li_level)
+        print('set')
+
     def getR(self):
         # OUTP? i Query the value of X (1), Y (2), R (3) or θ (4). Returns ASCII floating point value.
         self.write('OUTP? 3')  # request for R channel

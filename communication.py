@@ -20,17 +20,18 @@ import lock_in  # lock in amplifier class.
 import bh_15   # field controller class
 import keithley_pstat  # potentiostat keithley model 2450 source meter
 import agilent_53181a  # frequency counter class.
-import Plotter
-import emres_right_hand
+import emres_right_hand # right hand that clocks buttons and moves the mouse
+import scope # oscilloscope, by now a TDS on lyra
 
 class communicator(object):
-    rm = 0 # no resource manager for beginning
+    rm = visa.ResourceManager # no resource manager for beginning
     lockin = lock_in.lockin # lock in detector
     field_controller = bh_15.bh_15 # Bruker BH15 field controller
     keithley_pstat = keithley_pstat.pstat #
     frequency_counter = agilent_53181a.agilent_frequency_counter # Agilent/HP microwave frequency counter
     right_hand = emres_right_hand.emres_right_hand # software tool for moving and clicking the mouse
     windfreak = windfreak_synth.windfreak_synth # windfreak microwave synthesizer board
+    scope = scope.scope
 
     devices_list = [] # to be popuylated in the constructor
 
@@ -54,6 +55,8 @@ class communicator(object):
         self.devices_list.append(self.right_hand)
         self.windfreak = windfreak_synth.windfreak_synth()
         self.devices_list.append(self.windfreak)
+        self.scope = scope.scope(rm = self.rm)
+        self.devices_list.append(self.scope)
 
     def list_devices(self):
         '''list all devices, no matter available or not'''

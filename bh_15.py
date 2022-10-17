@@ -83,17 +83,18 @@ class bh_15 (object):
 
     def check_set_field(self,SetField):
         # if the set field is not
-
-        attemptsCtr = 1000 # how much time can we wait until the rusty box sets the field. Huge magnet! Huge!
+        if self.fake:
+            return
+        attemptsCtr = 100 # how much time can we wait until the rusty box sets the field. Huge magnet! Huge!
 
         while (self.get_field() - SetField) >  self.SW/MAX_SWA: # while not on field:
             print('BH-15: crawling on the field (doing its best)')
             sleep(0.2)
             attemptsCtr -=1
             if attemptsCtr == 0:
-                print('BH-15 crawling on the field for too long! Only at %.3f G by now'%self.get_field())
-                return -1
-        return(self.get_field() - SetField)
+                print('BH-15 crawling on field for too long! Only %.3f G now'%self.get_field())
+                return False
+        return(True)
 
     def get_field(self):
         B0_measured_str = self.talk_to_BH15('FC')       # measure field

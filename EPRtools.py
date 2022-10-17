@@ -16,7 +16,7 @@ class g_calculator(object):
         return h * _mwfq / mu_b / _b0
 
     def calculate_b0(self,_mwfq,_g): # calculate B from microwave frequency and g
-        return h * _mwfq / mu_b / _g
+        return h * _mwfq / mu_b / _g # T
 
     def calculate_mwfq(self,_b0, _g): # calculate microwave frequency from B and h
-        return mu_b * _b0 * _g/h
+        return mu_b * _b0 * _g/h # Hz
