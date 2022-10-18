@@ -100,9 +100,9 @@ class CweprUi(QtWidgets.QMainWindow):
 
 
 
-    def Import_parameters_from_file(self,filename=None):
+    def Import_parameters_from_file(self,filename=False):
         # get a spectrum from the filename, populate fields in the gui
-        if filename==None:
+        if not filename:
             filename = QFileDialog.getOpenFileName(self, 'Open file','/home/', "CWEPR files (*.akku2)")[0]
 
         tmpSpectrum = cw_spectrum.cw_spectrum(filename)

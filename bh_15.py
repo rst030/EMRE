@@ -43,6 +43,7 @@ class bh_15 (object):
             self.address = 'GPIB0::8::INSTR'  # pad 8
             try:
                 self.device = self.rm.open_resource(self.address, write_termination='\r')
+                self.write('SR0')
                 self.print('got instrument: %s'%self.device)
 
                 # Switch off service requests.
@@ -123,6 +124,7 @@ class bh_15 (object):
                 self.device.write(command)
             except:
                 self.print('write failed: %s'%command)
+                self.fake = True # if cant write, use fake device
         else:
             self.print('No device. Writing to fake: %s'%command)
 
