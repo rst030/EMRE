@@ -12,8 +12,9 @@ import communication
 import cw_spectrum # class of cw_spectrum, makes an object of a cw_spectrum. Can import from file
 import numpy as np
 from time import sleep
-import lock_in
-import EPRtools
+import lock_in # i want to know the fields of lia, good for coding
+import EPRtools # g calculator
+import tp # tunepicture object
 
 
 class CweprUi(QtWidgets.QMainWindow):
@@ -25,6 +26,8 @@ class CweprUi(QtWidgets.QMainWindow):
     frequency_counter = comm.frequency_counter
     workingFolder = r"./dummies/" # where the openfiledialog opens
     spectrum = cw_spectrum.cw_spectrum
+
+    ABORT_FLAG = True # flag to abort everything
 
     def __init__(self, comm: communication.communicator):
         # hardware to pass!
@@ -74,6 +77,7 @@ class CweprUi(QtWidgets.QMainWindow):
         self.calcGButton.clicked.connect(self.calculate_g)
         self.calcFieldButton.clicked.connect(self.calculate_B)
         self.calcMWfreqButton.clicked.connect(self.calculate_mwfq)
+        self.importDipButton.clicked.connect(self.import_tunepicture)
 
 
         # --- adding the plotter: ---
@@ -106,7 +110,6 @@ class CweprUi(QtWidgets.QMainWindow):
         # and plot that spectrum
         self.EPRplotter.clear()
         self.EPRplotter.plotEprData(tmpSpectrum)
-
 
     def PopulateFieldsFromSpectrum(self,spc:cw_spectrum.cw_spectrum):
         # get parameters from spectrum and populate fields in gui
@@ -166,6 +169,7 @@ class CweprUi(QtWidgets.QMainWindow):
         spc.comment = self.comment_textEdit.toPlainText()
 
     def do_cwepr_scan(self):
+        self.ABORT_FLAG = False
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
         # ????? apply positive current, go upto high point, then apply negative current and go downto low point
         self.spectrum = cw_spectrum.cw_spectrum('')
@@ -196,6 +200,8 @@ class CweprUi(QtWidgets.QMainWindow):
         fc.set_field(spc.bstart) # push the fc to the left most field
         fc.check_set_field(spc.bstart) # make sure the controller is on field
         for field_to_set in bvaluesToScan:
+            if self.ABORT_FLAG: # the hard way
+                continue
             measured_bfield = fc.set_field(field_to_set)  # set the magnetic field, get the set magnetic field. #todo ER35M!!!
             spc.x_channel.append(lia.getX())  # get x channel of the LIA
             spc.y_channel.append(lia.getY())  # get y channel of the LIA
@@ -209,9 +215,12 @@ class CweprUi(QtWidgets.QMainWindow):
 
     def abort_scan(self): # stops all
         print('mayday! MAYDAY!')
+        self.ABORT_FLAG = True
+        self.lock_in.set_voltage(0)
+        print("Field Modulation OFF!")
 
     def save_spectrum(self):
-        print('save the spectrum.')
+        print('save the spectrum. Steal it from the CHG module!')
 
 
 
@@ -266,5 +275,13 @@ class CweprUi(QtWidgets.QMainWindow):
         self.g_edit.setStyleSheet("QLineEdit{background: #ffffff}")
         self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
 
+    # --- EPR TOOLS ---
+    def import_tunepicture(self, filename=False):
+        if not filename:
+            filename = QFileDialog.getOpenFileName(self, 'Open file', './', "Tunepicture files (*.CSV)")[0]
+        tmpTP = tp.tp(filename)
+        self.TPplotter.clear()
+        self.TPplotter.plotTpData(tmpTP)
 
-        #todo: finish g calculator
+
+        #todo: Q fit, save, get tunepicture from scope

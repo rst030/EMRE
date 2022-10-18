@@ -2,8 +2,9 @@
 tune picture module for EMRE
 rst030@protonmail.com'''
 from datetime import datetime
+import numpy as np
 
-timeToFrequencyConversionFactor = 1  # Hz/s - see Matlab!
+timeToFrequencyConversionFactor = 6.94e4  # MHz/<tunepicunit>
 
 class tp():
     '''Tunepicture object. creted by scope on lyra or by Emre.'''
@@ -45,7 +46,7 @@ class tp():
                 self.time.append(relTime)
                 self.tunepicture.append(tunePicValue)
 
-        self.frequency = self.time*timeToFrequencyConversionFactor
+        self.frequency =  np.asarray(self.time,float)*timeToFrequencyConversionFactor
 
 
     def saveAs(self,filename: str):
