@@ -461,3 +461,12 @@ python3-usb package for your linux has to be installed for pyvisa to see the USB
 
 doing device management in a device manageer window.
 testing CV module with real pstat.
+
+24/10/22
+cv, chg, epr and device manager modules implemented.
+fitq.py taken from q project.
+Implement fitq in the tunepicture panel.
+
+
+
+

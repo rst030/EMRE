@@ -407,7 +407,9 @@ class pstat (object):
         chgTaken.datetime = str(starttime)
 
         # ELECTRICITY ON!
-        self.configureCHG(absoluteValueOfVoltageLimit=highVoltageLimit)  # go set the knobs there
+        print(max(highVoltageLimit, abs(lowVoltageLimit)))
+        self.configureCHG(absoluteValueOfVoltageLimit=max(highVoltageLimit, abs(lowVoltageLimit)))  # go set the knobs there
+
         self.output_on()
 
         for _ in range(chgTaken.n_cycles):
@@ -436,7 +438,7 @@ class pstat (object):
             print('FULLY CHARGED. DISCHARGING:')
 
             # then do dcg until the low limit ---- DCG DCG DCG DCG DCG DCG DCG DCG ----
-            self.configureCHG(absoluteValueOfVoltageLimit=highVoltageLimit)  # highVoltageLimit INDEED! otherwise this crap doesnt discharge
+            self.configureCHG(absoluteValueOfVoltageLimit=max(highVoltageLimit, abs(lowVoltageLimit)))  # highVoltageLimit INDEED! otherwise this crap doesnt discharge
             measuredVoltage = 65535  # for sure less than the high limit
 
             while measuredVoltage > lowVoltageLimit:
