@@ -10,7 +10,7 @@ class scope (object):
     model = 'TDS2002C'                   # default model is the TDS2002C at Lyra
     address = 'USB0::1689::929::C011897::0::INSTR'   # and this is its USB address
     #'USB0::2733::281::030031632::0::INSTR'          # Hall-setup R&S scope
-    device = visa.ResourceManager.get_instrument                    # pyvisa device that is populated with the constructor
+    device = 0                   # pyvisa device that is populated with the constructor
     rm = 0                        # visa resource manager
     fake = True                  # use simulated outputs. Used for testing outside the lab.
 
