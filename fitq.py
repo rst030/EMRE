@@ -10,6 +10,8 @@ sweep_scale_factor = 6.94e4  # MHz/tunepicture_unit_interval
 def cut_dip(scale_corrected_frequencies,tunepicture):
     '''first, correct for the baseline. Get the baseline from the very left points of the tunepicture'''
     data_for_baseline_correction = tunepicture[0:100]
+    print(data_for_baseline_correction)
+
     coordinates_for_baseline_correction = scale_corrected_frequencies[0:100]
     baseline = np.polyfit(coordinates_for_baseline_correction,data_for_baseline_correction,0) #fit with a horizontal line
 
@@ -73,14 +75,14 @@ def cut_dip(scale_corrected_frequencies,tunepicture):
     '''now,when the dip is detected, let's cut it out:'''
     if left_lim < right_lim: #if detected correctly, this should hold.
         tunepicture_cut = tunepicture[:left_lim - 10] + tunepicture[right_lim + 10:]
-        scale_corrected_frequencies_cut = scale_corrected_frequencies[:left_lim - 10] + scale_corrected_frequencies[right_lim + 10:]
+        scale_corrected_frequencies_cut = scale_corrected_frequencies
 
         left_lim_of_the_raw_tp = left_lim + cut_index_from_the_left
         right_lim_of_the_raw_tp = right_lim + cut_index_from_the_left
         dip_center_of_the_raw_tp = dip_center + cut_index_from_the_left
 
 
-    return scale_corrected_frequencies_cut, tunepicture_cut, left_lim_of_the_raw_tp, right_lim_of_the_raw_tp, dip_center_of_the_raw_tp
+    return scale_corrected_frequencies_cut, tunepicture_cut
 
 
 def correct_for_background(raw_frequencies, raw_tunepicture):

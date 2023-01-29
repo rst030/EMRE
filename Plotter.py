@@ -167,6 +167,20 @@ class PlotterCanvas(FigureCanvas):
         self.axes.autoscale(True)
         self.update_plotter()
 
+    def plotTpFitData(self,tpToPlot:tp):
+        times = tpToPlot.time
+        frequencies = tpToPlot.frequency
+        tunepicFit = tpToPlot.tunepicFit
+
+        self.title = ''
+        #self.axes.cla()
+        self.axes.set_xlabel(self.xlabel)
+        self.axes.set_ylabel(self.ylabel)
+        self.axes.set_title(self.title)
+        self.axes.plot(frequencies, tunepicFit, 'r--', linewidth=2)
+        self.axes.autoscale(True)
+        self.update_plotter()
+
     def plotCv(self,cvToPlot:cv):
         voltages = cvToPlot.voltage
         currents = cvToPlot.current

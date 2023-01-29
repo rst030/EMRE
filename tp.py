@@ -10,6 +10,7 @@ class tp():
     '''Tunepicture object. creted by scope on lyra or by Emre.'''
 
     tunepicture = [] # make it a real float array
+    tunepicFit = tunepicture*0 # tunepicture fit
     time = [] # make it a real float array
     frequency = 0 # millivolts per second
     datetime = datetime.now
@@ -26,25 +27,28 @@ class tp():
         # --- measure parameters ---
         self.tunepicture = []
         self.time = []
-        self.filename = 'dummy'
+        self.filename = ''
 
         # --- from here on - import from file ---
         # if filename was given, user wants to import that cv
-        if filename != '':
+        if filename == '':
+            filename = './dummies/TP.csv'
+            print('ever got here?')
+
+        self.tpFile = open(filename)  # open the file
         # populate the fields of the cv object from that csv file
+        self.tpFile = open(filename)  # open the file
+        self.filename = str(filename.split('/')[-1])
+        tpf = self.tpFile  # for short
+        datafile = tpf.readlines()
+        linecounter = 0
+        lineWhereDataStarts = 0
 
-            self.tpFile = open(filename)  # open the file
-            self.filename = str(filename.split('/')[-1])
-            tpf = self.tpFile  # for short
-            datafile = tpf.readlines()
-            linecounter = 0
-            lineWhereDataStarts = 0
-
-            for line in datafile:
-                relTime = float(line.split(',')[-3])
-                tunePicValue = float(line.split(',')[-2])
-                self.time.append(relTime)
-                self.tunepicture.append(tunePicValue)
+        for line in datafile:
+            relTime = float(line.split(',')[-3])
+            tunePicValue = float(line.split(',')[-2])
+            self.time.append(relTime)
+            self.tunepicture.append(tunePicValue)
 
         self.frequency =  np.asarray(self.time,float)*timeToFrequencyConversionFactor
 
@@ -60,3 +64,17 @@ class tp():
             fout.write(',,,%.12f, %.5f\n' % (float(self.time[i]), float(symb)))
             i = i + 1
         fout.close()
+
+    def fitDip(self):
+        print('cutting the dip of the tunepicture')
+        # find maximum of tunepicture:
+
+        dipLeft = 10
+        dipRight = 20
+        dip = np.asarray(self.tunepicture[dipLeft:dipRight])
+        self.tunepicFit = [np.asarray(self.tunepicture[0:dipLeft]), dip, np.asarray(self.tunepicture[dipRight:-1])] # TEMP!!!
+
+
+
+
+

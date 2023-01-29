@@ -19,15 +19,19 @@ import tp # tunepicture object
 
 class CweprUi(QtWidgets.QMainWindow):
     '''the cwEPR utility window.'''
-    comm = communication.communicator
-    lock_in = comm.lockin
 
+    comm = communication.communicator
+
+    # --- EPR ---
+    lock_in = comm.lockin
     field_controller = comm.field_controller
     frequency_counter = comm.frequency_counter
     workingFolder = r"./dummies/" # where the openfiledialog opens
     spectrum = cw_spectrum.cw_spectrum
-
     ABORT_FLAG = True # flag to abort everything
+
+    # --- TUNE PICTURE ---
+    tp = tp.tp # tunepicture
 
     def __init__(self, comm: communication.communicator):
         # hardware to pass!
@@ -77,7 +81,9 @@ class CweprUi(QtWidgets.QMainWindow):
         self.calcGButton.clicked.connect(self.calculate_g)
         self.calcFieldButton.clicked.connect(self.calculate_B)
         self.calcMWfreqButton.clicked.connect(self.calculate_mwfq)
+        # --- TUNE PICTURE ---
         self.importDipButton.clicked.connect(self.import_tunepicture)
+        self.fitDipButton.clicked.connect(self.fit_tunepicture) # draw a fit on top of the tunepicture
 
 
         # --- adding the plotter: ---
@@ -91,11 +97,13 @@ class CweprUi(QtWidgets.QMainWindow):
 
         # tune picture poltter
         #TPplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'TunePictureWidget')
+        self.tp = tp.tp()
         self.TPplotterWGT = Plotter.Plotter(parent=None,type='TP')
         self.verticalLayout_TP_plotter.addWidget(self.TPplotterWGT)
         self.TPplotter = self.TPplotterWGT.PlotterCanvas
         self.TPplotterWGT.setMinimumWidth(230)
         self.TPplotterWGT.setMaximumWidth(230)
+        self.TPplotter.plotTpData(self.tp)
 
 
 
@@ -280,8 +288,29 @@ class CweprUi(QtWidgets.QMainWindow):
         if not filename:
             filename = QFileDialog.getOpenFileName(self, 'Open file', './', "Tunepicture files (*.CSV)")[0]
         tmpTP = tp.tp(filename)
+        self.tp = tmpTP # now tp is a field in the CWEPR module.
+        print(self.tp)
+        print('TP initiated in CWEPR module')
         self.TPplotter.clear()
         self.TPplotter.plotTpData(tmpTP)
 
 
         #todo: Q fit, save, get tunepicture from scope
+
+
+    #rst, 230128, fitting the Q value.
+    # on FIT button press in the CWEPRUTILITY, call fitting.
+    # first cut out the dip,
+    # then fit the parabola
+    # then fit a lorentzian
+    def fit_tunepicture(self):
+        qvalue = 0
+        tp = self.tp
+        print(tp)
+        #TODO: cut dip of tunepicture, fit bg, subtract bg, fit dip, get FWHM, get q. USE DEBUGGER!
+        tp.fitDip()  # here it happens, the fit.
+        self.TPplotter.plotTpFitData(tp)
+        return qvalue
+
+
+

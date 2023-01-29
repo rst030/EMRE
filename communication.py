@@ -102,7 +102,6 @@ class communicator(object):
 
 
 
-
 class old_communicator (object):
     '''Our lab is a village with neighbors. There is a very communicative guy that knows all names and all addresses, the communicator.
     This person knows good manners and has found a common language to all his neighbors.
