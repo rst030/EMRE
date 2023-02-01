@@ -168,16 +168,17 @@ class PlotterCanvas(FigureCanvas):
         self.update_plotter()
 
     def plotTpFitData(self,tpToPlot:tp):
-        times = tpToPlot.time
         frequencies = tpToPlot.frequencyFit
         tunepicFit = tpToPlot.tunepicFit
-
+        
         self.title = ''
         #self.axes.cla()
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
-        self.axes.plot(frequencies, tunepicFit, 'r-', linewidth=2)
+        # self.axes.plot(dipFreqtpToPlot.dipFreq, tpToPlot.dip, 'r-', linewidth=2) # dip without bg
+        self.axes.plot(frequencies, tunepicFit, 'g--', linewidth=2)  # fit
+
         self.axes.autoscale(True)
         self.update_plotter()
 

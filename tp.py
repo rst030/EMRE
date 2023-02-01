@@ -2,7 +2,8 @@
 tune picture module for EMRE
 rst030@protonmail.com'''
 from datetime import datetime
-from scipy.signal import savgol_filter #great invention
+from scipy.signal import savgol_filter  # great invention
+from scipy.optimize import curve_fit  # for fitting the dip
 import numpy as np
 
 timeToFrequencyConversionFactor = 6.94e4  # MHz/<tunepicunit>
@@ -11,13 +12,18 @@ class tp():
     '''Tunepicture object. creted by scope on lyra or by Emre.'''
 
     tunepicture = [] # make it a real float array
-    tunepicFit = tunepicture*0 # tunepicture fit
     time = [] # make it a real float array
     frequency = 0 # millivolts per second
     datetime = datetime.now
     tpFile = 0 # a file where cv is stored
 
+    # --- Q fit stuff ---
+    dip = []
+    dipfreq = []
+    FWHM_in_hz = 0
 
+    tunepicFit = []
+    frequencyFit = []
 
     def __init__(self,filename=''):
 
@@ -75,66 +81,110 @@ class tp():
         self.tunepicFit = self.tunepicture - lofst # to play around
         self.tunepicture_blcorr = self.tunepicFit # to use later
 
-        # find maximum of tunepicture:
-        maxTp = max(self.tunepicFit)
-        # determine the noise level
-        noiseLvl = maxTp * 0.1 # 10% of TP is noise. #np.mean(abs(self.tunepicFit[0:16])) * 7 # to be safe
-        # determine when tunepicture exceeds the noise level
-        tpLeft = 0 # limits of the tunepicture
-        tpRight = -1
-        leftFlag = False  # for scanning through tp, limits.
-        for i in range (len(self.tunepicFit)):
-            if self.tunepicFit[i] > noiseLvl*7.5: # sharp left edge! change to *1 when fix the klystron
-                if not leftFlag: # if never detected left of TP
-                    print(f'TUNEPICTURE LEFT DETECTED, index={i:10d}')
-                    tpLeft = i+60
-                    leftFlag = True
-            else: # if below noise
-                if leftFlag and (self.tunepicFit[i] < noiseLvl*2): # and after left of TP
-                    print(f'TUNEPICTURE RIGHT DETECTED, index={i:10d}')
-                    tpRight = i-128
-                    break
+        # 1. get derivative of the smoothed tunepicture
+
+        smoothtp = savgol_filter(self.tunepicture_blcorr,40,3)
+        derivativeTP = savgol_filter(np.diff(smoothtp),40,3)
+        derivativeFrequency = self.frequency[1:]
+
+        # 2. find max of derivative - there the sharp peak is
+        indexMaxDeriv = derivativeTP.argmax() + 48 # max derivative is the left step of TP
 
 
-        dipWide = self.tunepicFit[tpLeft:tpRight] # dip with parabolic bg
-        frequencyWide = self.frequency[tpLeft:tpRight] # frequency for the wide dip
-
-        # cut out the dip
-        # smooth out the dip
-        # get the derivative of the TP between tpLeft and tpRight
-        self.tunepicFit = low_pass_filter(np.diff(savgol_filter(dipWide, 60,2)),1000, 44100) #savgol_filter(np.diff(savgol_filter(self.tunepicFit, 37,3)),37,3)
-        # cut out oscillations on edges
-        cutOscIdx = 100
-        self.tunepicFit = self.tunepicFit[cutOscIdx:-round(cutOscIdx*1.5)]
-        self.frequencyFit = self.frequency[tpLeft+1+cutOscIdx:tpRight-round(cutOscIdx*1.5)] # +1 from derivative
-
-        dipLeft = self.tunepicFit.argmin()
-        print('left dip ',dipLeft)
-        dipRight = self.tunepicFit.argmax()
-        print('right dip ',dipRight)
-        self.tunepicFit = self.tunepicFit[dipLeft:dipRight]
-        self.frequencyFit = self.frequencyFit[dipLeft:dipRight]
-        print('left dip ',self.frequencyFit[0])
-        print('right dip ',self.frequencyFit[-1])
+        leftLimTP = indexMaxDeriv
+        print('TP starts at idx ',leftLimTP,'at ',self.frequency[leftLimTP],' MHz')
 
 
-        # extract the parabola
-        dataToFitParanola = dipWide
-        freqToFitParabola = frequencyWide
+        for i in range(indexMaxDeriv+48):
+            derivativeTP[i] = 0
 
-        # TMP
-        self.tunepicFit = dataToFitParanola
-        self.frequencyFit = freqToFitParabola
+        # find the right limit of the TP
+        rightLimTp = 0
+        noiselevel = max(smoothtp)*0.1 # if 10% of height, then it is the end
+        for i in range(indexMaxDeriv+48,len(smoothtp)):
+            if smoothtp[i] < noiselevel:
+                rightLimTp = i
+                print(rightLimTp)
+                break
+        print('TP ends at idx ', rightLimTp, 'at ', self.frequency[rightLimTp], ' MHz')
 
-        #TODO: all bs, do smoothing, find 2nd extremum, there is your dip/
+        # nill the derivative outside the TP
+
+        for i in range(rightLimTp-64,len(derivativeTP)):
+            derivativeTP[i] = 0
+
+        # find maximum of the nulled derivativeTP
+        print('TP ends at idx ', rightLimTp, 'at ', self.frequency[rightLimTp], ' MHz')
+        dipRightIdx = derivativeTP.argmax()
+        print('DIP right at idx ', dipRightIdx, 'at ', self.frequency[dipRightIdx], ' MHz')
+        dipLeftIdx = derivativeTP[:dipRightIdx].argmin()
+        print('DIP left at idx ', dipLeftIdx, 'at ', self.frequency[dipLeftIdx], ' MHz')
+        # searching dip center
+        dipCenterIdx = derivativeTP[dipLeftIdx:dipRightIdx].argmin()
+        print('DIP center at idx ', dipCenterIdx, 'at ', self.frequency[dipLeftIdx], ' MHz')
+        # widening the dip region
+        dipWidthIdx = dipRightIdx-dipLeftIdx
+        print('initial DIP width [idx] ', dipWidthIdx, 'of ', self.frequency[dipRightIdx]-self.frequency[dipLeftIdx], ' MHz')
+        # widen the noise
+        if dipRightIdx + dipWidthIdx < rightLimTp:
+            dipRightIdx = dipRightIdx + dipWidthIdx
+        if dipLeftIdx - dipWidthIdx > leftLimTP:
+            dipLeftIdx = dipLeftIdx - dipWidthIdx
+        else:
+            dipLeftIdx = dipWidthIdx+1
+
+        # cutout the noise and the dip:
+        tunepicHumpOnly = np.concatenate((self.tunepicture_blcorr[leftLimTP:dipLeftIdx],self.tunepicture_blcorr[dipRightIdx:rightLimTp]))
+        frequencyHumpOnly = np.concatenate((self.frequency[leftLimTP:dipLeftIdx], self.frequency[dipRightIdx:rightLimTp]))
+
+        # fit the parabola
+        bgFit_coeffs = get_parabola_coefs(frequencyHumpOnly,tunepicHumpOnly+lofst)
+        bgParabola = get_background(self.frequency,bgFit_coeffs)
 
 
-        # self.tunepicFit = polyval ...
-        # self.dipfit = ...
+        # for plotting fitted dip
+        dip = (self.tunepicture - bgParabola)[dipLeftIdx:dipRightIdx]
+        dipFrequencies = self.frequency[dipLeftIdx:dipRightIdx]
 
-def get_derivative(x, y):
+        self.dip = dip
+        self.dipFreq = dipFrequencies
+
+        popt_lorentz, pcov_lorentz = curve_fit(_lorentzian, dipFrequencies, dip, p0=[-0.1, 1.6, 0.1])  # fit with Lorentz
+        lorentz_fit = _lorentzian(self.frequency, popt_lorentz[0], popt_lorentz[1], popt_lorentz[2])
+        FWHM_lorentz = 2 * popt_lorentz[2] * 1e6 # Hz
+        print('Q fit params:', popt_lorentz)
+        print('FWHM of dip %.3f Hz' % FWHM_lorentz)
+        print('FWHM = %.2f Hz' % FWHM_lorentz)
+
+
+        self.tunepicFit = lorentz_fit + bgParabola
+        self.frequencyFit = self.frequency
+
+        self.FWHM_in_hz = FWHM_lorentz
+
+
+def get_derivative(x, y): # get derivative of x by y, smoothen, adjust vector lengths
     smooth_y = savgol_filter(y, 37, 3)  # sav-gol(data,window,order)
     return x[1:], savgol_filter(np.diff(smooth_y), 37, 3)
+def get_background(frequencies, fit_coefs): # render a parabola of 2th degree on frequencies vector from the fit_coef coefficients
+    crds = frequencies
+    parabola = crds**2*fit_coefs[0] + crds**1*fit_coefs[1] + crds**0*fit_coefs[2]
+    return parabola
+
+def get_parabola_coefs(frequencies, tunepicturearray):
+    ''' fits a 2nd degree parabola on the tunepicturearray with frequencies coordinates'''
+    '''first detect and cut out the dip, then use this nethod'''
+    '''then fit the picture without dip with a 4-deg pol'''
+    fit_coefs = np.polyfit(frequencies, tunepicturearray, 2)  # fit the bg only, without the dip. Gives fit coefs.
+
+    return fit_coefs
+
+def _lorentzian(x, amp, cen, wid): # for curve_fit of numpy
+    return amp/np.pi*(wid/((x-cen)**2+wid**2))
+
+
+
+
 
 def low_pass_filter(adata: np.ndarray, bandlimit: int = 1000, sampling_rate: int = 44100) -> np.ndarray:
     # translate bandlimit from Hz to dataindex according to sampling rate and data size

@@ -84,6 +84,7 @@ class CweprUi(QtWidgets.QMainWindow):
         # --- TUNE PICTURE ---
         self.importDipButton.clicked.connect(self.import_tunepicture)
         self.fitDipButton.clicked.connect(self.fit_tunepicture) # draw a fit on top of the tunepicture
+        self.QfactorButton.clicked.connect(self.calculate_Q) # calculate Q from fit
 
 
         # --- adding the plotter: ---
@@ -146,6 +147,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
         # to EPR Tools:
         self.mw_freq_edit.setText('%.3f'%(spc.mwfreq/1e9))
+        self.MWFQ = spc.mwfreq
 
 
 
@@ -283,7 +285,10 @@ class CweprUi(QtWidgets.QMainWindow):
         self.g_edit.setStyleSheet("QLineEdit{background: #ffffff}")
         self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
 
+        self.MWFQ = mwfqcalc
+
     # --- EPR TOOLS ---
+
     def import_tunepicture(self, filename=False):
         if not filename:
             filename = QFileDialog.getOpenFileName(self, 'Open file', './', "Tunepicture files (*.CSV)")[0]
@@ -293,6 +298,15 @@ class CweprUi(QtWidgets.QMainWindow):
         print('TP initiated in CWEPR module')
         self.TPplotter.clear()
         self.TPplotter.plotTpData(tmpTP)
+
+    def calculate_Q(self):
+        #MWFQ = self.MWFQ
+        MWFQ = float(self.mw_freq_edit.text())*1e9 # Hz# get MWFQ from the MWFQ edit
+        FWHM = self.tp.FWHM_in_hz
+        self.Q = MWFQ/FWHM
+        self.qEdit.setText('%.0f' % float(self.Q))
+
+
 
 
         #todo: Q fit, save, get tunepicture from scope
@@ -304,13 +318,12 @@ class CweprUi(QtWidgets.QMainWindow):
     # then fit the parabola
     # then fit a lorentzian
     def fit_tunepicture(self):
-        qvalue = 0
         tp = self.tp
         print(tp)
-        #TODO: cut dip of tunepicture, fit bg, subtract bg, fit dip, get FWHM, get q. USE DEBUGGER!
         tp.fitDip()  # here it happens, the fit.
+        self.TPplotter.clear()
+        self.TPplotter.plotTpData(tp)
         self.TPplotter.plotTpFitData(tp)
-        return qvalue
 
 
 
