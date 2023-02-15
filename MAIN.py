@@ -4,7 +4,7 @@ import Plotter # for plotitng stuff online.
 import communication
 
 from tkinter import filedialog
-import os.path
+import os
 import importlib.util
 import tkinter as tk
 
@@ -14,14 +14,21 @@ import chgUtility
 import cweprUtility
 import deviceManagerUtility
 
+ABSOLUTEPATH = '/opt/electron-magnetic-resonance-environment/'
+
 class Ui(QtWidgets.QMainWindow):
     '''the main User Interface window.'''
     def __init__(self):
+
+        # get the script's directory
+        print('scripts working directory',os.path.dirname(sys.argv[0]))
+        os.chdir(os.path.dirname(sys.argv[0]))
+
         super(Ui, self).__init__() # Call the inherited classes __init__ method
         try:
             uic.loadUi('EMRE.ui', self) # Load the .ui file
         except:
-	        uic.loadUi('/opt/electron-magnetic-resonance-environment/EMRE.ui', self) # Load the .ui file
+            uic.loadUi(ABSOLUTEPATH+'EMRE.ui', self) # Load the .ui file
         self.show() # Show the GUI
 
         # for the open dialog we have to create a blank Tk window and then withdraw it.

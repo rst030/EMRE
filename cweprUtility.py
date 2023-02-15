@@ -234,14 +234,6 @@ class CweprUi(QtWidgets.QMainWindow):
 
 
 
-
-
-
-
-
-
-
-
 # --- EPR TOOLS ---
     def set_ge(self):
         self.g_edit.setText('%.12f'%EPRtools.ge)
