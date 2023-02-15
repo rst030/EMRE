@@ -18,7 +18,10 @@ class Ui(QtWidgets.QMainWindow):
     '''the main User Interface window.'''
     def __init__(self):
         super(Ui, self).__init__() # Call the inherited classes __init__ method
-        uic.loadUi('EMRE.ui', self) # Load the .ui file
+        try:
+            uic.loadUi('EMRE.ui', self) # Load the .ui file
+        except:
+	        uic.loadUi('/opt/electron-magnetic-resonance-environment/EMRE.ui', self) # Load the .ui file
         self.show() # Show the GUI
 
         # for the open dialog we have to create a blank Tk window and then withdraw it.
