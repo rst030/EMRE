@@ -16,13 +16,22 @@ import deviceManagerUtility
 
 ABSOLUTEPATH = '/opt/electron-magnetic-resonance-environment/'
 
+
 class Ui(QtWidgets.QMainWindow):
     '''the main User Interface window.'''
     def __init__(self):
 
         # get the script's directory
-        print('scripts working directory',os.path.dirname(sys.argv[0]))
-        os.chdir(os.path.dirname(sys.argv[0]))
+        # print('scripts working directory',os.path.dirname(sys.argv[0]))
+        # os.chdir(os.path.dirname(sys.argv[0]))
+        # get the root dir of the main exec script
+        ROOT_PATH = os.path.dirname(sys.argv[0])
+        if ROOT_PATH == '':
+            # get current dir
+            ROOT_PATH = os.getcwd()
+        
+        print('Main working directory: ',ROOT_PATH)
+        os.chdir(ROOT_PATH)
 
         super(Ui, self).__init__() # Call the inherited classes __init__ method
         try:
@@ -101,20 +110,25 @@ class Ui(QtWidgets.QMainWindow):
 
 
         # choose the script file location (where rops the files)
-        self.scriptPath = filedialog.askopenfilename(parent=None, initialdir=r"../scripts/", title="Select shkript", filetypes = (("python files","*.py"),("all files","*.*")))
+        # self.scriptPath = filedialog.askopenfilename(parent=None, initialdir=r"../scripts/", title="Select script", filetypes = (("python files","*.py"),("all files","*.*")))
+        self.scriptPath, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Select script", "../scripts/","All Files (*);;Python Files (*.py)")
 
 
-        print("loading script from %s"%os.path.dirname(self.scriptPath))
-        print('script name:', os.path.basename(self.scriptPath))
+        if self.scriptPath:
+            print("loading script from %s"%os.path.dirname(self.scriptPath))
+            print('script name:', os.path.basename(self.scriptPath))
 
         # script is a module, here we are loading it
 
-        spec = importlib.util.spec_from_file_location(os.path.basename(self.scriptPath),self.scriptPath)
+            spec = importlib.util.spec_from_file_location(os.path.basename(self.scriptPath),self.scriptPath)
 
-        self.script = importlib.util.module_from_spec(spec) # script is a field of EMRE. Just in case.
-        spec.loader.exec_module(self.script)
-        self.infoLabel.setText('user module loaded:\n%s' % os.path.basename(self.scriptPath))
-        self.initialize_button.setEnabled(True)
+            self.script = importlib.util.module_from_spec(spec) # script is a field of EMRE. Just in case.
+            spec.loader.exec_module(self.script)
+            self.infoLabel.setText('user module loaded:\n%s' % os.path.basename(self.scriptPath))
+            self.initialize_button.setEnabled(True)
+            
+        else:
+            print('loading script cancelled')
 
     def open_device_manager(self):
         self.DevManGui = deviceManagerUtility.deviceManagerUI(self.communicator)
