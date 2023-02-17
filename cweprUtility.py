@@ -39,6 +39,8 @@ class CweprUi(QtWidgets.QMainWindow):
         self.lock_in = comm.lockin
         self.field_controller = comm.field_controller
         self.frequency_counter = comm.frequency_counter
+        self.home_path = os.path.expanduser('~')
+        print('Home directory: ',self.home_path)
 
 
         super(CweprUi, self).__init__()  # Call the inherited classes __init__ method
@@ -112,7 +114,7 @@ class CweprUi(QtWidgets.QMainWindow):
     def Import_parameters_from_file(self,filename=False):
         # get a spectrum from the filename, populate fields in the gui
         if not filename:
-            filename = QFileDialog.getOpenFileName(self, 'Open file','/home/', "CWEPR files (*.akku2)")[0]
+            filename = QFileDialog.getOpenFileName(self, caption='Open file',directory=self.home_path, filter="CWEPR files (*.akku2)")[0]
 
         tmpSpectrum = cw_spectrum.cw_spectrum(filename)
         self.PopulateFieldsFromSpectrum(tmpSpectrum)
@@ -283,7 +285,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
     def import_tunepicture(self, filename=False):
         if not filename:
-            filename = QFileDialog.getOpenFileName(self, 'Open file', './', "Tunepicture files (*.CSV)")[0]
+            filename = QFileDialog.getOpenFileName(self, caption='Open file', directory=self.home_path, filter="Tunepicture files (*.CSV)")[0]
         tmpTP = tp.tp(filename)
         self.tp = tmpTP # now tp is a field in the CWEPR module.
         print(self.tp)

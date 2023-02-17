@@ -67,10 +67,12 @@ class CyclingUi(QtWidgets.QMainWindow):
         self.pstat.GlobalInterruptFlag = True
     def save_cv(self):
         print('save as file dialog etc, think of the format, Be compatible with the Keithley stuff!!!')
-        # open open file dialog
+        # open file dialog
         try:
-            self.CVPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
-                                                 filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
+            # self.CVPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
+#                                                 filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
+            self.CVPath, _ = QtWidgets.QFileDialog.getSaveFileName(self,caption="Select folder, insert name",
+                                                                   directory=self.workingFolder,filter="comma separated values (*.csv);all files (*)")
             self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
         except:
             print('no filename given, do it again.')
@@ -83,9 +85,11 @@ class CyclingUi(QtWidgets.QMainWindow):
 
     def load_cv(self):
         print('load the cv file, plot the curve in the plotter and populate the fields.')
-        # open open file dialog
+        # open file dialog
         try:
-            self.CVPath = filedialog.askopenfilename(parent=None, initialdir=self.workingFolder, title="Select shkript", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
+            # self.CVPath = filedialog.askopenfilename(parent=None, initialdir=self.workingFolder, title="Select shkript", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
+            self.CVPath = QtWidgets.QFileDialog.getOpenFileName(self,caption="Select script",
+                                                                directory=self.workingFolder,filter="comma separated values (*.csv);all files (*)")
             self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
         except:
             print('no filename given, do it again.')

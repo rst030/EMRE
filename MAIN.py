@@ -3,7 +3,6 @@ import sys # for finding the script path and importing scripts
 import Plotter # for plotitng stuff online.
 import communication
 
-from tkinter import filedialog
 import os
 import importlib.util
 import tkinter as tk
@@ -111,7 +110,7 @@ class Ui(QtWidgets.QMainWindow):
 
         # choose the script file location (where rops the files)
         # self.scriptPath = filedialog.askopenfilename(parent=None, initialdir=r"../scripts/", title="Select script", filetypes = (("python files","*.py"),("all files","*.*")))
-        self.scriptPath, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Select script", "../scripts/","All Files (*);;Python Files (*.py)")
+        self.scriptPath, _ = QtWidgets.QFileDialog.getOpenFileName(self,caption="Select script", directory="../scripts/",filter="All Files (*);;Python Files (*.py)")
 
 
         if self.scriptPath:
