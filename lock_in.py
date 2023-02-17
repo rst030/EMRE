@@ -16,8 +16,8 @@ class lockin (object):
          1e1, 3e1, 1e2, 3e2, 1e3,3e3, 1e4, 3e4]  # index = SCPI code
 
     list_of_lia_sensitivities = \
-        [2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 2e-7, 5e-7, 1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5,1e-4, 2e-4, 5e-4, 1e-3,
-         2e-3, 5e-3, 1e-2, 2e-2, 5e-2, 1e-1, 2e-1, 5e-1,1]  # index = SCPI code
+        [2e-9, 5e-9, 1e-8, 2e-8, 5e-8, 1e-7, 2e-7, 5e-7, 1e-6, 2e-6, 5e-6, 1e-5, 2e-5, 5e-5, 1e-4, 2e-4, 5e-4, 1e-3,
+         2e-3, 5e-3, 1e-2, 2e-2, 5e-2, 1e-1, 2e-1, 5e-1, 1]  # index = SCPI code
 
     list_of_lia_conversion_times = [1,2,3,4,5,6,7,8,9,10]
 
@@ -148,23 +148,23 @@ class lockin (object):
         # decode tc from code to seconds
         def times(tm):
             return {
-                0: 0.000001,  # 1 us
-                1: 0.000003,
-                2: 0.00001,
-                3: 0.00003,
-                4: 0.0001,
-                5: 0.0003,
-                6: 0.001,
-                7: 0.003,
-                8: 0.01,
-                9: 0.03,
-                10: 0.1,
-                11: 0.3,
-                12: 1,
-                13: 3,
-                14: 10,
-                15: 30,
-                16: 100,  # 100 s
+                0: 0.00001,  # 10 us is the lowest
+                1: 0.00003,
+                2: 0.0001,
+                3: 0.0003,
+                4: 0.001,
+                5: 0.003,
+                6: 0.01,
+                7: 0.03,
+                8: 0.1,
+                9: 0.3,
+                10: 1,
+                11: 3,
+                12: 10,
+                13: 30,
+                14: 100,
+                15: 300,
+                16: 1000,  # 1000 s
             }.get(tm, -1)  # default value to return is -1 that means smth went wrong and threw an error
 
         if getnext:  # if next TC is required.

@@ -72,6 +72,9 @@ class cw_spectrum:
         # or use self.eprload to get cw_spectrum from xEpr files.
 
         if filepath == '':  # if no file path given, just create a container. Used for getting spectra irl.
+            self.bvalues = []
+            self.x_channel = []
+            self.y_channel = []
             print('empty cwEPR spectrum created')
             return
 

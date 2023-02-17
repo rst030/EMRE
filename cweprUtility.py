@@ -41,6 +41,7 @@ class CweprUi(QtWidgets.QMainWindow):
         self.frequency_counter = comm.frequency_counter
         self.home_path = os.path.expanduser('~')
         print('Home directory: ',self.home_path)
+        self.DEBUG = 1
 
 
         super(CweprUi, self).__init__()  # Call the inherited classes __init__ method
@@ -56,8 +57,8 @@ class CweprUi(QtWidgets.QMainWindow):
         self.lia_sensitivity_comboBox.clear()  # clear what you put there in QtDesigner
         list_of_lia_sensitivities = lock_in.lockin.list_of_lia_sensitivities
         for sens in list_of_lia_sensitivities:
-            self.lia_sensitivity_comboBox.addItem('%.0e'%sens) # SCPI code = index in combobox
-        self.lia_sensitivity_comboBox.setCurrentIndex(np.where(np.array(list_of_lia_sensitivities)==100e-3)[0][0])
+            self.lia_sensitivity_comboBox.addItem('%.0e' % sens) # SCPI code = index in combobox
+        self.lia_sensitivity_comboBox.setCurrentIndex(np.where(np.array(list_of_lia_sensitivities) == 100e-3)[0][0])
         # --- TC combo box ---
         self.lia_TC_comboBox.clear()  # clear what you put there in QtDesigner
         list_of_lia_TC = lock_in.lockin.list_of_lia_TC # constants are given in the lia class
@@ -160,15 +161,20 @@ class CweprUi(QtWidgets.QMainWindow):
         spc.bstop = float(self.high_B_edit.text())
         spc.npoints = int(self.npoints_edit.text())
         spc.gaussmeterFlag = self.use_GM_checkbox.checkState()
+        spc.modfreq = float(self.mod_freq_edit.text())*1e3
         spc.li_phase = float(self.lia_phase_edit.text())
         spc.modamp = float(self.mod_amp_edit.text())
         spc.modamp_dim = self.modAmpDimensionCombobox.currentText()
         # LIA sensitivity
         spc.li_sens = float(self.lia_sensitivity_comboBox.currentText())
         spc.li_sens_SCPI_code = int(self.lia_sensitivity_comboBox.currentIndex())
+        if self.DEBUG:
+            print('Lockin sensitivity code: %s' % spc.li_sens_SCPI_code)
         # LIA TC
         spc.li_tc = float(self.lia_TC_comboBox.currentText())
-        spc.li_tc_SCPI_code_SCPI_code = int(self.lia_TC_comboBox.currentIndex())
+        spc.li_tc_SCPI_code = int(self.lia_TC_comboBox.currentIndex())
+        if self.DEBUG:
+            print('Lockin time constant code: %s' % spc.li_tc_SCPI_code)
         # conversion time
         spc.conv_time = int(self.lia_conversion_time_comboBox.currentText())
         # n scans
@@ -186,6 +192,7 @@ class CweprUi(QtWidgets.QMainWindow):
         # ????? apply positive current, go upto high point, then apply negative current and go downto low point
         self.spectrum = cw_spectrum.cw_spectrum('')
         spc = self.spectrum  # for short
+        print('data channel x length: %s' % len(spc.x_channel))
         self.EPRplotter.clear()
         self.EPRplotter.plotEprData(spc)
 
