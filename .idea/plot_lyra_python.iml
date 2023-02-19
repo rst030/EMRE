@@ -7,7 +7,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv/lib/python3.9/site-packages/windfreak" />
       <excludeFolder url="file://$MODULE_DIR$/venv/lib/python3.9/site-packages/windfreak-0.3.0.dist-info" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.11" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

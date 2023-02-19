@@ -51,6 +51,16 @@ class cw_spectrum:
     x_channel = []  # spectral x channel component
     y_channel = []  # spectral y channel component
 
+    x_scans = [] # array of x_channels
+    y_scans = []  # array of x_channels
+    bvalues_scans = [] # array of bvalues *for each scan
+
+    x_averaged = []  # x channel averaged by runs
+    y_averaged = []  # y channel averaged by runs
+    bvalues_averaged = [] # bvalues for the averaged spectra
+
+    nscansDone = 0 # how many scans accumulated
+
     frequency_corrected = False
 
     # === these are for saving spectrum to a file ===
@@ -75,6 +85,11 @@ class cw_spectrum:
             self.bvalues = []
             self.x_channel = []
             self.y_channel = []
+            self.x_scans = []
+            self.y_scans = []
+            self.x_averaged = []
+            self.y_averaged = []
+
             print('empty cwEPR spectrum created')
             return
 
@@ -298,6 +313,38 @@ class cw_spectrum:
         print("loading bruker xEpr spectrum from file. To be continued")
         print("read bruker xEpr file, lookup Stoll's code!")
         print("initialize the cw_spectrum instance with the fields from this file")
+
+
+    def append_scans_get_average(self):
+        print('scans done: %d'%self.nscansDone)
+        print('appending current x_channel and y_channel to x_scans and y_scans')
+        self.x_scans.append(self.x_channel)
+        self.y_scans.append(self.y_channel)
+        self.bvalues_scans.append(self.bvalues)
+        self.bvalues_averaged = self.bvalues # new b axis for averaged spectra. Not an average over bvalues!.
+
+        if len(self.x_scans) < 2: # for fresh scan make averaged as the scan
+            self.x_averaged = np.asarray(self.x_channel)*0
+            self.y_averaged = np.asarray(self.y_channel)*0
+
+        for tmp_scan_idx in range(len(self.x_scans)):
+            tmp_scan_x = self.x_scans[tmp_scan_idx]
+            tmp_scan_y = self.y_scans[tmp_scan_idx]
+
+            for idx in range(len(self.x_channel)):
+                self.x_averaged[idx] = self.x_averaged[idx] + tmp_scan_x[idx]
+                self.y_averaged[idx] = self.y_averaged[idx] + tmp_scan_y[idx]
+
+        self.x_averaged = [val / self.nscansDone for val in self.x_averaged] #OMFG those lists in python
+        self.y_averaged = [val / self.nscansDone for val in self.y_averaged]
+
+        print('calculate the average scans here!')
+
+        print('clearing current x_channel and y_channel')
+        self.x_channel = []
+        self.y_channel = []
+        print('clearing bvalues')
+        self.bvalues = []
 
 import setup_scan
 def make_spectrum_from_scans(scans: [cw_spectrum], scan_setting: setup_scan.Scan_setup):

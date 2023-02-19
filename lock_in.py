@@ -1,6 +1,7 @@
 '''communication to the lock-in amplifier.
 Written by Ilia Kulikov on 26/10/20
 ilia.kulikov@fu-berlin.de'''
+import random
 
 import pyvisa as visa
 
@@ -40,7 +41,8 @@ class lockin (object):
         if not self.fake:
             return(self.device.read())
         else:
-            return(3.1415926353897932384626433832795028841971693993751058209749445978230164)
+            print('Lock-in: no device. Reading fake data.')
+            return(random.randint(0,1000)/1000)
 
 
     def connect(self,model):

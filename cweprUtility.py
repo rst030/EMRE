@@ -218,18 +218,33 @@ class CweprUi(QtWidgets.QMainWindow):
         fc.preset_field_scan(bvaluesToScan)
         fc.set_field(spc.bstart) # push the fc to the left most field
         fc.check_set_field(spc.bstart) # make sure the controller is on field
-        for field_to_set in bvaluesToScan:
-            if self.ABORT_FLAG: # the hard way
-                continue
-            measured_bfield = fc.set_field(field_to_set)  # set the magnetic field, get the set magnetic field. #todo ER35M!!!
-            spc.x_channel.append(lia.getX())  # get x channel of the LIA
-            spc.y_channel.append(lia.getY())  # get y channel of the LIA
-            spc.bvalues.append(measured_bfield)  # pop
-            self.EPRplotter.clear()
-            self.EPRplotter.plotEprData(spc)
-            sleep(spc.li_tc*spc.conv_time)
-        fc.set_field(spc.bstart)
-        print('one CWEPR scan recorded.')
+
+        # loop on nruns
+        for runs in range(spc.nruns):
+            # loop on B0 for one scan
+            for field_to_set in bvaluesToScan:
+                if self.ABORT_FLAG: # the hard way
+                    continue
+
+                if fc.fake: # for debugging
+                    measured_bfield = field_to_set
+                else:
+                    measured_bfield = fc.set_field(field_to_set)
+                    # set the magnetic field, get the set magnetic field. #todo ER35M!!!
+
+                spc.x_channel.append(lia.getX())  # get x channel of the LIA
+                spc.y_channel.append(lia.getY())  # get y channel of the LIA
+                spc.bvalues.append(measured_bfield)  # pop
+                self.EPRplotter.clear()
+                print(spc.x_channel,spc.y_channel)
+                self.EPRplotter.plotEprData(spc)
+                sleep(spc.li_tc*spc.conv_time)
+
+            fc.set_field(spc.bstart)
+            spc.nscansDone = runs+1 # programmierungen
+            print('%d CWEPR scans recorded.'%spc.nscansDone)
+            # append scan to spc.x_scans
+            spc.append_scans_get_average()
 
 
     def abort_scan(self): # stops all
@@ -310,7 +325,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
 
 
-        #todo: Q fit, save, get tunepicture from scope
+        #todo: save, get tunepicture from scope
 
 
     #rst, 230128, fitting the Q value.
@@ -325,6 +340,3 @@ class CweprUi(QtWidgets.QMainWindow):
         self.TPplotter.clear()
         self.TPplotter.plotTpData(tp)
         self.TPplotter.plotTpFitData(tp)
-
-
-

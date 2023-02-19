@@ -1,6 +1,7 @@
 '''Communication to the Bruker bh-15 field controller
 written by Ilia Kulikov on 26/10/20
 ilia.kulikov@fu-berlin.de'''
+import random
 
 # hardware constants. Values are in Gauss
 
@@ -230,7 +231,8 @@ class bh_15 (object):
 
     def talk_to_BH15(self, command_): #this returns a value (string or whatever)
         if (self.fake and command_ == 'FC'):
-            return('xxx1000.00')
+            fakeField = random.randint(3000,4000)
+            return('xxx%.2f'%fakeField)
         #print('BH-15 talking to with %s' % command_)
         self.write(command_)
         response = self.read()

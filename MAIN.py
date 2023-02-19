@@ -13,7 +13,7 @@ import chgUtility
 import cweprUtility
 import deviceManagerUtility
 
-ABSOLUTEPATH = '/opt/electron-magnetic-resonance-environment/'
+#ABSOLUTEPATH = '/opt/electron-magnetic-resonance-environment/' here the thing is installed on lyra
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -36,7 +36,8 @@ class Ui(QtWidgets.QMainWindow):
         try:
             uic.loadUi('EMRE.ui', self) # Load the .ui file
         except:
-            uic.loadUi(ABSOLUTEPATH+'EMRE.ui', self) # Load the .ui file
+            print('loading UI failed, cd to script folder')
+            exit()
         self.show() # Show the GUI
 
         # for the open dialog we have to create a blank Tk window and then withdraw it.
