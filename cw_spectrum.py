@@ -287,12 +287,12 @@ class cw_spectrum:
         f2w.write('%%! li_level %.2f V\n' % self.li_level)
 
         # now populating the values
-        for value in self.x_channel:
+        for value in self.x_averaged:
             f2w.write("%.8e "%value)
 
         f2w.write('\n')
 
-        for value in self.y_channel:
+        for value in self.y_averaged:
             f2w.write("%.8e "%value)
 
         # writing mw frequency
