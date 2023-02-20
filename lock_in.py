@@ -2,6 +2,7 @@
 Written by Ilia Kulikov on 26/10/20
 ilia.kulikov@fu-berlin.de'''
 import random
+import logging
 
 import pyvisa as visa
 
@@ -24,6 +25,7 @@ class lockin (object):
 
     def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
         '''create an instance of the lock-in amplifier object'''
+        self.log = logging.getLogger("emre_logger.lockin")
         self.rm = rm
         self.connect(model)
 
@@ -35,13 +37,13 @@ class lockin (object):
             except:
                 print('write operation to lock-in failed')
         else:
-            print('Lock-in: No device. Writing %s to fake lock-in'%command)  # when device is fake, write to console
+            self.log.debug('Lock-in: No device. Writing %s to fake lock-in'%command)  # when device is fake, write to console
 
     def read(self):
         if not self.fake:
             return(self.device.read())
         else:
-            print('Lock-in: no device. Reading fake data.')
+            self.log.debug('Lock-in: no device. Reading fake data.')
             return(random.randint(0,1000)/1000)
 
 

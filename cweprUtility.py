@@ -16,6 +16,7 @@ import lock_in # i want to know the fields of lia, good for coding
 import EPRtools # g calculator
 import tp # tunepicture object
 
+import logging
 
 class CweprUi(QtWidgets.QMainWindow):
     '''the cwEPR utility window.'''
@@ -29,19 +30,21 @@ class CweprUi(QtWidgets.QMainWindow):
     workingFolder = r"./dummies/" # where the openfiledialog opens
     spectrum = cw_spectrum.cw_spectrum
     ABORT_FLAG = True # flag to abort everything
+    
 
     # --- TUNE PICTURE ---
     tp = tp.tp # tunepicture
 
     def __init__(self, comm: communication.communicator):
+        self.log = logging.getLogger("emre_logger.cweprUtility")
         # hardware to pass!
         self.comm = comm
         self.lock_in = comm.lockin
         self.field_controller = comm.field_controller
         self.frequency_counter = comm.frequency_counter
         self.home_path = os.path.expanduser('~')
-        print('Home directory: ',self.home_path)
-        self.DEBUG = 1
+        # if self.DEBUG:
+        self.log.debug('Home directory: %s' , self.home_path)
 
 
         super(CweprUi, self).__init__()  # Call the inherited classes __init__ method
@@ -168,13 +171,13 @@ class CweprUi(QtWidgets.QMainWindow):
         # LIA sensitivity
         spc.li_sens = float(self.lia_sensitivity_comboBox.currentText())
         spc.li_sens_SCPI_code = int(self.lia_sensitivity_comboBox.currentIndex())
-        if self.DEBUG:
-            print('Lockin sensitivity code: %s' % spc.li_sens_SCPI_code)
+        # if self.DEBUG:
+        self.log.debug('Lockin sensitivity code: %s' % spc.li_sens_SCPI_code)
         # LIA TC
         spc.li_tc = float(self.lia_TC_comboBox.currentText())
         spc.li_tc_SCPI_code = int(self.lia_TC_comboBox.currentIndex())
-        if self.DEBUG:
-            print('Lockin time constant code: %s' % spc.li_tc_SCPI_code)
+        # if self.DEBUG:
+        self.log.debug('Lockin time constant code: %s' % spc.li_tc_SCPI_code)
         # conversion time
         spc.conv_time = int(self.lia_conversion_time_comboBox.currentText())
         # n scans
@@ -192,7 +195,10 @@ class CweprUi(QtWidgets.QMainWindow):
         # ????? apply positive current, go upto high point, then apply negative current and go downto low point
         self.spectrum = cw_spectrum.cw_spectrum('')
         spc = self.spectrum  # for short
-        print('data channel x length: %s' % len(spc.x_channel))
+        # if self.DEBUG:
+        self.log.debug('data channel x length: %s' % len(spc.x_channel))
+        self.log.debug('data channel y length: %s' % len(spc.y_channel))
+        self.log.debug('bvalues channel length: %s' % len(spc.bvalues))
         self.EPRplotter.clear()
         self.EPRplotter.plotEprData(spc)
 
@@ -236,7 +242,7 @@ class CweprUi(QtWidgets.QMainWindow):
                 spc.y_channel.append(lia.getY())  # get y channel of the LIA
                 spc.bvalues.append(measured_bfield)  # pop
                 self.EPRplotter.clear()
-                print(spc.x_channel,spc.y_channel)
+                self.log.debug(str(spc.x_channel) + str(spc.y_channel))
                 self.EPRplotter.plotEprData(spc)
                 sleep(spc.li_tc*spc.conv_time)
 

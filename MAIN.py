@@ -13,13 +13,22 @@ import chgUtility
 import cweprUtility
 import deviceManagerUtility
 
-#ABSOLUTEPATH = '/opt/electron-magnetic-resonance-environment/' here the thing is installed on lyra
+# logging for debug info and cmdline arg parsing
+import logging
+import argparse
 
+# parse the log level
+parser = argparse.ArgumentParser(description='This is the electron magnetic environment')
+parser.add_argument('-d','--debug', dest='debug',help='switch to debug mode')
+my_args = parser.parse_args()
+DEBUG=my_args.debug
 
 class Ui(QtWidgets.QMainWindow):
     '''the main User Interface window.'''
     def __init__(self):
-
+        self.log = logging.getLogger("emre_logger")
+        self.log.setLevel(logging.DEBUG if DEBUG == '1' else logging.INFO)
+        logging.debug('Plain debug test') # for some reason necessary to initialise logging
         # get the script's directory
         # print('scripts working directory',os.path.dirname(sys.argv[0]))
         # os.chdir(os.path.dirname(sys.argv[0]))
@@ -29,7 +38,7 @@ class Ui(QtWidgets.QMainWindow):
             # get current dir
             ROOT_PATH = os.getcwd()
         
-        print('Main working directory: ',ROOT_PATH)
+        self.log.debug('Main working directory: %s'% ROOT_PATH)
         os.chdir(ROOT_PATH)
 
         super(Ui, self).__init__() # Call the inherited classes __init__ method
@@ -86,7 +95,6 @@ class Ui(QtWidgets.QMainWindow):
         self.verticalLayout_CHG_plotter.addWidget(self.CHGplotterWGT)
         #self.verticalLayout_CHG_plotter.addWidget(self.CHGplotter.toolbar)
         self.CHGplotter = self.CHGplotterWGT.PlotterCanvas
-
 
     def connect_to_spectrometer(self):
         '''connects to the spectrometer

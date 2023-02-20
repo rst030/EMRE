@@ -17,6 +17,7 @@ MAX_SWA        =    4095
 import pyvisa as visa
 from time import sleep
 import numpy as np
+import logging
 
 class bh_15 (object):
     type = 'field controller'
@@ -37,6 +38,7 @@ class bh_15 (object):
     def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
         '''create an instance of the BH-15 field controller object'''
         self.rm = rm
+        self.log = logging.getLogger("emre_logger.bh15")
         self.connect(model)
 
     def connect(self, model):

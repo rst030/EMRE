@@ -6,10 +6,11 @@ import numpy as np
 import os
 # copy it from the plotting module, disgraceful!
 
+import logging
+
 class cw_spectrum:
     '''cw EPR spectrum recorded on lyra
     and some methods for processing it'''
-
     file_path = ""     # file path with data
     file_name = ""  # file name, not the full path
     spectrum_file = 0  # spectrum file
@@ -80,7 +81,8 @@ class cw_spectrum:
         # by now this works by loading a fsc2 akku2 spectrum from file.
         # replace it by self.fsc2load to get cw_spectrum from akku2 file (look at file format)
         # or use self.eprload to get cw_spectrum from xEpr files.
-
+        
+        self.log= logging.getLogger("emre_logger.cw_spectrum")
         if filepath == '':  # if no file path given, just create a container. Used for getting spectra irl.
             self.bvalues = []
             self.x_channel = []
@@ -94,7 +96,7 @@ class cw_spectrum:
             return
 
         self.file_path = filepath # we will work with the file from here
-        print("importing cwEPR spectrum from: %s" %self.file_path)
+        self.log.debug("importing cwEPR spectrum from: %s" % self.file_path)
 
         self.spectrum_file = open(self.file_path,'r') # open the file
         self.file_name = os.path.basename(self.file_path)  # name of the file
@@ -317,7 +319,7 @@ class cw_spectrum:
 
     def append_scans_get_average(self):
         print('scans done: %d'%self.nscansDone)
-        print('appending current x_channel and y_channel to x_scans and y_scans')
+        self.log.debug('appending current x_channel and y_channel to x_scans and y_scans')
         self.x_scans.append(self.x_channel)
         self.y_scans.append(self.y_channel)
         self.bvalues_scans.append(self.bvalues)
@@ -340,10 +342,10 @@ class cw_spectrum:
 
         print('calculate the average scans here!')
 
-        print('clearing current x_channel and y_channel')
+        self.log.debug('clearing current x_channel and y_channel')
         self.x_channel = []
         self.y_channel = []
-        print('clearing bvalues')
+        self.log.debug('clearing bvalues')
         self.bvalues = []
 
 import setup_scan
