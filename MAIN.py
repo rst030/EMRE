@@ -177,6 +177,17 @@ class Ui(QtWidgets.QMainWindow):
 
 
 #todo: add abort button!
-app = QtWidgets.QApplication(sys.argv) # Create an instance of QtWidgets.QApplication
-window = Ui() # Create an instance of our class
-app.exec_() # Start the applicatio
+def threaded_function(arg):
+    print("running")
+    app = QtWidgets.QApplication(sys.argv) # Create an instance of QtWidgets.QApplication
+    window = Ui() # Create an instance of our class
+    app.exec_() # Start the applicatio
+
+
+from threading import Thread
+
+if __name__ == "__main__":
+    thread = Thread(target = threaded_function, args = (10, ))
+    thread.start()
+    thread.join()
+    print("thread finished...exiting")
