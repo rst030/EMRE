@@ -88,9 +88,10 @@ class CyclingUi(QtWidgets.QMainWindow):
         # open file dialog
         try:
             # self.CVPath = filedialog.askopenfilename(parent=None, initialdir=self.workingFolder, title="Select shkript", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
-            self.CVPath = QtWidgets.QFileDialog.getOpenFileName(self,caption="Select script",
-                                                                directory=self.workingFolder,filter="comma separated values (*.csv);all files (*)")
+            self.CVPath, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="Select CV data", directory=self.workingFolder,
+                                                  filter="All Files (*);;CSV Files (*.csv)")
             self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
+
         except:
             print('no filename given, do it again.')
             return 0

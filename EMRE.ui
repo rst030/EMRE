@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
+    <width>222</width>
     <height>600</height>
    </rect>
   </property>
@@ -242,52 +242,6 @@
         </item>
        </layout>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_EPR_plotter">
-          <item>
-           <widget class="QWidget" name="EPR_plotter_widget" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>420</width>
-              <height>0</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_CV_plotter">
-          <item>
-           <widget class="QWidget" name="CV_plotter_widget" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>300</width>
-              <height>0</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_CHG_plotter">
-          <item>
-           <widget class="QWidget" name="CHG_plotter_widget" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>300</width>
-              <height>0</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
      </layout>
     </item>
    </layout>
@@ -297,7 +251,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1280</width>
+     <width>222</width>
      <height>22</height>
     </rect>
    </property>

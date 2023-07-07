@@ -43,6 +43,7 @@ class CweprUi(QtWidgets.QMainWindow):
         self.field_controller = comm.field_controller
         self.frequency_counter = comm.frequency_counter
         self.home_path = os.path.expanduser('~')
+        self.workingFolder = self.home_path
         # if self.DEBUG:
         self.log.debug('Home directory: %s' , self.home_path)
 
@@ -118,7 +119,11 @@ class CweprUi(QtWidgets.QMainWindow):
     def Import_parameters_from_file(self,filename=False):
         # get a spectrum from the filename, populate fields in the gui
         if not filename:
-            filename = QFileDialog.getOpenFileName(self, caption='Open file',directory=self.home_path, filter="CWEPR files (*.akku2)")[0]
+            filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="Select spectrum file",
+                                                                directory=self.workingFolder,filter="akku2 Files (*.akku2)")
+            self.workingFolder = os.path.split(os.path.abspath(filename))[0]
+
+
 
         tmpSpectrum = cw_spectrum.cw_spectrum(filename)
         self.PopulateFieldsFromSpectrum(tmpSpectrum)

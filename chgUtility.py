@@ -74,7 +74,7 @@ class ChargingUi(QtWidgets.QMainWindow):
         try:
             # self.CHGPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
                                                  # filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
-            self.CHGPath = QtWidgets.QFileDialog.getSaveFileName(self,caption="Select folder, insert name",
+            self.CHGPath, _ = QtWidgets.QFileDialog.getOpenFileName(self,caption="Select folder, insert name",
                                                                  directory=self.workingFolder,filter="comma separated values (*,csv);all files (*)")
             self.workingFolder = os.path.split(os.path.abspath(self.CHGPath))[0]
         except:

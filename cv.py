@@ -31,7 +31,7 @@ class cv():
         # if filename was given, user wants to import that cv
         if filename != '':
         # populate the fields of the cv object from that csv file
-
+            print('CV module: opening %s'%filename)
             self.cvFile = open(filename)  # open the file
             self.filename = str(filename.split('/')[-1])
             cvf = self.cvFile  # for short

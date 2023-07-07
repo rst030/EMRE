@@ -49,10 +49,7 @@ class Ui(QtWidgets.QMainWindow):
             exit()
         self.show() # Show the GUI
 
-        # for the open dialog we have to create a blank Tk window and then withdraw it.
-        self._window=tk.Tk()
-        self._window.title("The window I initzialized")
-        self._window.withdraw()
+
 
         # initialization of buttons and labels:
         self.connect_button.setText('Connect to spectrometer')
@@ -73,28 +70,7 @@ class Ui(QtWidgets.QMainWindow):
         self.run_button.clicked.connect(self.run_experiment)
         self.abort_button.clicked.connect(self.abort_experiment)
 
-        # --- adding the plotters: ---
-        # EPR plotter:
-        EPRplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'EPR_plotter_widget')
-        #self.EPRplotter = Plotter.Plotter(parent = EPRplotterWidgetFound)
-        self.EPRplotterWGT = Plotter.Plotter(parent=EPRplotterWidgetFound,type = 'EPR')
-        self.verticalLayout_EPR_plotter.addWidget(self.EPRplotterWGT)
-        #self.verticalLayout_EPR_plotter.addWidget(self.EPRplotterWGT.Plotter.toolbar)
-        self.EPRplotter = self.EPRplotterWGT.PlotterCanvas
 
-        # CV plotter:
-        CVplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CV_plotter_widget')
-        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound,type='CV')
-        self.verticalLayout_CV_plotter.addWidget(self.CVplotterWGT)
-       # self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
-        self.CVplotter = self.CVplotterWGT.PlotterCanvas
-
-        # CHG plotter:
-        CHGplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CHG_plotter_widget') # locate the widget
-        self.CHGplotterWGT = Plotter.Plotter(parent=CHGplotterWidgetFound,type='CHG') # create the plotter with that widget
-        self.verticalLayout_CHG_plotter.addWidget(self.CHGplotterWGT)
-        #self.verticalLayout_CHG_plotter.addWidget(self.CHGplotter.toolbar)
-        self.CHGplotter = self.CHGplotterWGT.PlotterCanvas
 
     def connect_to_spectrometer(self):
         '''connects to the spectrometer
@@ -103,7 +79,8 @@ class Ui(QtWidgets.QMainWindow):
 
         print('connecting to spectrometer.')
         self.communicator = communication.communicator(backend = '')
-        self.communicator.keithley_pstat.plotter = self.CVplotter
+
+
         self.infoLabel.setText('connected')
         self.devman_button.setEnabled(True)
         self.CV_button.setEnabled(True)
@@ -160,7 +137,7 @@ class Ui(QtWidgets.QMainWindow):
         '''sends the initial parameters to the spectrometer.
         parameters have to be defined in the loaded script.'''
         print('sending init param to the spectrometer.')
-        self.experiment = self.script.experiment(communicator = self.communicator, plotter = self.EPRplotter)  # ecxperiment is a field of EMRE. It is globally visible.
+        self.experiment = self.script.experiment(communicator = self.communicator, plotter = None)  # ecxperiment is a field of EMRE. It is globally visible.
         self.infoLabel.setText('experiment initialized')
         self.run_button.setEnabled(True)
 
