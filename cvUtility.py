@@ -3,29 +3,93 @@
     rst '''
 from PyQt5 import QtWidgets, uic
 import os
+from time import sleep # for dev only
 
-from tkinter import filedialog
-import Plotter # an EMRE module for plotting
-import keithley_pstat # an EMRE module for communicating to a keithley potentiostat
-import cv # class of cv, makes an object of a cv. Can import from file. Attributes: voltage[], current[], etc
+import Plotter  # an EMRE module for plotting
+import keithley_pstat  # an EMRE module for communicating to a keithley potentiostat
+import cv  # class of cv, makes an object of a cv. Can import from file. Attributes: voltage[], current[], etc
+
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import *
+import time
+
+from multiprocessing import Queue
+
+
+class data_visualisation_thread(QThread): # this is the data vis thread. Reads data from q and plots to Plotter
+    def __init__(self,plotter:Plotter.Plotter, q:Queue):
+        super(data_visualisation_thread, self).__init__()
+        self.plotter = plotter
+        self.q = q
+
+    def run(self):
+        print('plotter: queue empty?', self.q.empty())
+        slp = 0.5
+        sleep(slp)
+        while True:
+            if not self.q.empty():
+                while not self.q.empty():
+                    cvY = self.q.get()
+                self.plotter.plotCv(cvY)
+                slp = cvY.delayBetweenPointsInSeconds
+                sleep(slp)
+            else:
+                sleep(2*slp)
+                if self.q.empty():
+                    break
+        self.quit()
+        self.wait()
+
+class data_generating_thread(QThread): # oт это у нас кусрэд, но наш, русскaй, родной, ТТТ.
+    def __init__(self, pstat:keithley_pstat, q:Queue, cv_init:cv.cv):  # and here is its constructor
+        super(data_generating_thread, self).__init__() # from a parent to be born
+        self.quit_flag = False # and no flag was given to ever quit anything
+        self.pstat = pstat
+        self.q = q # there put what you have done in your miserable life
+        self.cv = cv_init # whsat kind of function to be called in this thread
+
+    def run(self): # it waits, like a cat in a bush, when you call it. Run! - you shout.
+
+        print('cvUTility QThread running, type CV')
+
+        self.do_cv()
+
+        self.quit()
+        self.wait()
+
+    def do_cv(self):
+        print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
+        cvTmp = self.cv
+        print(cvTmp.filename)
+        cvTmp.filename = 'temp_cv'
+        print(cvTmp.filename)
+
+        # get the cv with the potentiostat
+        self.pstat.GlobalInterruptFlag = False
+        print('taking a cv')
+        self.pstat.TakeCV(cvTmp, self.q)
+
+
+
 
 class CyclingUi(QtWidgets.QMainWindow):
     '''the cycling utility window.'''
     pstat = keithley_pstat.pstat # the keithley with which the CV or CHG is recorded.
+
+    cvGlob = cv.cv  # instance of cv, global variable, careful.
+    q = Queue  # queue for pstat to put things into
+    trd = QThread  # thread
+
     workingFolder = r"./dummies/"  # where the openfiledialog opens
 
-    def __init__(self, pstat: keithley_pstat.pstat):
+    def __init__(self, pstat: keithley_pstat.pstat, q:Queue):
         super(CyclingUi, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi('EMRE_cycling_module.ui', self)  # Load the .ui file
+
+        uic.loadUi('gui/EMRE_cycling_module.ui', self)  # Load the .ui file
         self.show()  # Show the GUI
 
-        # initialization of buttons and labels:
-        self.go_button.setText('Go!')
-        self.abort_button.setText('Abort')
-        self.save_button.setText('Save as')
-        self.load_button.setText('Load')
-
-        self.info_label.setText('')
+        # working folder
+        self.CVPath = None
 
         # binding methods to buttons:
         self.go_button.clicked.connect(self.do_cv_scan)  # Remember to pass the definition/method, not the return value!
@@ -36,7 +100,7 @@ class CyclingUi(QtWidgets.QMainWindow):
         # --- adding the plotter: ---
         # CV plotter:
         CVplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'CV_plotter_widget')
-        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound, type = 'CV')
+        self.CVplotterWGT = Plotter.Plotter(parent=CVplotterWidgetFound, plotType = 'CV')
         self.verticalLayout_CV_plotter.addWidget(self.CVplotterWGT)
         #self.verticalLayout_CV_plotter.addWidget(self.CVplotter.toolbar)
         self.CVplotter = self.CVplotterWGT.PlotterCanvas
@@ -44,52 +108,94 @@ class CyclingUi(QtWidgets.QMainWindow):
 
         # --- connect the pstat ---
         self.pstat = pstat
+        self.q=q
+
+        # todo create two processes. One speaks with pstat, other plots stuff
+
 
 
     def do_cv_scan(self):
+        # create initial cv and populate its fields
+        self.cvGlob = cv.cv()
+        self.cvGlob.low_voltage_point = float(self.low_edit.text()) / 1000  # in Volts!
+        self.cvGlob.high_voltage_point = float(self.high_edit.text()) / 1000  # in Volts!
+        self.cvGlob.scan_rate = float(self.rate_edit.text()) / 1000  # in Volts per second!
+        self.cvGlob.n_cycles = int(self.n_edit.text())
+        self.cvGlob.currentLimitInMicroamps = float(self.current_limit_edit.text())
+
+        # parallel computing
+        self.gen_trd = data_generating_thread(pstat=self.pstat, q=self.q, cv_init=self.cvGlob)
+        # because it hangs on a laptop
+        self.vis_trd = data_visualisation_thread(plotter=self.CVplotter, q=self.q)
+
+        self.gen_trd.start()
+        self.vis_trd.start()
+
+    def do_cv_scan_old(self):
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
         # go from low point to high_point downto low_point for n_cycles cycles at scan_rate rate
-        self.cv = cv.cv()
-        self.cv.low_voltage_point = float(self.low_edit.text())/1000 # in Volts!
-        self.cv.high_voltage_point  = float(self.high_edit.text())/1000 # in Volts!
-        self.cv.scan_rate = float(self.rate_edit.text())/1000 # in Volts per second!
-        self.cv.n_cycles = int(self.n_edit.text())
-        self.cv.currentLimitInMicroamps = float(self.current_limit_edit.text())
+
+        # start process with data generation, update cv in the q
+        # start process with data collection, read cv from the q
+
+        self.cvGlob = cv.cv()
+        self.cvGlob.low_voltage_point = float(self.low_edit.text())/1000 # in Volts!
+        self.cvGlob.high_voltage_point  = float(self.high_edit.text())/1000 # in Volts!
+        self.cvGlob.scan_rate = float(self.rate_edit.text())/1000 # in Volts per second!
+        self.cvGlob.n_cycles = int(self.n_edit.text())
+        self.cvGlob.currentLimitInMicroamps = float(self.current_limit_edit.text())
 
         # get the cv with the potentiostat
         self.pstat.GlobalInterruptFlag = False
-        self.pstat.TakeCV(self.cv, self.CVplotter)
-        print('taking a cv')
+
+        #self.q = Queue(maxsize=100000)
+        print('here?')
+
+        TESTCCLS = 100
+        for i in range(TESTCCLS):
+            # spit that to the queue every x seconds
+            sleep(0.1)
+            print('new cv. q deep?',self.q.qsize())
+            self.q.put(self.cvGlob)
+
+    def data_generator(self):
+        pass
+
+    def data_receiver(self):
+        pass
 
     def abort_cv_scan(self):
         print('stop that crazy pstat, and turn the output off!')
         self.pstat.output_off()
         self.pstat.GlobalInterruptFlag = True
+
     def save_cv(self):
         print('save as file dialog etc, think of the format, Be compatible with the Keithley stuff!!!')
         # open file dialog
         try:
-            # self.CVPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
-#                                                 filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
+
             self.CVPath, _ = QtWidgets.QFileDialog.getSaveFileName(self,caption="Select folder, insert name",
-                                                                   directory=self.workingFolder,filter="comma separated values (*.csv);all files (*)")
+                                                                   directory=self.workingFolder, filter="comma "
+                                                                                                        "separated "
+                                                                                                        "values ("
+                                                                                                        "*.csv);all "
+                                                                                                        "files (*)")
             self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
         except:
             print('no filename given, do it again.')
             return 0
 
-        if self.cv != 0:
+        if self.cvGlob != 0:
             print('')
-            self.cv.saveAs(self.CVPath)
-
+            self.cvGlob.saveAs(self.CVPath)
 
     def load_cv(self):
         print('load the cv file, plot the curve in the plotter and populate the fields.')
         # open file dialog
         try:
-            # self.CVPath = filedialog.askopenfilename(parent=None, initialdir=self.workingFolder, title="Select shkript", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
-            self.CVPath, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="Select CV data", directory=self.workingFolder,
-                                                  filter="All Files (*);;CSV Files (*.csv)")
+            self.CVPath, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="Select CV data",
+                                                                   directory=self.workingFolder,
+                                                                   filter="All Files (*);;CSV Files (*.csv)")
             self.workingFolder = os.path.split(os.path.abspath(self.CVPath))[0]
 
         except:
@@ -97,6 +203,6 @@ class CyclingUi(QtWidgets.QMainWindow):
             return 0
 
         # import the cv curve as an object
-        self.cv = cv.cv(filename = self.CVPath)
+        self.cvGlob = cv.cv(filename = self.CVPath)
         # and print it on the plotter.
-        self.CVplotter.plotCv(self.cv)
+        self.CVplotter.plotCv(self.cvGlob)

@@ -49,7 +49,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
 
         super(CweprUi, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi('EMRE_CWEPR_module.ui', self)  # Load the .ui file
+        uic.loadUi('gui/EMRE_CWEPR_module.ui', self)  # Load the .ui file
         self.show()  # Show the GUI
 
         # initialization of buttons and labels:

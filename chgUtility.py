@@ -15,7 +15,7 @@ class ChargingUi(QtWidgets.QMainWindow):
 
     def __init__(self, pstat: keithley_pstat.pstat):
         super(ChargingUi, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi('EMRE_charging_module.ui', self)  # Load the .ui file
+        uic.loadUi('gui/EMRE_charging_module.ui', self)  # Load the .ui file
         self.show()  # Show the GUI
 
         # initialization of buttons and labels:

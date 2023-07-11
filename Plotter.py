@@ -24,30 +24,16 @@ from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout
 from PyQt5.QtWidgets import QWidget
 
 
-import tkinter as tk # window to be able to save plots
-import math
-
-# the proper way:
-# class WidgetPlot(QWidget):
-#     def __init__(self, *args, **kwargs):
-#         QWidget.__init__(self, *args, **kwargs)
-#         self.setLayout(QVBoxLayout())
-#         self.canvas = PlotCanvas(self, width=10, height=8)
-#         self.toolbar = NavigationToolbar(self.canvas, self)
-#         self.layout().addWidget(self.toolbar)
-#         self.layout().addWidget(self.canvas)
-
-
 class PlotterCanvas(FigureCanvas):
     '''Plotter based on FigureCanvasQTAgg'''
     xlabel = 'pirates'
     ylabel = 'crocodiles'
     title = 'ultimate grapfh'
     parent = None # parent widget, [have to] pass it on construction for live updates
-    type = 'GEN' # available: 'GEN,CV,CHG,EPR,TP'
+    plotType = 'GEN' # available: 'GEN,CV,CHG,EPR,TP'
 
-    def __init__(self,type:str):
-        self.type = type # assign and dont worry anymore!
+    def __init__(self, plotType:str):
+        self.plotType = plotType # assign and dont worry anymore!
         fig = Figure(figsize=(16, 16), dpi=100)
         self.axes = fig.add_subplot(111)
         plt.style.use('seaborn-colorblind')
@@ -57,7 +43,7 @@ class PlotterCanvas(FigureCanvas):
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-        if type == 'TP': # if a tunepicture plotter:
+        if plotType == 'TP': # if a tunepicture plotter:
             tightrect = (0.01,0.06,0.99,1)
             self.axes.set_yticks([])
         else:
@@ -78,20 +64,21 @@ class PlotterCanvas(FigureCanvas):
         self.update_plotter()
     def compute_initial_figure(self):
         self.clear()
-        if self.type == 'GEN':
+        if self.plotType == 'GEN':
             pass
-        if self.type == 'CV':
+        if self.plotType == 'CV':
             self.preset_CV()
-        if self.type == 'CHG':
+        if self.plotType == 'CHG':
             self.preset_CHG()
-        if self.type == 'EPR':
+        if self.plotType == 'EPR':
             self.preset_EPR()
-        if self.type == 'TP':
+        if self.plotType == 'TP':
             self.preset_TP()
 
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
+
 
     def preset_EPR(self):
         self.clear()
@@ -221,11 +208,11 @@ class PlotterCanvas(FigureCanvas):
 
     # a widget class to implement the toolbar
 class Plotter(QWidget):
-    type = 'general' # can be EPR, TP, CV and CHG type
-    def __init__(self, parent, type, *args, **kwargs): # you have to pass the main window here, else crashes on click save
+    plotType = 'general' # can be EPR, TP, CV and CHG plotType
+    def __init__(self, parent, plotType, *args, **kwargs): # you have to pass the main window here, else crashes on click save
         QWidget.__init__(self, *args, **kwargs)
         self.setLayout(QVBoxLayout())
-        self.PlotterCanvas = PlotterCanvas(type = type) # Plotter is a class defined above. Type defines which plotter to be created ('CV,CHG,EPR,TP')
+        self.PlotterCanvas = PlotterCanvas(plotType = plotType) # Plotter is a class defined above. plotType defines which plotter to be created ('CV,CHG,EPR,TP')
 
         # navigation toolbar
         self.toolbar = NavigationToolbar(self.PlotterCanvas, parent = self)

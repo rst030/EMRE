@@ -6,7 +6,8 @@ import numpy as np
 import pyvisa as visa
 from time import sleep
 from datetime import datetime  # this thing gets current time
-import Plotter
+from multiprocessing import Queue
+
 import random # for fake data
 import cv # a CV object, for saving and running a cv
 import chg # a CHG object, for saving and running a chg
@@ -27,11 +28,11 @@ class pstat (object):
     rm = visa.ResourceManager         # visa resource manager, the communicator makes it
     fake = False                      # use simulated outputs. Used for testing outside the lab.
 
-    plotter = Plotter.Plotter         # a potentiostat has a plotter object that has to be assigned when connected.
+    q = None # potentiostat sends data to a queue.
 
     GlobalInterruptFlag = False       # emergency break handle
 
-    def __init__(self, rm: visa.ResourceManager, model: str, plotter: Plotter.Plotter): # when create a lia you'd better have a resource manager already working
+    def __init__(self, rm: visa.ResourceManager, model: str): # when create a lia you'd better have a resource manager already working
         '''create an instance of the pstat object''' # создать объект потенциостата.
         self.rm = rm
         self.connect(model)
@@ -57,8 +58,6 @@ class pstat (object):
 #################################################################
 
         self.print(response)
-
-        self.plotter = plotter #
 
     def connect(self, model):
         try:
@@ -246,7 +245,7 @@ class pstat (object):
         try:
             currentString = self.device.query('MEASure:CURRent:DC?') # 1 point it is supposed to be.
         except:
-            return 666
+            return (random.randint(0,1000)/1000)
         #self.write('TRACe:DATA? 1,2, \"CYKA_BLYAT\", READ, REL, SOUR')# 2, 9')
         #currentString = self.read() instead of query if you want to wait for a few plc. 
         #print(currentString) # temp
@@ -254,7 +253,7 @@ class pstat (object):
         return current
 
 
-    def TakeCV(self, cv_input:cv.cv, plotter: Plotter.Plotter):
+    def TakeCV(self, cv_input:cv.cv, q:Queue):
         '''take a cv curve with parameters specified in the given cv.cv. plot in the given  plotter'''
         cvTaken = cv_input
         # before taking the cv - limit the current!
@@ -264,7 +263,7 @@ class pstat (object):
         self.set_measure_range(current_limit_in_microamperes=currentLimitInMicroamps)
         self.set_current_limit(current_limit_in_microamperes=currentLimitInMicroamps)
 
-        self.plotter = plotter # plot cv in the plotter that is given as argument
+        self.q = q # plot cv in the plotter that is given as argument
 
         # do the electrochemical business here
         nStepsUp = 128 # n steps in voltages when going up in potentials
@@ -281,13 +280,8 @@ class pstat (object):
         scanWidthInMv = cvTaken.high_voltage_point - cvTaken.low_voltage_point # in mV
         rateInMvPerSecond = cvTaken.scan_rate # in millivolts per second
         numberOfPointsInScan = nStepsUp
-        delayBetweenPointsInSeconds = scanWidthInMv / rateInMvPerSecond / numberOfPointsInScan
 
-        # considering that fucking matplotlib delay
-        if delayBetweenPointsInSeconds < 0.1: #second
-            delayBetweenPointsInSeconds = 0
-        else:
-            delayBetweenPointsInSeconds = delayBetweenPointsInSeconds - 0.1
+        delayBetweenPointsInSeconds = scanWidthInMv / rateInMvPerSecond / numberOfPointsInScan # precisely
 
         # make vector with potentials
         pot_up_vector = np.linspace(cvTaken.low_voltage_point, cvTaken.high_voltage_point, nStepsUp)
@@ -296,6 +290,9 @@ class pstat (object):
 
         starttime = datetime.now()  # get current time. start of the cv
         cvTaken.datetime = str(starttime)
+        cvTaken.voltage = []
+        cvTaken.current = []
+        cvTaken.delayBetweenPointsInSeconds = delayBetweenPointsInSeconds
 
         # ELECTRICITY ON!
         self.configureCv()
@@ -303,23 +300,24 @@ class pstat (object):
 
             for i in range(len(pot_vector)):
                 potential = pot_vector[i]
-                cvTaken.voltage.append(potential)
                 current = self.getCvPoint(voltage_in_volts=potential,sleeptime = delayBetweenPointsInSeconds)
-                cvTaken.current.append(current)
                 reltime = (datetime.now() - starttime).total_seconds()
+                cvTaken.current.append(current)
                 cvTaken.time.append(reltime) # relative time in microseconds
-                if i%1 == 0: # how often to plot. Each point is ok for now but that would be a constant delay!!!
-                    self.plotter.plotCvData(cvTaken.voltage, cvTaken.current)
+                cvTaken.voltage.append(potential)
 
-                self.plotter.title = 'cycle %d/%d' % (_+1, cvTaken.n_cycles)
+                q.put(cvTaken)
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
                     self.GlobalInterruptFlag = False
                     return cvTaken
 
 
+
+
         self.output_off()
         return cvTaken
+
 
     def TakeCV_the_old_way(self, lowPotential: float, highPotential: float, rate: float, filePath:str):
 
@@ -394,11 +392,10 @@ class pstat (object):
 
 
 
-    def TakeCHG(self, chg_input:chg.chg, plotter: Plotter.Plotter):
+    def TakeCHG(self, chg_input:chg.chg, q: Queue):
         '''take a chg cycle with parameters specified in the given chg.chg. plot in the given  plotter'''
         chgTaken = chg_input
 
-        self.plotter = plotter # plot cv in the plotter that is given as argument, switchable SNOUT!
 
         highVoltageLimit = chg_input.high_voltage_level
         lowVoltageLimit = chg_input.low_voltage_level
@@ -425,9 +422,9 @@ class pstat (object):
                 measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
                 chgTaken.voltage.append(measuredVoltage)
 
-                # keep plotting
-                self.plotter.plotChgData(chgTaken)
-                self.plotter.title = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6,_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
+                # keep pushing data to the queue
+                q.put(chgTaken)
+                # self.plotter.title = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6,_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:

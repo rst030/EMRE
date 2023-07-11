@@ -8,10 +8,7 @@
 '''
 
 import pyvisa as visa
-
 from time import sleep #time-dependent business for IV curves and time-constants
-
-import windfreak_synth
 
 interval = 0.01 # an interval in seconds that is waited whenever a command is sent to the Osilla's X200 SMU.
 # Can be made a little shorter, but Osilla is unpredictable often.
@@ -22,6 +19,7 @@ import keithley_pstat  # potentiostat keithley model 2450 source meter
 import agilent_53181a  # frequency counter class.
 import emres_right_hand # right hand that clocks buttons and moves the mouse
 import scope # oscilloscope, by now a TDS on lyra
+import windfreak_synth
 
 class communicator(object):
     rm = visa.ResourceManager # no resource manager for beginning
@@ -34,6 +32,8 @@ class communicator(object):
     scope = scope.scope
 
     devices_list = [] # to be popuylated in the constructor
+    numConnectedDevices = 0 # how many devices are not fake
+    numRealDevices = 0 # how many devices totally in communicator
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
@@ -47,7 +47,7 @@ class communicator(object):
         self.devices_list.append(self.lockin)
         self.field_controller = bh_15.bh_15(rm = self.rm, model = 'BH-15') # creating field controller. that easy.
         self.devices_list.append(self.field_controller)
-        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450', plotter=None) # creating pstat. That easy BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
+        self.keithley_pstat = keithley_pstat.pstat(rm = self.rm, model = '2450') # creating pstat. That easy BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
         self.devices_list.append(self.keithley_pstat)
         self.frequency_counter = agilent_53181a.agilent_frequency_counter(rm=self.rm, model = '53181')
         self.devices_list.append(self.frequency_counter)
@@ -57,6 +57,12 @@ class communicator(object):
         self.devices_list.append(self.windfreak)
         self.scope = scope.scope(rm = self.rm)
         self.devices_list.append(self.scope)
+
+        # count the connected devices
+        self.numConnectedDevices = len(self.devices_list)
+        for dev in self.devices_list:
+            if not dev.fake:
+                self.numRealDevices = self.numRealDevices + 1
 
     def list_devices(self):
         '''list all devices, no matter available or not'''

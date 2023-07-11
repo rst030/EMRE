@@ -12,7 +12,7 @@ class deviceManagerUI(QtWidgets.QMainWindow):
 
     def __init__(self, comm: communication.communicator):
         super(deviceManagerUI, self).__init__()  # Call the inherited classes __init__ method
-        uic.loadUi('EMRE_device_manager_module.ui', self)  # Load the .ui file
+        uic.loadUi('gui/EMRE_device_manager_module.ui', self)  # Load the .ui file
         self.show()  # Show the GUI
 
         # --- connect the communicator ---
