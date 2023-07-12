@@ -126,12 +126,12 @@ class Ui(QtWidgets.QMainWindow):
 
     def open_CV_utility(self):
         """ opens the CV GUI with CV the plotter in it."""
-        self.qGlob = Queue(maxsize=100)
+        self.qGlob = Queue(maxsize=10000)
         self.CVgui = cvUtility.CyclingUi(self.communicator.keithley_pstat, self.qGlob)
 
     def open_CHG_utility(self):
         """ opens the CHG GUI with the CHG plotter in it."""
-        self.qGlob = Queue(maxsize=100)
+        self.qGlob = Queue(maxsize=10000)
         self.CHGgui = chgUtility.ChargingUi(self.communicator.keithley_pstat, self.qGlob)
 
     def open_CWEPR_utility(self):

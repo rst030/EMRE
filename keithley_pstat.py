@@ -444,7 +444,7 @@ class pstat (object):
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
                     self.GlobalInterruptFlag = False
-                    return self.self.chgTaken
+                    return self.chgTaken
 
 
             print('FULLY CHARGED. DISCHARGING:')
