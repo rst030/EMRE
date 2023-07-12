@@ -29,6 +29,7 @@ class chg():
         self.voltage = []
 
         self.filename = 'dummy'
+        self.delayBetweenPointsInSeconds = 0
 
         # --- from here on - import from file ---
         # if filename was given, user wants to import that cv

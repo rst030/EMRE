@@ -108,7 +108,7 @@ class PlotterCanvas(FigureCanvas):
         self.title = 'CHG'
         self.axes.grid()
         chgDummy = chg.chg('./dummies/lipton_4_CHG_DCG.csv')
-        self.plotChgData(chgDummy)
+        self.plotChg(chgDummy)
 
     def preset_TP(self):
         self.clear()
@@ -129,15 +129,16 @@ class PlotterCanvas(FigureCanvas):
         self.axes.autoscale(True)
         self.update_plotter()
 
-    def plotChgData(self, chgInput: chg.chg):
+    def plotChg(self, chgInput: chg.chg):
         xValues = chgInput.time
         yValues = chgInput.voltage
-        self.clear()
-        self.axes.plot(xValues,yValues)
-        self.axes.autoscale(True)
+        self.axes.cla()
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
+        self.axes.plot(xValues, yValues,'o:')
+        self.axes.plot(xValues[-1], yValues[-1], 'kx:', linewidth=5)
+        self.axes.autoscale(True)
         self.axes.grid()
         self.update_plotter()
 
@@ -202,7 +203,7 @@ class PlotterCanvas(FigureCanvas):
 
     def update_plotter(self): # very useful and important method for live plotting.
         self.figure.canvas.draw()
-        self.figure.canvas.flush_events()
+        #self.figure.canvas.flush_events()
 
 
 

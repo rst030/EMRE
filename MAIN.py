@@ -126,11 +126,13 @@ class Ui(QtWidgets.QMainWindow):
 
     def open_CV_utility(self):
         """ opens the CV GUI with CV the plotter in it."""
+        self.qGlob = Queue(maxsize=100)
         self.CVgui = cvUtility.CyclingUi(self.communicator.keithley_pstat, self.qGlob)
 
     def open_CHG_utility(self):
         """ opens the CHG GUI with the CHG plotter in it."""
-        self.CHGgui = chgUtility.ChargingUi(self.communicator.keithley_pstat)
+        self.qGlob = Queue(maxsize=100)
+        self.CHGgui = chgUtility.ChargingUi(self.communicator.keithley_pstat, self.qGlob)
 
     def open_CWEPR_utility(self):
         """ opens the CWEPR GUI with the CWEPR plotter in it."""
@@ -156,10 +158,6 @@ class Ui(QtWidgets.QMainWindow):
         print('stop machine!: todo')
         self.experiment.abort() #todo: add abort button to the experiment class
 
-    def data_generator(self,q:Queue):
-        while 1:
-            print('HELLO FROM DATA GENERATOR')
-            sleep(1)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
     rst '''
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QTreeWidgetItem
+from PyQt5 import QtGui
 import communication
 
 class deviceManagerUI(QtWidgets.QMainWindow):
@@ -68,6 +69,9 @@ class deviceManagerUI(QtWidgets.QMainWindow):
             itm.setText(1, str(dev.address))
             itm.setText(2, str(not dev.fake))
             itm.device = dev
+            itm.setForeground(0,QtGui.QColor(16, 16, 16, 255))
+            if not dev.fake:
+                itm.setBackground(0,QtGui.QColor(0, 255, 0, 255))
             ListOfDeviceItems.append(itm)
 
         self.treeWidget.clear()

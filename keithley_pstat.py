@@ -5,6 +5,7 @@ ilia.kulikov@fu-berlin.de'''
 import numpy as np
 import pyvisa as visa
 from time import sleep
+from math import sin
 from datetime import datetime  # this thing gets current time
 from multiprocessing import Queue
 
@@ -232,7 +233,7 @@ class pstat (object):
         try:
             voltageString = self.device.query('MEASure:VOLTage:DC?') # 1 point it is supposed to be.
         except:
-            return 777
+            return float(sin(float(datetime.now().second/10)))
         voltage = float(voltageString)#np.mean(np.array(self.read().split(',')).astype(float))
         return voltage
 
@@ -394,42 +395,56 @@ class pstat (object):
 
     def TakeCHG(self, chg_input:chg.chg, q: Queue):
         '''take a chg cycle with parameters specified in the given chg.chg. plot in the given  plotter'''
-        chgTaken = chg_input
+        self.chgTaken = chg_input
 
 
         highVoltageLimit = chg_input.high_voltage_level
         lowVoltageLimit = chg_input.low_voltage_level
 
         starttime = datetime.now()  # get current time. start of the cv
-        chgTaken.datetime = str(starttime)
+        self.chgTaken.datetime = str(starttime)
+        self.chgTaken.voltage = []
+        self.chgTaken.time = []
+
+        delayBetweenPointsInSeconds = 0.00
+        self.chgTaken.delayBetweenPointsInSeconds = delayBetweenPointsInSeconds # recording as fast as possible, all timing depends on the battery
+
+
 
         # ELECTRICITY ON!
+
         print(max(highVoltageLimit, abs(lowVoltageLimit)))
         self.configureCHG(absoluteValueOfVoltageLimit=max(highVoltageLimit, abs(lowVoltageLimit)))  # go set the knobs there
 
         self.output_on()
 
-        for _ in range(chgTaken.n_cycles):
+        for _ in range(self.chgTaken.n_cycles):
             # do chg until the high limit ---- CHG CHG CHG CHG CHG CHG CHG CHG CHG ----
             measuredVoltage = -65535  # for sure less than the high limit
 
             print('CHARGING.')
             while measuredVoltage < highVoltageLimit:
+
                 currentToApply = chg_input.chg_current # charging with the chg current of the passed chg object
                 reltime = (datetime.now() - starttime).total_seconds() # time since the beginning of the experiment
-                chgTaken.time.append(reltime)
-                chgTaken.current.append(currentToApply)
+
                 measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
-                chgTaken.voltage.append(measuredVoltage)
+
+                self.chgTaken.time.append(reltime)
+                self.chgTaken.current.append(currentToApply)
+                self.chgTaken.voltage.append(measuredVoltage)
+                self.chgTaken.title = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (
+                currentToApply * 1e6, _ + 1, self.chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
+
 
                 # keep pushing data to the queue
-                q.put(chgTaken)
-                # self.plotter.title = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6,_ + 1, chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
+                sleep(0.01)
+                q.put(self.chgTaken)
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
                     self.GlobalInterruptFlag = False
-                    return chgTaken
+                    return self.self.chgTaken
 
 
             print('FULLY CHARGED. DISCHARGING:')
@@ -439,26 +454,32 @@ class pstat (object):
             measuredVoltage = 65535  # for sure less than the high limit
 
             while measuredVoltage > lowVoltageLimit:
+                sleep(0.01)
                 currentToApply = chg_input.dcg_current  # discharging with the dcg current of the passed chg object
                 reltime = (datetime.now() - starttime).total_seconds()
-                chgTaken.time.append(reltime)
-                chgTaken.current.append(currentToApply)
-                measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
-                chgTaken.voltage.append(measuredVoltage)
 
-                # keep plotting
-                self.plotter.plotChgData(chgTaken)
-                self.plotter.title = 'DCG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6, _ + 1, chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
+                measuredVoltage = self.getCHGpoint(current_in_amps=currentToApply)
+
+                self.chgTaken.time.append(reltime)
+                self.chgTaken.current.append(currentToApply)
+                self.chgTaken.voltage.append(measuredVoltage)
+                sleep(delayBetweenPointsInSeconds)
+                self.chgTaken.filename = 'DCG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (currentToApply*1e6, _ + 1, self.chgTaken.n_cycles, measuredVoltage, lowVoltageLimit)
+
+                # keep pushing data to the queue
+                sleep(0.01)
+                q.put(self.chgTaken)
+
 
                 # emergency stop break:
                 if self.GlobalInterruptFlag:
                     self.GlobalInterruptFlag = False
-                    return chgTaken
+                    return self.chgTaken
 
             print('FULLY DISCHARGED.')
 
         self.output_off()
-        return chgTaken
+        return self.chgTaken
 
     def ConfigureForTransient(self):
         #self.write(':TRACe:MAKE \"CYKA_BLYAT\", 10')

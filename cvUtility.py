@@ -23,9 +23,10 @@ class data_visualisation_thread(QThread): # this is the data vis thread. Reads d
         self.q = q
 
     def run(self):
-        print('plotter: queue empty?', self.q.empty())
+        print('CV plotter: queue empty?', self.q.empty())
         slp = 0.5
         sleep(slp)
+        cvY = cv.cv()
         while True:
             if not self.q.empty():
                 while not self.q.empty():
@@ -78,7 +79,6 @@ class CyclingUi(QtWidgets.QMainWindow):
 
     cvGlob = cv.cv  # instance of cv, global variable, careful.
     q = Queue  # queue for pstat to put things into
-    trd = QThread  # thread
 
     workingFolder = r"./dummies/"  # where the openfiledialog opens
 
@@ -168,6 +168,9 @@ class CyclingUi(QtWidgets.QMainWindow):
         print('stop that crazy pstat, and turn the output off!')
         self.pstat.output_off()
         self.pstat.GlobalInterruptFlag = True
+        self.gen_trd.quit()
+        self.vis_trd.quit()
+
 
     def save_cv(self):
         print('save as file dialog etc, think of the format, Be compatible with the Keithley stuff!!!')
