@@ -433,7 +433,7 @@ class pstat (object):
                 self.chgTaken.time.append(reltime)
                 self.chgTaken.current.append(currentToApply)
                 self.chgTaken.voltage.append(measuredVoltage)
-                self.chgTaken.title = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (
+                self.chgTaken.filename = 'CHG %.3f [uA] | %d/%d | %.3f / %.3f [V]' % (
                 currentToApply * 1e6, _ + 1, self.chgTaken.n_cycles, measuredVoltage, highVoltageLimit)
 
 

@@ -3,7 +3,6 @@
     rst '''
 from PyQt5 import QtWidgets, uic
 import os
-from tkinter import filedialog
 import Plotter  # an EMRE module for plotting
 import keithley_pstat  # an EMRE module for communicating to a keithley potentiostat
 import chg  # class of cv, makes an object of a cv. Can import from file. Attributes: voltage[], current[], etc
@@ -23,16 +22,21 @@ class data_visualisation_thread(QThread):  # this is the data vis thread. Reads 
 
     def run(self):
         print('CHG plotter: queue empty?', self.q.empty())
+        tmpCHG = chg.chg()
 
         while 1==1:
             sleep(0.05)
             while not self.q.empty():
-                self.plotter.plotChg(self.q.get())
+                tmpCHG = self.q.get()
+                print(self.q.qsize())
             else:
+                self.plotter.plotChg(tmpCHG)
                 sleep(0.1)
                 if self.q.empty():
-                    self.quit()
                     self.wait()
+                    self.quit()
+                    break
+
 
 
 class data_generating_thread(QThread):  # oт это у нас кусрэд, но наш, русскaй, родной, ТТТ.
@@ -49,8 +53,9 @@ class data_generating_thread(QThread):  # oт это у нас кусрэд, н�
 
         self.do_chg()
 
-        self.quit()
         self.wait()
+        self.quit()
+
 
     def do_chg(self):
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
@@ -166,17 +171,24 @@ class ChargingUi(QtWidgets.QMainWindow):
             print('potentiometry saved')
 
     def load_chg(self):
-        print('load the cv file, plot the curve in the plotter and populate the fields.')
+        print('load the CHG file, plot the curve in the plotter and populate the fields.')
         # open file dialog
+
         try:
-            # self.CHGPath = filedialog.askopenfilename(parent=None, initialdir=self.workingFolder, title="Select script", filetypes = (("comma separated values","*.csv"),("all files","*.*")))
-            self.CHGPath = QtWidgets.QFileDialog.getOpenFileName(self, "Select script", self.workingFolder,
-                                                                 "comma separated values (*,csv);all files (*)")
+            self.CHGPath, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="Select CHG data",
+                                                                   directory=self.workingFolder,
+                                                                   filter="All Files (*);;CSV Files (*.csv)")
             self.workingFolder = os.path.split(os.path.abspath(self.CHGPath))[0]
+
         except:
             print('no filename given, do it again.')
             return 0
+
+
         # import the chg curve as an object
         self.chg = chg.chg(filename=self.CHGPath)
+        print(self.chg.filename)
+        print(self.chg.time)
+
         # and print it on the plotter.
-        self.CHGplotter.plotChgData(self.chg)
+        self.CHGplotter.plotChg(self.chg)

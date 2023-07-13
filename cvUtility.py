@@ -158,11 +158,6 @@ class CyclingUi(QtWidgets.QMainWindow):
             print('new cv. q deep?',self.q.qsize())
             self.q.put(self.cvGlob)
 
-    def data_generator(self):
-        pass
-
-    def data_receiver(self):
-        pass
 
     def abort_cv_scan(self):
         print('stop that crazy pstat, and turn the output off!')

@@ -135,7 +135,7 @@ class PlotterCanvas(FigureCanvas):
         self.axes.cla()
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
-        self.axes.set_title(self.title)
+        self.axes.set_title(chgInput.filename)
         self.axes.plot(xValues, yValues,'o:')
         self.axes.plot(xValues[-1], yValues[-1], 'kx:', linewidth=5)
         self.axes.autoscale(True)
