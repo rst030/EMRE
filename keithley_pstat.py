@@ -23,7 +23,9 @@ class pstat (object):
     address.append('USB0::0x05E6::0x2450::04509830::INSTR') # new pstat
     address.append('USB0::0x05E6::0x2450::04431893::INSTR') # old pstat
     address.append('USB0::1510::9296::04509830::0::INSTR')  # old pstat at e1
+    address.append('USB0::1510::9296::04431893::0::INSTR') # old pstat
     address.append('GPIB0::18::INSTR')  # any pstat at lyra. Mind the GPIB settings of the thing!
+
 
     device = visa.Resource            # pyvisa device that is populated with the constructor
     rm = visa.ResourceManager         # visa resource manager, the communicator makes it
@@ -75,8 +77,10 @@ class pstat (object):
                 return self.device
             except:
                     print('failed to get Pstat at ', addr)
-                    self.fake = True
-                    self.device = 0
+
+
+        self.fake = True
+        self.device = 0
                     #self.address = 'N/C'
         if self.fake:
             self.print('Using fake Pstat')
@@ -234,7 +238,11 @@ class pstat (object):
             voltageString = self.device.query('MEASure:VOLTage:DC?') # 1 point it is supposed to be.
         except:
             return float(sin(float(datetime.now().second/10)))
-        voltage = float(voltageString)#np.mean(np.array(self.read().split(',')).astype(float))
+        try:
+            voltage = float(voltageString)#np.mean(np.array(self.read().split(',')).astype(float))
+        except:
+            voltage = 0
+
         return voltage
 
 
@@ -406,14 +414,14 @@ class pstat (object):
         self.chgTaken.voltage = []
         self.chgTaken.time = []
 
-        delayBetweenPointsInSeconds = 0.00
+        delayBetweenPointsInSeconds = 0.01
         self.chgTaken.delayBetweenPointsInSeconds = delayBetweenPointsInSeconds # recording as fast as possible, all timing depends on the battery
 
 
 
         # ELECTRICITY ON!
 
-        print(max(highVoltageLimit, abs(lowVoltageLimit)))
+        print('KEITHLEY IS WORKING.....')
         self.configureCHG(absoluteValueOfVoltageLimit=max(highVoltageLimit, abs(lowVoltageLimit)))  # go set the knobs there
 
         self.output_on()
@@ -438,7 +446,7 @@ class pstat (object):
 
 
                 # keep pushing data to the queue
-                sleep(0.01)
+                sleep(delayBetweenPointsInSeconds)
                 q.put(self.chgTaken)
 
                 # emergency stop break:
@@ -454,7 +462,7 @@ class pstat (object):
             measuredVoltage = 65535  # for sure less than the high limit
 
             while measuredVoltage > lowVoltageLimit:
-                sleep(0.01)
+
                 currentToApply = chg_input.dcg_current  # discharging with the dcg current of the passed chg object
                 reltime = (datetime.now() - starttime).total_seconds()
 

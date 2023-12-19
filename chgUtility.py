@@ -15,26 +15,28 @@ from multiprocessing import Queue
 
 
 class data_visualisation_thread(QThread):  # this is the data vis thread. Reads data from q and plots to Plotter
+    tmpCHG = chg.chg()
+    tmpCHG.time=[-1]
+    tmpCHG.voltage = [0]
+
     def __init__(self, plotter: Plotter.Plotter, q: Queue):
         super(data_visualisation_thread, self).__init__()
         self.plotter = plotter
         self.q = q
 
     def run(self):
-        print('CHG plotter: queue empty?', self.q.empty())
-        tmpCHG = chg.chg()
-
+        print('CHG plotter: queue empty?', not self.q._notempty)
+        sleep(1)
+        ncycles=0 # how many times tried to read the queue
         while 1==1:
-            sleep(0.05)
-            while not self.q.empty():
-                tmpCHG = self.q.get()
-                print(self.q.qsize())
-            else:
-                self.plotter.plotChg(tmpCHG)
-                sleep(0.1)
-                if self.q.empty():
-                    self.wait()
-                    self.quit()
+            self.plotter.plotChg(self.tmpCHG)  # after reading the last cv from the q, plot.
+            try:
+                self.tmpCHG = self.q.get()  # read all that queue
+            except:
+                sleep(0.05)
+                ncycles = ncycles+1
+                if ncycles > 100:
+                    print("I tried %d times. There is nothing."%ncycles)
                     break
 
 
@@ -111,7 +113,7 @@ class ChargingUi(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         # do stuff
-        if self.q.empty():
+        if self.q and self.q.empty():
             while not self.q.empty():
                 print(self.q.get())
             event.accept()  # let the window close
@@ -137,17 +139,23 @@ class ChargingUi(QtWidgets.QMainWindow):
         self.chg.n_cycles = int(self.ncycles_edit.text())
 
         # parallel computing
-        self.gen_trd = data_generating_thread(pstat=self.pstat, q=self.q, chg_init=self.chg)
         # because it hangs on a laptop
         self.vis_trd = data_visualisation_thread(plotter=self.CHGplotter, q=self.q)
+        self.gen_trd = data_generating_thread(pstat=self.pstat, q=self.q, chg_init=self.chg)
+
+
+        self.vis_trd.start()
 
         self.gen_trd.start()
-        self.vis_trd.start()
+
+
 
     def abort_chg_scan(self):
         print('stop that crazy pstat, and turn the output off!')
         self.pstat.output_off()
         self.pstat.GlobalInterruptFlag = True
+        print('get tmpCHG from the self.vis_trd!')
+        self.chg = self.vis_trd.tmpCHG
         self.gen_trd.quit()
         self.vis_trd.quit()
 
@@ -157,7 +165,7 @@ class ChargingUi(QtWidgets.QMainWindow):
         try:
             # self.CHGPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
             # filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
-            self.CHGPath, _ = QtWidgets.QFileDialog.getOpenFileName(self, caption="Select folder, insert name",
+            self.CHGPath, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption="Select folder, insert name",
                                                                     directory=self.workingFolder,
                                                                     filter="comma separated values (*,csv);all files (*)")
             self.workingFolder = os.path.split(os.path.abspath(self.CHGPath))[0]
@@ -165,9 +173,10 @@ class ChargingUi(QtWidgets.QMainWindow):
             print('no filename given, do it again.')
             return 0
 
-        if self.chg != 0:
-            print('saving chg potentiometry...')
-            self.chg.saveAs(self.CHGPath)
+        if self.chg:
+            print('saving CHG potentiometry...')
+            print('saving CHG as ',self.CHGPath)
+            self.chg.saveAs(filename=self.CHGPath)
             print('potentiometry saved')
 
     def load_chg(self):

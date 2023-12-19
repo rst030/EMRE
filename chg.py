@@ -24,9 +24,9 @@ class chg():
 
         # --- measure parameters ---
         self.data_pts = []
-        self.time = []
-        self.current = []
-        self.voltage = []
+        self.time = [0]
+        self.current = [0]
+        self.voltage = [0]
 
         self.filename = 'dummy'
         self.delayBetweenPointsInSeconds = 0
@@ -34,6 +34,9 @@ class chg():
         # --- from here on - import from file ---
         # if filename was given, user wants to import that cv
         if filename != '':
+            self.time = []
+            self.current = []
+            self.voltage = []
         # populate the fields of the chg object from that csv file
 
             self.chgFile = open(filename)  # open the file
