@@ -1,0 +1,14 @@
+<changelist name="twinkle_played_around" date="1689173207520" recycled="false">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/twinkle_played_around/shelved.patch" />
+  <option name="DESCRIPTION" value="twinkle played around" />
+  <binary>
+    <option name="BEFORE_PATH" />
+    <option name="AFTER_PATH" value="figures/tunepicture_fit.png" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/twinkle_played_around/tunepicture_fit.png" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" />
+    <option name="AFTER_PATH" value="icons/emreicon.pdf" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/twinkle_played_around/emreicon.pdf" />
+  </binary>
+</changelist>
