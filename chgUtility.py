@@ -92,6 +92,12 @@ class ChargingUi(QtWidgets.QMainWindow):
 
         self.info_label.setText('')
 
+        self.CHGlistWidget.addItem('n/a')
+        self.DCGlistWidget.addItem('n/a')
+
+        self.CHGlcdNumber.display('000')
+        self.DCGlcdNumber.display('000')
+
         # binding methods to buttons:
         self.go_button.clicked.connect(self.do_chg_scan)  # code that method
         self.abort_button.clicked.connect(self.abort_chg_scan)  # Remember to code the method in the class.

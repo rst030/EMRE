@@ -79,7 +79,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Charge [uA]</string>
+             <string>CHG [uA]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -115,7 +115,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Discharge [uA]</string>
+             <string>DCG [uA]</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -217,7 +217,7 @@
              </size>
             </property>
             <property name="text">
-             <string>№ cycles</string>
+             <string># cycles</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -239,6 +239,54 @@
              <string>2</string>
             </property>
            </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>CHG [uAh]</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>DCG [uAh]</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <item>
+           <widget class="QLCDNumber" name="DCGlcdNumber">
+            <property name="value" stdset="0">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLCDNumber" name="CHGlcdNumber"/>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <item>
+           <widget class="QListWidget" name="DCGlistWidget"/>
+          </item>
+          <item>
+           <widget class="QListWidget" name="CHGlistWidget"/>
           </item>
          </layout>
         </item>
