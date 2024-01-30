@@ -97,7 +97,7 @@ class CweprUi(QtWidgets.QMainWindow):
         # --- adding the plotter: ---
         # EPR plotter:
         #EPRplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'EPR_plotter_widget')
-        self.EPRplotterWGT = Plotter.Plotter(parent=None,type = 'EPR')
+        self.EPRplotterWGT = Plotter.Plotter(parent=None,plotType = 'EPR')
         self.verticalLayout_EPR_plotter.addWidget(self.EPRplotterWGT)
         #self.verticalLayout_CV_plotter.addWidget(self.CHGplotter.toolbar)
         self.EPRplotter = self.EPRplotterWGT.PlotterCanvas
@@ -106,7 +106,7 @@ class CweprUi(QtWidgets.QMainWindow):
         # tune picture poltter
         #TPplotterWidgetFound = self.findChild(QtWidgets.QWidget, 'TunePictureWidget')
         self.tp = tp.tp()
-        self.TPplotterWGT = Plotter.Plotter(parent=None,type='TP')
+        self.TPplotterWGT = Plotter.Plotter(parent=None, plotType = 'TP')
         self.verticalLayout_TP_plotter.addWidget(self.TPplotterWGT)
         self.TPplotter = self.TPplotterWGT.PlotterCanvas
         self.TPplotterWGT.setMinimumWidth(230)
