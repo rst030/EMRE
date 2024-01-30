@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QFileDialog
 import os
 #from tkinter import filedialog
 import Plotter # an EMRE module for plotting
+import agilent_53181a
+import bh_15
 import communication
 import cw_spectrum # class of cw_spectrum, makes an object of a cw_spectrum. Can import from file
 import numpy as np
@@ -17,6 +19,119 @@ import EPRtools # g calculator
 import tp # tunepicture object
 
 import logging
+
+from multiprocessing import Queue
+from PyQt5.QtCore import *
+
+
+class data_visualisation_thread(QThread):  # this is the data vis thread. Reads data from q and plots to Plotter
+    tmpSPC = cw_spectrum.cw_spectrum('')
+
+    def __init__(self, plotter: Plotter.Plotter, q: Queue):
+        super(data_visualisation_thread, self).__init__()
+        self.plotter = plotter
+        self.q = q
+
+    def run(self):
+        print('EPR plotter: queue empty?', not self.q._notempty)
+        sleep(1)
+        ncycles=0 # how many times tried to read the queue
+        while 1==1:
+            self.plotter.plotEprData(self.tmpSPC)  # after reading the last cv from the q, plot.
+            try:
+                self.tmpSPC = self.q.get()  # read all that queue
+            except:
+                sleep(0.05)
+                ncycles = ncycles+1
+                if ncycles > 100:
+                    print("I tried %d times. There is nothing."%ncycles)
+                    break
+
+
+
+class data_generating_thread(QThread):  # oт это у нас кусрэд, но наш, русскaй, родной, ТТТ.
+    def __init__(self, lockin: lock_in.lockin, fieldcontroller: bh_15.bh_15, frequencycounter: agilent_53181a.agilent_frequency_counter, ABORTFLAG: bool, q: Queue, spc_init: cw_spectrum.cw_spectrum):  # and here is its constructor
+        super(data_generating_thread, self).__init__()  # from a parent to be born
+        self.ABORT_FLAG = ABORTFLAG  # and no flag was given to ever quit anything
+        self.lock_in = lockin
+        self.field_controller = fieldcontroller
+        self.agilentFC = frequencycounter
+        self.q = q  # there put what you have done in your miserable life
+        self.spc = spc_init  # whsat kind of function to be called in this thread
+
+    def run(self):  # it waits, like a cat in a bush, when you call it. Run! - you shout.
+
+        print('cweprUTility QThread running, type EPR')
+
+        self.do_epr()
+
+        self.wait()
+        self.quit()
+
+
+    def do_epr(self):
+        print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
+        spcTmp = self.spc
+        print(spcTmp.filename)
+
+        # get the spc with the SR810 lia and BH15 field controller
+        print('taking a cwEPR spectrum...')
+
+
+        # preset LIA
+        lia = self.lock_in
+        lia.set_frequency(frequency_in_hz=spcTmp.modfreq)
+        lia.set_phase(spcTmp.li_phase)
+
+        if 'G' in spcTmp.modamp_dim:
+            lia.set_modamp(modamp_in_gauss = spcTmp.modamp, frequency_in_hz = spcTmp.modfreq) #todo
+        if 'V' in spcTmp.modamp_dim:
+            lia.set_voltage(spcTmp.modamp)
+
+        lia.set_sensitivity(code=spcTmp.li_sens_SCPI_code)
+        lia.set_time_constant(code=spcTmp.li_tc_SCPI_code)
+        # dont forget about the conversion time!
+
+        # Preset field vector in the field controller
+        fc = self.field_controller
+        bvaluesToScan = np.linspace(start = spcTmp.bstart, stop = spcTmp.bstop, num = spcTmp.npoints)
+        fc.preset_field_scan(bvaluesToScan)
+        fc.set_field(spcTmp.bstart) # push the fc to the left most field
+        fc.check_set_field(spcTmp.bstart) # make sure the controller is on field
+
+
+
+        # loop on nruns
+        for runs in range(self.spcTmp.nruns):
+            # loop on B0 for one scan
+            for field_to_set in bvaluesToScan:
+                if self.ABORT_FLAG: # the hard way
+                    continue
+
+                if fc.fake: # for debugging
+                    measured_bfield = field_to_set
+                else:
+                    measured_bfield = fc.set_field(field_to_set)
+                    # set the magnetic field, get the set magnetic field. #todo ER35M!!!
+
+                spcTmp.x_channel.append(lia.getX())  # get x channel of the LIA
+                spcTmp.y_channel.append(lia.getY())  # get y channel of the LIA
+                spcTmp.bvalues.append(measured_bfield)  # pop
+
+                # put the spectrum to the queue
+                q.put(spcTmp)
+                sleep(spcTMP.li_tc*spcTMP.conv_time)
+
+
+            fc.set_field(spcTMP.bstart)
+            spcTMP.nscansDone = runs+1 # programmierungen
+            print('%d CWEPR scans recorded.'%spcTMP.nscansDone)
+            # append scan to spc.x_scans
+            spcTMP.append_scans_get_average()
+
+
+
+
 
 class CweprUi(QtWidgets.QMainWindow):
     '''the cwEPR utility window.'''
@@ -34,6 +149,9 @@ class CweprUi(QtWidgets.QMainWindow):
 
     # --- TUNE PICTURE ---
     tp = tp.tp # tunepicture
+
+    # multiprocessing
+    q = Queue  # queue for LIA to put spectra into
 
     def __init__(self, comm: communication.communicator):
         self.log = logging.getLogger("emre_logger.cweprUtility")
@@ -113,6 +231,7 @@ class CweprUi(QtWidgets.QMainWindow):
         self.TPplotterWGT.setMaximumWidth(230)
         self.TPplotter.plotTpData(self.tp)
 
+        self.q = q
 
 
 
@@ -194,6 +313,7 @@ class CweprUi(QtWidgets.QMainWindow):
         # comment
         spc.comment = self.comment_textEdit.toPlainText()
 
+
     def do_cwepr_scan(self):
         self.ABORT_FLAG = False
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
@@ -209,53 +329,20 @@ class CweprUi(QtWidgets.QMainWindow):
 
         # capture fields and constants from the gui:
         self.PopulateSpectrumFromFields(spc)
-        # preset LIA
-        lia = self.lock_in
-        lia.set_frequency(frequency_in_hz=spc.modfreq)
-        lia.set_phase(spc.li_phase)
 
-        if 'G' in spc.modamp_dim:
-            lia.set_modamp(modamp_in_gauss = spc.modamp, frequency_in_hz = spc.modfreq) #todo
-        if 'V' in spc.modamp_dim:
-            lia.set_voltage(spc.modamp)
 
-        lia.set_sensitivity(code=spc.li_sens_SCPI_code)
-        lia.set_time_constant(code=spc.li_tc_SCPI_code)
-        # dont forget about the conversion time!
+        # start the two processes here
 
-        # Preset field vector in the field controller
-        fc = self.field_controller
-        bvaluesToScan = np.linspace(start = spc.bstart, stop = spc.bstop, num = spc.npoints)
-        fc.preset_field_scan(bvaluesToScan)
-        fc.set_field(spc.bstart) # push the fc to the left most field
-        fc.check_set_field(spc.bstart) # make sure the controller is on field
 
-        # loop on nruns
-        for runs in range(spc.nruns):
-            # loop on B0 for one scan
-            for field_to_set in bvaluesToScan:
-                if self.ABORT_FLAG: # the hard way
-                    continue
+        self.vis_trd = data_visualisation_thread(plotter=self.EPRplotter, q=self.q)
+        self.gen_trd = data_generating_thread(lockin=self.lock_in, fieldcontroller = self.field_controller, frequencycounter = self.frequency_counter, ABORTFLAG = self.ABORT_FLAG, q=self.q, spc_init=self.spc)
 
-                if fc.fake: # for debugging
-                    measured_bfield = field_to_set
-                else:
-                    measured_bfield = fc.set_field(field_to_set)
-                    # set the magnetic field, get the set magnetic field. #todo ER35M!!!
+        self.vis_trd.start()
 
-                spc.x_channel.append(lia.getX())  # get x channel of the LIA
-                spc.y_channel.append(lia.getY())  # get y channel of the LIA
-                spc.bvalues.append(measured_bfield)  # pop
-                self.EPRplotter.clear()
-                self.log.debug(str(spc.x_channel) + str(spc.y_channel))
-                self.EPRplotter.plotEprData(spc)
-                sleep(spc.li_tc*spc.conv_time)
+        self.gen_trd.start()
 
-            fc.set_field(spc.bstart)
-            spc.nscansDone = runs+1 # programmierungen
-            print('%d CWEPR scans recorded.'%spc.nscansDone)
-            # append scan to spc.x_scans
-            spc.append_scans_get_average()
+
+
 
 
     def abort_scan(self): # stops all

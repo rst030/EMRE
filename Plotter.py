@@ -184,22 +184,33 @@ class PlotterCanvas(FigureCanvas):
         self.update_plotter()
 
     def plotEprData(self, spectrum:cw_spectrum.cw_spectrum):
-        #self.axes.cla()
+
+
+
+        self.axes.cla()
         self.title = spectrum.file_name
         self.axes.set_xlabel(self.xlabel)
         self.axes.set_ylabel(self.ylabel)
         self.axes.set_title(self.title)
 
         # plot current spectra
-        self.axes.plot(spectrum.bvalues, spectrum.x_channel, 'k-', linewidth=1)
-        self.axes.plot(spectrum.bvalues, spectrum.y_channel, 'r-', linewidth=1)
+        self.axes.plot(spectrum.bvalues, spectrum.x_channel, 'k-', linewidth = 1)
+        self.axes.plot(spectrum.bvalues[-1], spectrum.x_channel[-1], 'kx', linewidth = 5)
+
+        self.axes.plot(spectrum.bvalues, spectrum.y_channel, 'r-', linewidth = 1)
+        self.axes.plot(spectrum.bvalues[-1], spectrum.y_channel[-1], 'rx', linewidth = 5)
+
         # plot averaged traces
         self.axes.plot(spectrum.bvalues_averaged, spectrum.x_averaged, 'y-', linewidth=1)
+        self.axes.plot(spectrum.bvalues_averaged[-1], spectrum.x_averaged[-1], 'yx', linewidth=5)
+
         self.axes.plot(spectrum.bvalues_averaged, spectrum.y_averaged, 'b-', linewidth=1)
+        self.axes.plot(spectrum.bvalues_averaged[-1], spectrum.x_averaged[-1], 'yx', linewidth=5)
 
 
         self.axes.autoscale(True)
         self.update_plotter()
+
 
     def update_plotter(self): # very useful and important method for live plotting.
         self.figure.canvas.draw()

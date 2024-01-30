@@ -39,8 +39,8 @@ class pstat (object):
         '''create an instance of the pstat object''' # создать объект потенциостата.
         self.rm = rm
         self.connect(model)
-        self.write('*RST')  # ресетнем ка мы его на всякий случай
-        self.write('*IDN?') # и спросим, как его зовут
+        self.write('*RST')  # always reset the thing
+        self.write('*IDN?') # and ask whats your name
         response = self.read()
         self.play_tune()
         self.write('DISP:SCR SWIPE_GRAP')
@@ -92,6 +92,7 @@ class pstat (object):
                 self.device.write(command)
             except:
                 print('write operation to Pstat failed')
+                self.fake = True
         else:
             print('Pstat: No device. Writing %s to fake Pstat'%command)
 
