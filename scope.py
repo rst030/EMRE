@@ -1,9 +1,9 @@
 '''communication to the TDS2002C oscilloscope.
-221017 rst @ FUB
+221017 rst@FUB
 rst030@protonmail.com'''
 
-import communication
-import pyvisa as visa
+import usbtmc
+from datetime import datetime
 
 class scope (object):
     type = 'scope'
@@ -15,83 +15,78 @@ class scope (object):
     fake = True                  # use simulated outputs. Used for testing outside the lab.
 
     curve = ['a,csv,file,is,a,text,file,separated,with,commas']    # that is what we are hunting for
+    dt = 0 # datetime when tp is taken
 
+    def __init__(self):
+        if len(usbtmc.list_devices()) == 0:
+            print("usbtmc returned empty list of devices. usb cable?")
+            self.fake = True
+            return
+        else:
+            self.connect()
 
-    def __init__(self, rm: visa.ResourceManager): # when create a scope you'd better have a resource manager already working
-        '''create an instance of the lock-in amplifier object'''
-        self.rm = rm
-        self.connect()
 
     def connect(self):
-        ''' constructor for the scope.
-        Need rights. Modify the 99-ni... file and restart udev. have a look here:
-        https://stackoverflow.com/questions/52256123/unable-to-get-full-visa-address-that-includes-the-serial-number
-        we will need to use the system interpreter. If so, installing packages is not possible for non-roots.
-        When using vitrual eivironment, accessing gpib can be troublesome.
-        '''
-        try:
-            self.device.close()
-        except:
-            print('no scope to close, ok.')
-
-        try:
-            self.device = self.rm.open_resource(self.address) #LYRA tds 2002C scope
-            self.write('*IDN?')
-            response = self.read()
-            print('scope connected:\n' + response)  # if ok return scope's id)
+        print('connecting to', usbtmc.list_devices()[0], '...\n')
+        self.scope = usbtmc.Instrument(usbtmc.list_devices()[0])
+        if print(self.scope.ask("*IDN?")):
             self.fake = False
-        except:
-            print('ERROR: failed connecting to scope')
-            self.fake = True
+
 
     def write(self,cmd):  # methods work with fake device
         if self.fake:
             return('fake talking')
         else:
-            self.device.write(cmd)
+            self.scope.write(cmd)
 
     def read(self):  # methods work with fake device
         if self.fake:
             return('fake bla')
         else:
-            return(self.device.read())
+            return(self.scope.read())
 
     def get_tunepicture(self):
         '''
-        this method returns a waveform of the channel 1 of the scope.
-        The connection to the scope is specified in the connect_to_scope method
-        The commmands are sent in ASCII encoding via GPIB or USB interface.
+         this method returns a waveform of the channel 1 of the scope.
+         The connection to the scope is specified in the connect_to_scope method
+         The commmands are sent in ASCII encoding via USB.
 
-        1. configure the data format and waveform locations
-        2. request a waveform of Ch1'''
+         1. configure the data format and waveform locations
+         2. request a waveform of Ch1'''
 
-
-        self.write("DATA:SOURCE CH1")#choose the source of data
-        self.write("DATa:ENCdg ASCII") #choose the encoding
-        self.write("DATa:WIDth 1") # 2 bytes per point
-        self.write("ACQ:MOD SAMPLE") # sample, not averaged picture
-        self.write("CURVE?") # qurey it is
-        curve = self.read()
-        print("tune picture captured\n")
-        self.curve = curve
+        self.write("DATA:SOURCE CH1")  # choose the source of data
+        self.write("DATa:ENCdg ASCII")  # choose the encoding
+        self.write("DATa:WIDth 1")  # 2 bytes per point
+        self.write("ACQ:MOD SAMPLE")  # sample, not averaged picture
+        curve = self.scope.ask("CURVE?")
+        self.dt = datetime.now()  # datetime on query
+        print("tune picture captured at\n")
+        print(self.dt.strftime('%A %d.%m.%Y, %H:%M:%S.%f'))
         return curve
 
     def saveTunePictureToFile(self,filename:str): # saves the tunepicture to a csv file
 
-        curve = self.curve.split(',')
-        self.write('WFMPre:XINcr?')
-        xint = self.read() # interval on x axis between the points.
+        curve = self.get_tunepicture().split(',')
+        try:
+            xint = self.scope.ask('WFMPre:XINcr?')  # get x interval
+        except:
+            xint = 2.000000e-07
+            print('failed acquiring x interval using default value %.1e s' % xint)
         # now lets save this in the file.
-        fout = open('%s.csv' % filename, 'w')
+        filename = filename
+        fout = open(filename, 'w')
 
         i = 0
         for symb in curve:
             if i == 0:
-                fout.write('datetime,00.00.0000,00:00:00.000,%.12f, %.5f\n' % (float(xint) * i, float(symb)))
-                continue
+                fout.write(
+                    'datetime,%s,%.12f, %.5f,\n'
+                    % (self.dt.strftime('%d.%m.%Y, %H:%M:%S.%f'),
+                       float(xint) * i, float(symb)))
 
-            fout.write(',,,%.12f, %.5f\n' % (float(xint) * i, float(symb)))
+            else:
+                fout.write(',,,%.12f, %.5f,\n' % (float(xint) * i, float(symb)))
             i = i + 1
+
         fout.close()
         print('tune picture saved as %s' % fout.name)
-

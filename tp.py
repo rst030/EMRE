@@ -52,6 +52,7 @@ class tp():
         lineWhereDataStarts = 0
 
         for line in datafile:
+            print(line)
             relTime = float(line.split(',')[-3])
             tunePicValue = float(line.split(',')[-2])
             self.time.append(relTime)
@@ -83,8 +84,8 @@ class tp():
 
         # 1. get derivative of the smoothed tunepicture
 
-        smoothtp = savgol_filter(self.tunepicture_blcorr,40,3)
-        derivativeTP = savgol_filter(np.diff(smoothtp),40,3)
+        smoothtp = savgol_filter(self.tunepicture_blcorr,41,3)
+        derivativeTP = savgol_filter(np.diff(smoothtp),41,3)
         derivativeFrequency = self.frequency[1:]
 
         # 2. find max of derivative - there the sharp peak is
@@ -92,6 +93,10 @@ class tp():
 
 
         leftLimTP = indexMaxDeriv
+
+        if leftLimTP > len(self.frequency):
+            return
+
         print('TP starts at idx ',leftLimTP,'at ',self.frequency[leftLimTP],' MHz')
 
 

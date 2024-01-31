@@ -103,7 +103,10 @@ class lockin (object):
     def getX(self):
         # OUTP? i Query the value of X (1), Y (2), R (3) or θ (4). Returns ASCII floating point value.
         self.write('OUTP? 1')  # request for R channel
-        voltage = float(self.read())  # read the lockin response in volts
+        try:
+            voltage = float(self.read())  # read the lockin response in volts
+        except:
+            voltage = 0
         return voltage
 
     def getY(self):

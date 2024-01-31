@@ -163,6 +163,7 @@ class CweprUi(QtWidgets.QMainWindow):
         self.lock_in = comm.lockin
         self.field_controller = comm.field_controller
         self.frequency_counter = comm.frequency_counter
+        self.scope = comm.scope
         self.home_path = os.path.expanduser('~')
         self.workingFolder = self.home_path
         # if self.DEBUG:
@@ -471,8 +472,8 @@ class CweprUi(QtWidgets.QMainWindow):
 
     def get_tunepicture(self):
         self.scope.get_tunepicture()
-        self.tp = tp.tp('tmpTP.csv')
         self.scope.saveTunePictureToFile('tmpTP.csv')
+        self.tp = tp.tp('tmpTP.csv')
         self.import_tunepicture('tmpTP.csv')
 
     def save_tunepicture(self):

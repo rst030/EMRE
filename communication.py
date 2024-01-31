@@ -37,7 +37,7 @@ class communicator(object):
 
     # for the beginning only two devices. then we may expand. Gaussmeter is a must, frequency counter is desirable too
 
-    def __init__(self, backend): #  BUGS!!!!! <---------- the fucking plotter, noone really needs it at this point.
+    def __init__(self, backend):
         '''The constructor of the communicator class.'''
         # visa.log_to_screen() #here we initialize the communicator. But there is nothing really to initialize logging is temporary
         backend = '@py'# for PyVISA-py backend, '' for NIVISA backend
@@ -55,7 +55,7 @@ class communicator(object):
         self.devices_list.append(self.right_hand)
         self.windfreak = windfreak_synth.windfreak_synth()
         self.devices_list.append(self.windfreak)
-        self.scope = scope.scope(rm = self.rm)
+        self.scope = scope.scope()
         self.devices_list.append(self.scope)
 
         # count the connected devices
