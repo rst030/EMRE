@@ -136,7 +136,8 @@ class Ui(QtWidgets.QMainWindow):
 
     def open_CWEPR_utility(self):
         """ opens the CWEPR GUI with the CWEPR plotter in it."""
-        self.CWEPRgui = cweprUtility.CweprUi(comm=self.communicator)
+        self.qGlob = Queue(maxsize=128)
+        self.CWEPRgui = cweprUtility.CweprUi(comm=self.communicator,q=self.qGlob)
 
     def initialize_experiment(self):
         '''sends the initial parameters to the spectrometer.

@@ -255,7 +255,7 @@ class cw_spectrum:
             self.frequency_corrected = True
 
 
-    def save(self, file_path): # saves data in akku2 format, compatible with fscII
+    def saveAs(self, file_path): # saves data in akku2 format, compatible with fscII
         self.savefile = open(file_path,'w')  # open the file
         f2w = self.savefile
         # ____________________________ saving spectrum to akku2 file _____________________________________________________________

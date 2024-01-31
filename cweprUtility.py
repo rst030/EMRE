@@ -72,7 +72,8 @@ class data_generating_thread(QThread):  # oт это у нас кусрэд, н�
     def do_epr(self):
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
         spcTmp = self.spc
-        print(spcTmp.filename)
+        spcTmp.file_name = ['cwEPR ',spcTmp.datetime]
+        print(spcTmp.file_name)
 
         # get the spc with the SR810 lia and BH15 field controller
         print('taking a cwEPR spectrum...')
@@ -102,7 +103,7 @@ class data_generating_thread(QThread):  # oт это у нас кусрэд, н�
 
 
         # loop on nruns
-        for runs in range(self.spcTmp.nruns):
+        for runs in range(spcTmp.nruns):
             # loop on B0 for one scan
             for field_to_set in bvaluesToScan:
                 if self.ABORT_FLAG: # the hard way
@@ -119,15 +120,15 @@ class data_generating_thread(QThread):  # oт это у нас кусрэд, н�
                 spcTmp.bvalues.append(measured_bfield)  # pop
 
                 # put the spectrum to the queue
-                q.put(spcTmp)
-                sleep(spcTMP.li_tc*spcTMP.conv_time)
+                self.q.put(spcTmp)
+                sleep(spcTmp.li_tc*spcTmp.conv_time)
 
 
-            fc.set_field(spcTMP.bstart)
-            spcTMP.nscansDone = runs+1 # programmierungen
-            print('%d CWEPR scans recorded.'%spcTMP.nscansDone)
+            fc.set_field(spcTmp.bstart)
+            spcTmp.nscansDone = runs+1 # programmierungen
+            print('%d CWEPR scans recorded.'%spcTmp.nscansDone)
             # append scan to spc.x_scans
-            spcTMP.append_scans_get_average()
+            spcTmp.append_scans_get_average()
 
 
 
@@ -153,7 +154,7 @@ class CweprUi(QtWidgets.QMainWindow):
     # multiprocessing
     q = Queue  # queue for LIA to put spectra into
 
-    def __init__(self, comm: communication.communicator):
+    def __init__(self, comm: communication.communicator, q:Queue):
         self.log = logging.getLogger("emre_logger.cweprUtility")
         # hardware to pass!
         self.comm = comm
@@ -231,6 +232,8 @@ class CweprUi(QtWidgets.QMainWindow):
         self.TPplotterWGT.setMaximumWidth(230)
         self.TPplotter.plotTpData(self.tp)
 
+
+        # Queue for plotting simulatneously with measuring
         self.q = q
 
 
@@ -287,6 +290,7 @@ class CweprUi(QtWidgets.QMainWindow):
         spc.bstart = float(self.low_B_edit.text())
         spc.bstop = float(self.high_B_edit.text())
         spc.npoints = int(self.npoints_edit.text())
+        spc.bstep = (spc.bstop - spc.bstart) / spc.npoints
         spc.gaussmeterFlag = self.use_GM_checkbox.checkState()
         spc.modfreq = float(self.mod_freq_edit.text())*1e3
         spc.li_phase = float(self.lia_phase_edit.text())
@@ -295,6 +299,10 @@ class CweprUi(QtWidgets.QMainWindow):
         # LIA sensitivity
         spc.li_sens = float(self.lia_sensitivity_comboBox.currentText())
         spc.li_sens_SCPI_code = int(self.lia_sensitivity_comboBox.currentIndex())
+
+        # some weird trash from FSC2
+        spc.li_level = 0
+
         # if self.DEBUG:
         self.log.debug('Lockin sensitivity code: %s' % spc.li_sens_SCPI_code)
         # LIA TC
@@ -312,6 +320,9 @@ class CweprUi(QtWidgets.QMainWindow):
         spc.temp = float(self.T_edit.text())
         # comment
         spc.comment = self.comment_textEdit.toPlainText()
+
+        spc.mwfreq = 0 # to be populated from the Agilent!
+
 
 
     def do_cwepr_scan(self):
@@ -335,7 +346,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
 
         self.vis_trd = data_visualisation_thread(plotter=self.EPRplotter, q=self.q)
-        self.gen_trd = data_generating_thread(lockin=self.lock_in, fieldcontroller = self.field_controller, frequencycounter = self.frequency_counter, ABORTFLAG = self.ABORT_FLAG, q=self.q, spc_init=self.spc)
+        self.gen_trd = data_generating_thread(lockin=self.lock_in, fieldcontroller = self.field_controller, frequencycounter = self.frequency_counter, ABORTFLAG = self.ABORT_FLAG, q=self.q, spc_init=spc)
 
         self.vis_trd.start()
 
@@ -351,8 +362,35 @@ class CweprUi(QtWidgets.QMainWindow):
         self.lock_in.set_voltage(0)
         print("Field Modulation OFF!")
 
+
+
     def save_spectrum(self):
-        print('save the spectrum. Steal it from the CHG module!')
+        print('save as file dialog etc, think of the format, Be compatible with the Keithley stuff!!!')
+        # open open file dialog
+        try:
+            # self.CHGPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
+            # filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
+            self.CWPath, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption="Select folder, insert name",
+                                                                    directory=self.workingFolder,
+                                                                    filter="comma separated values (*,akku2);all files (*)")
+            self.workingFolder = os.path.split(os.path.abspath(self.CWPath))[0]
+        except:
+            print('no filename given, do it again.')
+            return 0
+
+        if self.spectrum:
+            print('saving cwEPR spectrum...')
+            print('saving cwEPR spectrum as ',self.CWPath)
+            self.spectrum.file_name = self.CWPath
+            self.spectrum.saveAs(file_path=self.spectrum.file_name)
+            print('cwEPR saved')
+
+
+
+
+
+
+
 
 
 
