@@ -138,11 +138,13 @@ class CweprUi(QtWidgets.QMainWindow):
     '''the cwEPR utility window.'''
 
     comm = communication.communicator
-
-    # --- EPR ---
+    # devices
     lock_in = comm.lockin
     field_controller = comm.field_controller
     frequency_counter = comm.frequency_counter
+    scope = comm.scope
+
+    # --- EPR ---
     workingFolder = r"./dummies/" # where the openfiledialog opens
     spectrum = cw_spectrum.cw_spectrum
     ABORT_FLAG = True # flag to abort everything
@@ -326,8 +328,12 @@ class CweprUi(QtWidgets.QMainWindow):
         spc.mwfreq = float(mwfq) # to be populated from the Agilent!
 
 
-    def get_mw_frequency(self):
+    def get_mw_frequency(self):  # TODO: call it on pressing get mwfq button
+        # populate that field in the gui
         return self.frequency_counter.get_MW_frequency()
+
+
+
 
     def do_cwepr_scan(self):
         self.ABORT_FLAG = False
@@ -452,6 +458,12 @@ class CweprUi(QtWidgets.QMainWindow):
         print('TP initiated in CWEPR module')
         self.TPplotter.clear()
         self.TPplotter.plotTpData(tmpTP)
+
+
+    def get_tunepicture(self): # TODO: call it on pressing get tp button
+        self.scope.get_tunepicture()
+        self.scope.saveTunePictureToFile('tmpTP.csv')
+        self.import_tunepicture(tmpTP.csv)
 
     def calculate_Q(self):
         #MWFQ = self.MWFQ
