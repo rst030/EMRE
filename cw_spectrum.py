@@ -256,7 +256,7 @@ class cw_spectrum:
 
 
     def saveAs(self, file_path): # saves data in akku2 format, compatible with fscII
-        self.savefile = open(file_path,'w')  # open the file
+        self.savefile = open(file_path+'.akku2','w')  # open the file
         f2w = self.savefile
         # ____________________________ saving spectrum to akku2 file _____________________________________________________________
         # following the structure of akku2. Fields of class must be populated before writing in file

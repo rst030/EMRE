@@ -72,7 +72,7 @@ class data_generating_thread(QThread):  # oт это у нас кусрэд, н�
     def do_epr(self):
         print('get the fields from the gui\ncheck if everygthing is ok,\nrun the sequence.')
         spcTmp = self.spc
-        spcTmp.file_name = ['cwEPR ',spcTmp.datetime]
+        spcTmp.file_name = 'cwEPR ' + spcTmp.datetime.strftime('%y%m%d %H:%M:%S:%f')
         print(spcTmp.file_name)
 
         # get the spc with the SR810 lia and BH15 field controller
@@ -321,9 +321,13 @@ class CweprUi(QtWidgets.QMainWindow):
         # comment
         spc.comment = self.comment_textEdit.toPlainText()
 
-        spc.mwfreq = 0 # to be populated from the Agilent!
+        mwfq = self.get_mw_frequency()
+        print('microwave frequency is ',mwfq,' Hz')
+        spc.mwfreq = float(mwfq) # to be populated from the Agilent!
 
 
+    def get_mw_frequency(self):
+        return self.frequency_counter.get_MW_frequency()
 
     def do_cwepr_scan(self):
         self.ABORT_FLAG = False
@@ -366,13 +370,11 @@ class CweprUi(QtWidgets.QMainWindow):
 
     def save_spectrum(self):
         print('save as file dialog etc, think of the format, Be compatible with the Keithley stuff!!!')
-        # open open file dialog
+        # save file dialog
         try:
-            # self.CHGPath = filedialog.asksaveasfilename(parent=None, initialdir=self.workingFolder, title="Selekt foolder, insert name",
-            # filetypes=(("comma separated values", "*.csv"), ("all files", "*.*")))
             self.CWPath, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption="Select folder, insert name",
                                                                     directory=self.workingFolder,
-                                                                    filter="comma separated values (*,akku2);all files (*)")
+                                                                    filter="akku2 files (*.akku2); all files (*)")
             self.workingFolder = os.path.split(os.path.abspath(self.CWPath))[0]
         except:
             print('no filename given, do it again.')
