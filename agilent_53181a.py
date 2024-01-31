@@ -39,7 +39,7 @@ class agilent_frequency_counter (object):
         if not self.fake:
             return(self.device.read())
         else:
-            return('fake talking')
+            return(666)
 
     def get_MW_frequency(self):
         #sleep(5)

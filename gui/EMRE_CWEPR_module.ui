@@ -1107,7 +1107,7 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="measureMWButton">
+           <widget class="QPushButton" name="getMWButton">
             <property name="maximumSize">
              <size>
               <width>30</width>
@@ -1115,7 +1115,7 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>get</string>
+             <string>Get</string>
             </property>
            </widget>
           </item>
@@ -1265,7 +1265,7 @@ p, li { white-space: pre-wrap; }
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_21">
           <item>
-           <widget class="QPushButton" name="getDipButton">
+           <widget class="QPushButton" name="getTPButton">
             <property name="maximumSize">
              <size>
               <width>34</width>
@@ -1304,7 +1304,7 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="saveDipButton">
+           <widget class="QPushButton" name="saveTPButton">
             <property name="maximumSize">
              <size>
               <width>66</width>

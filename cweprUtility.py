@@ -209,11 +209,16 @@ class CweprUi(QtWidgets.QMainWindow):
         self.calcGButton.clicked.connect(self.calculate_g)
         self.calcFieldButton.clicked.connect(self.calculate_B)
         self.calcMWfreqButton.clicked.connect(self.calculate_mwfq)
+        # hardware interaction!
+        self.getMWButton.clicked.connect(self.get_mw_frequency)
+
         # --- TUNE PICTURE ---
         self.importDipButton.clicked.connect(self.import_tunepicture)
         self.fitDipButton.clicked.connect(self.fit_tunepicture) # draw a fit on top of the tunepicture
         self.QfactorButton.clicked.connect(self.calculate_Q) # calculate Q from fit
-
+        # hardware interaction!
+        self.getTPButton.clicked.connect(self.get_tunepicture)
+        self.saveTPButton.clicked.connect(self.save_tunepicture)
 
         # --- adding the plotter: ---
         # EPR plotter:
@@ -330,7 +335,11 @@ class CweprUi(QtWidgets.QMainWindow):
 
     def get_mw_frequency(self):  # TODO: call it on pressing get mwfq button
         # populate that field in the gui
-        return self.frequency_counter.get_MW_frequency()
+        mwFqMeasured = self.frequency_counter.get_MW_frequency()
+        self.mw_freq_edit.clear()
+        self.mw_freq_edit.setText('%.4f' % float(mwFqMeasured / 1e9))  # GHz
+        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #00ff00}")  # what calculated goes green
+        return mwFqMeasured
 
 
 
@@ -405,7 +414,7 @@ class CweprUi(QtWidgets.QMainWindow):
 # --- EPR TOOLS ---
     def set_ge(self):
         self.g_edit.setText('%.12f'%EPRtools.ge)
-        self.g_edit.setStyleSheet("QLineEdit{background: #00ff9f}") # what calculated goes green
+        self.g_edit.setStyleSheet("QLineEdit{background: #10ffaf}") # what calculated goes green
         self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
         self.mw_freq_edit.setStyleSheet("QLineEdit{background: #ffffff}")
 
@@ -417,7 +426,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
         self.g_edit.clear()
         self.g_edit.setText('%.12f' % gcalc)
-        self.g_edit.setStyleSheet("QLineEdit{background: #00ff9f}")  # what calculated goes green
+        self.g_edit.setStyleSheet("QLineEdit{background: #10ffaf}")  # what calculated goes green
         self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
         self.mw_freq_edit.setStyleSheet("QLineEdit{background: #ffffff}")
 
@@ -429,7 +438,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
         self.B_edit.clear()
         self.B_edit.setText('%.2f' % float(b0calc*1e4))
-        self.B_edit.setStyleSheet("QLineEdit{background: #00ff9f}")  # what calculated goes green
+        self.B_edit.setStyleSheet("QLineEdit{background: #10ffaf}")  # what calculated goes green
         self.g_edit.setStyleSheet("QLineEdit{background: #ffffff}")
         self.mw_freq_edit.setStyleSheet("QLineEdit{background: #ffffff}")
 
@@ -441,7 +450,7 @@ class CweprUi(QtWidgets.QMainWindow):
 
         self.mw_freq_edit.clear()
         self.mw_freq_edit.setText('%.4f' % float(mwfqcalc / 1e9)) # GHz
-        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #00ff9f}")  # what calculated goes green
+        self.mw_freq_edit.setStyleSheet("QLineEdit{background: #10ffaf}")  # what calculated goes green
         self.g_edit.setStyleSheet("QLineEdit{background: #ffffff}")
         self.B_edit.setStyleSheet("QLineEdit{background: #ffffff}")
 
@@ -460,10 +469,24 @@ class CweprUi(QtWidgets.QMainWindow):
         self.TPplotter.plotTpData(tmpTP)
 
 
-    def get_tunepicture(self): # TODO: call it on pressing get tp button
+    def get_tunepicture(self):
         self.scope.get_tunepicture()
+        self.tp = tp.tp('tmpTP.csv')
         self.scope.saveTunePictureToFile('tmpTP.csv')
-        self.import_tunepicture(tmpTP.csv)
+        self.import_tunepicture('tmpTP.csv')
+
+    def save_tunepicture(self):
+        try:
+            self.TPPath, _ = QtWidgets.QFileDialog.getSaveFileName(self, caption="Select folder, insert name",
+                                                                   directory=self.workingFolder,
+                                                                   filter="csv files (*.csv); all files (*)")
+            self.workingFolder = os.path.split(os.path.abspath(self.TPPath))[0]
+            self.tp.saveAs(filename=self.TPPath)
+        except:
+            print('no filename given, do it again.')
+            return 0
+
+
 
     def calculate_Q(self):
         #MWFQ = self.MWFQ
